@@ -55,9 +55,8 @@ class SelectionStrategy(object):
         Initialize theta to None at the beginning of the training
         OrderedDict containing tensors of weights and biases
     numSelected : int
-
-
     '''
+
     def __init__(self, trainloader, valloader, model, loss_criterion,
                  loss_nored, eta, device, num_channels, num_classes, batch_size, bud, if_convex):
 
