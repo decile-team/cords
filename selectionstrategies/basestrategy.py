@@ -18,7 +18,7 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 
 
-class SelectionStrategy(object):
+class BaseStrategy(object):
     '''
     Parameters
     ----------
