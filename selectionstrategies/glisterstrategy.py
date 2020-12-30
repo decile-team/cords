@@ -1,0 +1,1 @@
+class GlisterStrategy(object):       
