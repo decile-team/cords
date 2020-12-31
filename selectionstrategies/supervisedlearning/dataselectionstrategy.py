@@ -53,4 +53,3 @@ class DataSelectionStrategy(object):
 
     def update_model(self, model_dict):
         self.model.load_state_dict(model_dict)
-
