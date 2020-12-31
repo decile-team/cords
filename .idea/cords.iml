@@ -8,6 +8,9 @@
   <component name="PyDocumentationSettings">
     <option name="renderExternalDocumentation" value="true" />
   </component>
+  <component name="ReSTService">
+    <option name="DOC_DIR" value="$MODULE_DIR$" />
+  </component>
   <component name="TestRunnerService">
     <option name="PROJECT_TEST_RUNNER" value="pytest" />
   </component>
