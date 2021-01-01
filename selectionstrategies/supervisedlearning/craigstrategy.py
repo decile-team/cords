@@ -7,7 +7,7 @@ from selectionstrategies.supervisedlearning.dataselectionstrategy import DataSel
 
 class CRAIGStrategy(DataSelectionStrategy):
     def __init__(self, trainloader, valloader, model, loss_criterion,
-                 eta, device, num_classes, budget, if_convex):
+                 eta, device, num_classes, linear_layer, budget, if_convex):
         super().__init__(trainloader, valloader, model, linear_layer)
 
         self.loss = loss_criterion  # Make sure it has reduction='none' instead of default
