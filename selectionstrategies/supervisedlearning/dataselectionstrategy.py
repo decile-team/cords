@@ -4,8 +4,24 @@ import torch.nn.functional as F
 
 
 class DataSelectionStrategy(object):
+    """
+    This is the base Data Selection Strategy class.
+
+    :param trainloader: Loading the training data using pytorch DataLoader
+    :type trainloader: class
+    :param valloader: Loading the validation data using pytorch DataLoader
+    :type valloader: class
+    :param model: Model architecture used for training
+    :type model: class
+    :param linear_layer: Apply linear transformation to the data
+    :type linear_layer: bool
+    """
 
     def __init__(self, trainloader, valloader, model, linear_layer):
+        """
+        Constructer method
+        """
+
         self.trainloader = trainloader  # assume its a sequential loader.
         self.valloader = valloader
         self.model = model
@@ -18,7 +34,12 @@ class DataSelectionStrategy(object):
     def select(self, budget, model_dict):
         pass
 
+
     def compute_gradients(self):
+        """
+        Computes the gradient of each element
+        """
+
         embDim = self.model.get_embedding_dim()
         for batch_idx, (inputs, targets) in enumerate(self.trainloader):
             inputs, targets = inputs.to(self.device), targets.to(self.device, non_blocking=True)
@@ -52,4 +73,11 @@ class DataSelectionStrategy(object):
             self.grads_per_elem = l0_grads
 
     def update_model(self, model_dict):
+        """
+        Update the models parameters
+
+        :param model_dict: Python dictionary object containing models parameters
+        :type model_dict: OrderedDict
+        """
+
         self.model.load_state_dict(model_dict)

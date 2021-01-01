@@ -7,10 +7,37 @@ from selectionstrategies.supervisedlearning.dataselectionstrategy import DataSel
 
 
 class GlisterStrategy(DataSelectionStrategy):
+    """
+    This class extends :class:`selectionstrategies.supervisedlearning.dataselectionstrategy.DataSelectionStrategy`
+    to include naive greedy technique to select the indices.
+
+    :param trainloader: Loading the training data using pytorch DataLoader
+    :type trainloader: class
+    :param valloader: Loading the validation data using pytorch DataLoader
+    :type valloader: class
+    :param model: Model architecture used for training
+    :type model: class
+    :param loss_criterion: The type of loss criterion
+    :type loss_criterion: class
+    :param eta: Learning rate. Step size for the one step gradient update
+    :type eta: float
+    :param device: The device being utilized - cpu | cuda
+    :type device: str
+    :param num_classes: The number of target classes in the dataset
+    :type num_classes: int
+    :param linear_layer: Apply linear transformation to the data
+    :type linear_layer: bool
+    :param selection_type: selection type - R
+    :type selection_type: str
+    """
 
     def __init__(self, trainloader, valloader, model, loss_criterion,
                  eta, device, num_classes, linear_layer, selection_type):
-        super().__init__(trainloader, valloader, model, linear_layer, selection_type)
+        """
+        Constructor method
+        """
+
+        super().__init__(trainloader, valloader, model, linear_layer)
         self.loss = loss_criterion  # Make sure it has reduction='none' instead of default
         self.eta = eta  # step size for the one step gradient update
         self.device = device
@@ -19,6 +46,15 @@ class GlisterStrategy(DataSelectionStrategy):
         self.init_l1 = list()
 
     def _update_grads_val(self, grads_currX=None, first_init=False):
+        """
+        Update the gradient values
+
+        :param grad_currX: gradients of the current element, defaults to None
+        :type grad_currX: OrderedDict
+        :param first_init: gradients are initialized, defaults to False
+        :type first_init: bool
+        """
+
         self.model.zero_grad()
         embDim = self.model.get_embedding_dim()
 
@@ -75,20 +111,50 @@ class GlisterStrategy(DataSelectionStrategy):
             self.grads_val_curr = torch.mean(l0_grads, dim=0).view(-1, 1)
 
     def eval_taylor_modular(self, grads):
+        """
+        Evaluate gradients
+
+        :param grads: gradients
+        :type grads: Tensor
+        :return: matrix product of two tensors
+        :rtype: Tensor
+        """
+
         grads_val = self.grads_val_curr
         with torch.no_grad():
             gains = torch.matmul(grads, grads_val)
         return gains
 
-    # Updates gradients of set X + element (basically adding element to X)
-    # Note that it modifies the inpute vector! Also grads_X is a list! grad_e is a tuple!
+
     def _update_gradients_subset(self, grads_X, element):
+        """
+        Update gradients of set X + element (basically adding element to X)
+        Note that it modifies the inpute vector! Also grads_X is a list! grad_e is a tuple!
+
+        :param grads_X: gradients
+        :type grads_X: list
+        :param element: element that need to be added to the gradients
+        :type element: int
+        """
+
         grads_e = self.grads_per_elem[element]
         grads_X += grads_e
 
     # Same as before i.e full batch case! No use of dataloaders here!
     # Everything is abstracted away in eval call
     def select(self, budget, model_dict):
+        """
+        Apply naive greedy method for data selection
+
+        :param budget: The number of data points to be selected
+        :type budget: int
+        :param model_dict: Python dictionary object containing models parameters
+        :type model_dict: OrderedDict
+        :return: List containing indices of the best datapoints, 
+                list containing gradients of datapoints present in greedySet
+        :rtype: list, list
+        """
+
         self.update_model(model_dict)
         start_time = time.time()
         self.compute_gradients()
