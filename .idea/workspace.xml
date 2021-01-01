@@ -2,16 +2,27 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="45c47c08-f163-460a-8dc3-e579582dd153" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/selectionstrategies/supervisedlearning/dataselectionstrategy.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/cords.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/cords.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/notebooks/glister_example.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/selectionstrategies/supervisedlearning/basestrategy.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/models/cifar10net.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/models/logreg_net.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/models/mnist_net.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/models/resnet.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/models/simpleNN_net.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/selectionstrategies/supervisedlearning/craigstrategy.py" beforeDir="false" afterPath="$PROJECT_DIR$/selectionstrategies/supervisedlearning/craigstrategy.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/selectionstrategies/supervisedlearning/glisterstrategy.py" beforeDir="false" afterPath="$PROJECT_DIR$/selectionstrategies/supervisedlearning/glisterstrategy.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -89,5 +100,8 @@
       </map>
     </option>
     <option name="oldMeFiltersMigrated" value="true" />
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/cords$glister_tutorial.coverage" NAME="glister_tutorial Coverage Results" MODIFIED="1609523363001" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/notebooks" />
   </component>
 </project>

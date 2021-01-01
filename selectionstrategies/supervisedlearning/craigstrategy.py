@@ -3,7 +3,9 @@ import time
 import torch
 import math
 import torch.nn.functional as F
+import apricot
 from selectionstrategies.supervisedlearning.dataselectionstrategy import DataSelectionStrategy
+
 
 class CRAIGStrategy(DataSelectionStrategy):
     def __init__(self, trainloader, valloader, model, loss_criterion,
