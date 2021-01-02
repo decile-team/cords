@@ -31,13 +31,13 @@ class GLISTERStrategy(DataSelectionStrategy):
     :type selection_type: str
     """
 
-    def __init__(self, trainloader, valloader, model, loss_criterion,
+    def __init__(self, trainloader, valloader, model, loss_type,
                  eta, device, num_classes, linear_layer, selection_type, r=15):
         """
         Constructor method
         """
         super().__init__(trainloader, valloader, model, linear_layer)
-        self.loss = loss_criterion  # Make sure it has reduction='none' instead of default
+        self.loss_type = loss_type
         self.eta = eta  # step size for the one step gradient update
         self.device = device
         self.num_classes = num_classes
@@ -138,9 +138,8 @@ class GLISTERStrategy(DataSelectionStrategy):
         :type element: int
         """
         if isinstance(element, list):
-            for idx in element:
-                grads_e = self.grads_per_elem[idx]
-                grads_X += grads_e
+            grads_e = self.grads_per_elem[element].sum(dim=0)
+            grads_X += grads_e
         else:
             grads_e = self.grads_per_elem[element]
             grads_X += grads_e
@@ -191,12 +190,7 @@ class GLISTERStrategy(DataSelectionStrategy):
                 if self.numSelected > 0:
                     self._update_gradients_subset(grads_currX, selected_indices)
                 else:  # If 1st selection, then just set it to bestId grads
-                    for i in range(len(selected_indices)):
-                        if i == 0:
-                            grads_currX = self.grads_per_elem[selected_indices[i]]
-                        else:
-                            grads_e = self.grads_per_elem[selected_indices[i]]
-                            grads_currX += grads_e
+                    grads_currX = self.grads_per_elem[selected_indices].sum(dim=0).view(1, -1)
                 # Update the grads_val_current using current greedySet grads
                 self._update_grads_val(grads_currX)
                 if self.numSelected % 1000 == 0:

@@ -204,7 +204,7 @@ def train_model_craig(start_rand_idxs, bud):
 
     # cosine learning rate
     #scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, math.ceil(len(idxs)/trn_batch_size) * num_epochs)
-    setf_model = CRAIG(device, model, trainset, N_trn=N, batch_size=1000, if_convex=False)
+    setf_model = CRAIG(trainloader, valloader, model, 'CrossEntropy', device, num_cls, True, True)
     print("Starting CRAIG Run")
     substrn_losses = np.zeros(num_epochs)
     fulltrn_losses = np.zeros(num_epochs)
@@ -215,7 +215,7 @@ def train_model_craig(start_rand_idxs, bud):
         #if ((i) % select_every) == 0:
         cached_state_dict = copy.deepcopy(model.state_dict())
         clone_dict = copy.deepcopy(model.state_dict())
-        subset_idxs, gammas = setf_model.lazy_greedy_max(int(bud), clone_dict)
+        subset_idxs, gammas = setf_model.select(int(bud), clone_dict, 'stochastic')
         model.load_state_dict(cached_state_dict)
         gammas = np.array(gammas)
         idxs = subset_idxs
@@ -341,11 +341,11 @@ def train_model_glister_closed(start_rand_idxs, bud):
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_epochs)
     if data_name == 'mnist':
         setf_model = Strategy(trainloader, valloader, model, criterion,
-                              learning_rate, device, num_cls, 1000)
+                              learning_rate, device, num_cls, True, 'RModular')
         num_channels = 1
     elif data_name == 'cifar10':
         setf_model = Strategy(trainloader, valloader, model, criterion,
-                              learning_rate, device, num_cls, 1000)
+                              learning_rate, device, num_cls, True, 'RModular')
         num_channels = 3
     print("Starting Greedy Online OneStep Run with taylor!")
     substrn_losses = np.zeros(num_epochs)
@@ -368,7 +368,7 @@ def train_model_glister_closed(start_rand_idxs, bud):
             clone_dict = copy.deepcopy(model.state_dict())
             print("selEpoch: %d, Starting Selection:" % i, str(datetime.datetime.now()))
             subset_start_time = time.time()
-            subset_idxs, grads_idxs = setf_model.naive_greedy_max(int(bud), clone_dict)
+            subset_idxs, grads_idxs = setf_model.select(int(bud), clone_dict)
             subset_end_time = time.time() - subset_start_time
             print("Subset Selection Time is:" + str(subset_end_time))
             idxs = subset_idxs
@@ -475,8 +475,8 @@ def train_model_random_online(start_rand_idxs, bud):
     torch.manual_seed(42)
     np.random.seed(42)
     if data_name == 'mnist':
-        #model = MnistNet()
-        model = Net()
+        model = MnistNet()
+        #model = Net()
     elif data_name == 'cifar10':
         model = ResNet18(num_cls)
     model = model.to(device)
@@ -597,7 +597,7 @@ def train_model_mod_online(start_rand_idxs, bud):
     torch.manual_seed(42)
     np.random.seed(42)
     if data_name == 'mnist':
-        model = Net()
+        model = MnistNet()
     elif data_name == 'cifar10':
         model = ResNet18(num_cls)
     model = model.to(device)
@@ -723,7 +723,7 @@ def train_model_mod_online(start_rand_idxs, bud):
 
 start_idxs = np.random.choice(N, size=bud, replace=False)
 random_subset_idx = [trainset.indices[x] for x in start_idxs]
-"""
+
 craig_val_valacc, craig_val_tstacc, craig_val_subtrn_acc, craig_val_full_trn_acc, craig_val_valloss, craig_val_tstloss,  craig_val_subtrnloss, \
 craig_val_full_trn_loss, craig_fval_val_losses, craig_fval_substrn_losses, craig_fval_fulltrn_losses, craig_subset_idxs, \
 craig_step_time, craig_timing, craig_val_accuracies, craig_tst_accuracies= \
@@ -744,7 +744,7 @@ train_model_glister_closed(start_idxs, bud)
 
 #mod_cum_timing = np.zeros(num_epochs)
 closed_cum_timing = np.zeros(num_epochs)
-"""
+
 #tmp = 0
 #for i in range(len(mod_timing)):
 #    tmp += mod_timing[i]

@@ -39,7 +39,6 @@ class DataSelectionStrategy(object):
         """
         Computes the gradient of each element
         """
-
         embDim = self.model.get_embedding_dim()
         for batch_idx, (inputs, targets) in enumerate(self.trainloader):
             inputs, targets = inputs.to(self.device), targets.to(self.device, non_blocking=True)
