@@ -4,9 +4,9 @@
     <list default="true" id="45c47c08-f163-460a-8dc3-e579582dd153" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/notebooks/glister_example.py" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/glister_example.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/resultsmnist/dss/0.1/1/mnist.txt" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/selectionstrategies/supervisedlearning/craigstrategy.py" beforeDir="false" afterPath="$PROJECT_DIR$/selectionstrategies/supervisedlearning/craigstrategy.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/selectionstrategies/supervisedlearning/dataselectionstrategy.py" beforeDir="false" afterPath="$PROJECT_DIR$/selectionstrategies/supervisedlearning/dataselectionstrategy.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/selectionstrategies/supervisedlearning/glisterstrategy.py" beforeDir="false" afterPath="$PROJECT_DIR$/selectionstrategies/supervisedlearning/glisterstrategy.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/custom_dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/custom_dataset.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -126,14 +126,31 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/selectionstrategies/supervisedlearning/craigstrategy.py</url>
-          <line>43</line>
-          <option name="timeStamp" value="26" />
+          <line>90</line>
+          <option name="timeStamp" value="43" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/selectionstrategies/supervisedlearning/craigstrategy.py</url>
+          <line>88</line>
+          <option name="timeStamp" value="45" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/selectionstrategies/supervisedlearning/craigstrategy.py</url>
+          <line>87</line>
+          <option name="timeStamp" value="47" />
         </line-breakpoint>
       </breakpoints>
+      <default-breakpoints>
+        <breakpoint type="python-exception">
+          <properties notifyOnTerminate="true" exception="BaseException">
+            <option name="notifyOnTerminate" value="true" />
+          </properties>
+        </breakpoint>
+      </default-breakpoints>
     </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/cords$glister_example.coverage" NAME="glister_example Coverage Results" MODIFIED="1609571267703" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/notebooks" />
+    <SUITE FILE_PATH="coverage/cords$glister_example.coverage" NAME="glister_example Coverage Results" MODIFIED="1609579479759" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/notebooks" />
     <SUITE FILE_PATH="coverage/cords$glister_tutorial.coverage" NAME="glister_tutorial Coverage Results" MODIFIED="1609523363001" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/notebooks" />
   </component>
 </project>

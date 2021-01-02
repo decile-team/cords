@@ -15,7 +15,8 @@ from torch.utils.data.sampler import SubsetRandomSampler
 from selectionstrategies.supervisedlearning.glisterstrategy import GLISTERStrategy as Strategy
 from utils.models.mnist_net import MnistNet
 from utils.models.resnet import ResNet18
-from utils.custom_dataset import load_mnist_cifar
+from utils.models.simpleNN_net import TwoLayerNet
+from utils.custom_dataset import load_mnist_cifar, load_dataset_custom
 from torch.utils.data import random_split, SequentialSampler, BatchSampler, RandomSampler
 from torch.autograd import Variable
 from selectionstrategies.supervisedlearning.craigstrategy import CRAIGStrategy as CRAIG
@@ -80,8 +81,8 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 print("Using Device:", device)
 
 ## Convert to this argparse
-datadir = '../../data/'
-data_name = 'mnist'
+datadir = '../../data/dna/'
+data_name = 'dna'
 fraction = float(0.1)
 num_epochs = int(200)
 select_every = int(1)
@@ -89,7 +90,7 @@ feature = 'dss'# 70
 warm_method = 0  # whether to use warmstart-onestep (1) or online (0)
 num_runs = 1  # number of random runs
 learning_rate = 0.05
-all_logs_dir = './results' + data_name +'/' + feature +'/' + str(fraction) + '/' + str(select_every)
+all_logs_dir = './results/' + data_name +'/' + feature +'/' + str(fraction) + '/' + str(select_every)
 print(all_logs_dir)
 subprocess.run(["mkdir", "-p", all_logs_dir])
 path_logfile = os.path.join(all_logs_dir, data_name + '.txt')
@@ -100,14 +101,15 @@ print(exp_name)
 exp_start_time = datetime.datetime.now()
 print("=======================================", file=logfile)
 print(exp_name, str(exp_start_time), file=logfile)
-
-fullset, valset, testset, num_cls = load_mnist_cifar(datadir, data_name, feature)
+fullset, valset, testset, M, num_cls = load_dataset_custom(datadir, data_name, feature, False)
+#fullset, valset, testset, num_cls = load_mnist_cifar(datadir, data_name, feature)
 # Validation Data set is 10% of the Entire Trainset.
 validation_set_fraction = 0.1
 num_fulltrn = len(fullset)
 num_val = int(num_fulltrn * validation_set_fraction)
 num_trn = num_fulltrn - num_val
 trainset, validset = random_split(fullset, [num_trn, num_val])
+N = len(trainset)
 trn_batch_size = 20
 val_batch_size = 1000
 tst_batch_size = 1000
@@ -122,56 +124,9 @@ valloader = torch.utils.data.DataLoader(valset, batch_size=val_batch_size, shuff
 testloader = torch.utils.data.DataLoader(testset, batch_size=tst_batch_size,
                                          shuffle=False, pin_memory=True)
 
-trainset_idxs = np.array(trainset.indices)
-batch_wise_indices = trainset_idxs[list(BatchSampler(SequentialSampler(trainset_idxs), 1000, drop_last=False))]
-cnt = 0
-for batch_idx in batch_wise_indices:
-    inputs = torch.cat([fullset[x][0].view(1, -1) for x in batch_idx],
-                       dim=0).type(torch.float)
-    targets = torch.tensor([fullset[x][1] for x in batch_idx])
-    if cnt == 0:
-        x_trn = inputs
-        y_trn = targets
-        cnt = cnt + 1
-    else:
-        x_trn = torch.cat([x_trn, inputs], dim=0)
-        y_trn = torch.cat([y_trn, targets], dim=0)
-        cnt = cnt + 1
-
-for batch_idx, (inputs, targets) in enumerate(valloader):
-    if batch_idx == 0:
-        x_val = inputs
-        y_val = targets
-        x_val_new = inputs.view(val_batch_size, -1)
-    else:
-        x_val = torch.cat([x_val, inputs], dim=0)
-        y_val = torch.cat([y_val, targets], dim=0)
-        x_val_new = torch.cat([x_val_new, inputs.view(val_batch_size, -1)], dim=0)
-for batch_idx, (inputs, targets) in enumerate(testloader):
-    if batch_idx == 0:
-        x_tst = inputs
-        y_tst = targets
-        x_tst_new = inputs.view(tst_batch_size, -1)
-    else:
-        x_tst = torch.cat([x_tst, inputs], dim=0)
-        y_tst = torch.cat([y_tst, targets], dim=0)
-        x_tst_new = torch.cat([x_tst_new, inputs.view(tst_batch_size, -1)], dim=0)
-
-write_knndata(datadir, x_trn, y_trn, x_val_new, y_val, x_tst_new, y_tst, data_name)
-print('-----------------------------------------')
-print(exp_name, str(exp_start_time))
-print("Data sizes:", x_trn.shape, x_val.shape, x_tst.shape)
-# print(y_trn.shape, y_val.shape, y_tst.shape)
-
-N, M = x_trn.shape
-n_val = x_val_new.shape[0]
 bud = int(fraction * N)
 print("Budget, fraction and N:", bud, fraction, N)
 # Transfer all the data to GPU
-d_t = time.time()
-x_trn, y_trn = x_trn.to('cpu'), y_trn.to('cpu')
-x_val, y_val = x_val.to('cpu'), y_val.to('cpu')
-print("Transferred data to device in time:", time.time() - d_t)
 print_every = 3
 
 
@@ -184,6 +139,8 @@ def train_model_craig(start_rand_idxs, bud):
     elif data_name == 'cifar10':
         model = ResNet18(num_cls)
         num_channels = 3
+    else:
+        model = TwoLayerNet(M, num_cls, 50)
     model = model.to(device)
     idxs = start_rand_idxs
     criterion = nn.CrossEntropyLoss()
@@ -204,7 +161,7 @@ def train_model_craig(start_rand_idxs, bud):
 
     # cosine learning rate
     #scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, math.ceil(len(idxs)/trn_batch_size) * num_epochs)
-    setf_model = CRAIG(trainloader, valloader, model, 'CrossEntropy', device, num_cls, True, True)
+    setf_model = CRAIG(trainloader, valloader, model, 'CrossEntropy', device, num_cls, True, True, 'Supervised')
     print("Starting CRAIG Run")
     substrn_losses = np.zeros(num_epochs)
     fulltrn_losses = np.zeros(num_epochs)

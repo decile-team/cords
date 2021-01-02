@@ -330,7 +330,7 @@ def load_dataset_custom (datadir, dset_name, feature, isnumpy=True):
             fullset = CustomDataset(torch.from_numpy(x_trn), torch.from_numpy(y_trn))
             valset = CustomDataset(torch.from_numpy(x_val), torch.from_numpy(y_val))
             testset = CustomDataset(torch.from_numpy(x_tst), torch.from_numpy(y_tst))
-        return fullset, valset, testset, data_dims,num_cls 
+        return fullset, valset, testset, data_dims, num_cls
 
     elif dset_name == "adult":
         trn_file = os.path.join(datadir, 'a9a.trn')
@@ -366,7 +366,7 @@ def load_dataset_custom (datadir, dset_name, feature, isnumpy=True):
             valset = CustomDataset(torch.from_numpy(x_val), torch.from_numpy(y_val))
             testset = CustomDataset(torch.from_numpy(x_tst), torch.from_numpy(y_tst))
 
-        return fullset, valset, testset, data_dims,num_cls 
+        return fullset, valset, testset, data_dims, num_cls
 
     elif dset_name == "connect_4":
         trn_file = os.path.join(datadir, 'connect_4.trn')
@@ -645,7 +645,7 @@ def load_dataset_custom (datadir, dset_name, feature, isnumpy=True):
             valset = CustomDataset(x_val, y_val)
             testset = CustomDataset(x_tst, y_tst)
 
-        return fullset, valset, testset, data_dims,num_cls 
+        return fullset, valset, testset, data_dims, num_cls
 
     elif dset_name in ['prior_shift_clf_2', 'prior_shift_gauss_2','conv_shift_clf_2', 'conv_shift_gauss_2',"gauss_2", "clf_2","linsep"]:
         

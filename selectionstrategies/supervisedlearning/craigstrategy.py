@@ -4,18 +4,20 @@ import torch.nn.functional as F
 from torch.utils.data.sampler import SubsetRandomSampler
 import apricot
 from selectionstrategies.supervisedlearning.dataselectionstrategy import DataSelectionStrategy
+from scipy.sparse import csr_matrix
 
 
 class CRAIGStrategy(DataSelectionStrategy):
 
     def __init__(self, trainloader, valloader, model, loss_type,
-                 device, num_classes, linear_layer, if_convex):
+                 device, num_classes, linear_layer, if_convex, selection_type):
         super().__init__(trainloader, valloader, model, linear_layer)
 
         self.loss_type = loss_type  # Make sure it has reduction='none' instead of default
         self.device = device
         self.num_classes = num_classes
         self.if_convex = if_convex
+        self.selection_type = selection_type
 
     def distance(self, x, y, exp=2):
         n = x.size(0)
@@ -73,11 +75,18 @@ class CRAIGStrategy(DataSelectionStrategy):
         self.dist_mat = (self.const - self.dist_mat).numpy()
 
     def compute_gamma(self, idxs):
-        gamma = [0 for i in range(len(idxs))]
-        best = self.dist_mat[idxs]  # .to(self.device)
-        rep = np.argmax(best, axis=0)
-        for i in rep:
-            gamma[i] += 1
+        if self.selection_type == 'PerClass':
+            gamma = [0 for i in range(len(idxs))]
+            best = self.dist_mat[idxs]  # .to(self.device)
+            rep = np.argmax(best, axis=0)
+            for i in rep:
+                gamma[i] += 1
+        elif self.selection_type == 'Supervised':
+            gamma = [0 for i in range(len(idxs))]
+            best = self.dist_mat[idxs]  # .to(self.device)
+            rep = np.argmax(best, axis=0)
+            for i in range(rep.shape[1]):
+                gamma[rep[0, i]] += 1
         return gamma
 
     def get_similarity_kernel(self):
@@ -105,16 +114,40 @@ class CRAIGStrategy(DataSelectionStrategy):
         per_class_bud = int(budget / self.num_classes)
         total_greedy_list = []
         gammas = []
-
-        for i in range(self.num_classes):
-            idxs = torch.where(labels == i)[0]
-            self.compute_score(model_params, idxs)
+        if self.selection_type == 'PerClass':
+            for i in range(self.num_classes):
+                idxs = torch.where(labels == i)[0]
+                self.compute_score(model_params, idxs)
+                fl = apricot.functions.facilityLocation.FacilityLocationSelection(random_state=0, metric='precomputed',
+                                                                                  n_samples=per_class_bud,
+                                                                                  optimizer=optimizer)
+                sim_sub = fl.fit_transform(self.dist_mat)
+                greedyList = list(np.argmax(sim_sub, axis=1))
+                gamma = self.compute_gamma(greedyList)
+                total_greedy_list.extend(idxs[greedyList])
+                gammas.extend(gamma)
+        elif self.selection_type == 'Supervised':
+            for i in range(self.num_classes):
+                if i == 0:
+                    idxs = torch.where(labels == i)[0]
+                    N = len(idxs)
+                    self.compute_score(model_params, idxs)
+                    row = idxs.repeat_interleave(N)
+                    col = idxs.repeat(N)
+                    data = self.dist_mat.flatten()
+                else:
+                    idxs = torch.where(labels == i)[0]
+                    N = len(idxs)
+                    self.compute_score(model_params, idxs)
+                    row = torch.cat((row, idxs.repeat_interleave(N)), dim=0)
+                    col = torch.cat((col, idxs.repeat(N)), dim=0)
+                    data = np.concatenate([data, self.dist_mat.flatten()], axis=0)
+            sparse_simmat = csr_matrix((data, (row.numpy(), col.numpy())), shape=(self.N_trn, self.N_trn))
+            self.dist_mat = sparse_simmat
             fl = apricot.functions.facilityLocation.FacilityLocationSelection(random_state=0, metric='precomputed',
-                                                                              n_samples=per_class_bud,
+                                                                              n_samples=budget,
                                                                               optimizer=optimizer)
-            sim_sub = fl.fit_transform(self.dist_mat)
-            greedyList = list(np.argmax(sim_sub, axis=1))
-            gamma = self.compute_gamma(greedyList)
-            total_greedy_list.extend(idxs[greedyList])
-            gammas.extend(gamma)
+            sim_sub = fl.fit_transform(sparse_simmat)
+            total_greedy_list = list(np.array(np.argmax(sim_sub, axis=1)).reshape(-1))
+            gammas = self.compute_gamma(total_greedy_list)
         return total_greedy_list, gammas
