@@ -13,11 +13,11 @@ class RandomStrategy(object):
     :type model: class
     :param budget: The number of data points to be selected
     :type budget: int
-    :param model_dict: Python dictionary object containing models parameters
-    :type model_dict: OrderedDict
+    :param model_params: Python dictionary object containing models parameters
+    :type model_params: OrderedDict
     """
 
-    def __init__(self, trainloader, model, budget, model_dict):
+    def __init__(self, trainloader, model, budget, model_params):
         """
         Constructer method
         """
@@ -26,23 +26,23 @@ class RandomStrategy(object):
         self.valloader = valloader
         self.model = model
         self.budget = budget
-        self.model_dict = model_dict
+        self.model_params = model_params
         self.N_trn = len(trainloader.sampler.data_source)
 
 
-    def select(self, budget, model_dict):
+    def select(self, budget, model_params):
         """
         Perform random sampling of indices of size budget.
 
         :param budget: The number of data points to be selected
         :type budget: int
-        :param model_dict: Python dictionary object containing models parameters
-        :type model_dict: OrderedDict
+        :param model_params: Python dictionary object containing models parameters
+        :type model_params: OrderedDict
         :return: Array of indices of size budget selected randomly, and gamma values
         :rtype: ndarray, Tensor
         """
 
-        self.model.load_state_dict(model_dict)
+        self.model.load_state_dict(model_params)
         indxs = np.random.choice(self.N_trn, size=budget, replace=False)
         gammas = torch.ones(budget)
         return indxs, gammas

@@ -1,7 +1,7 @@
+import math
 import numpy as np
 import time
 import torch
-import math
 import torch.nn.functional as F
 from multipledispatch import dispatch
 from selectionstrategies.supervisedlearning.dataselectionstrategy import DataSelectionStrategy
@@ -146,19 +146,19 @@ class GLISTERStrategy(DataSelectionStrategy):
 
     # Same as before i.e full batch case! No use of dataloaders here!
     # Everything is abstracted away in eval call
-    def select(self, budget, model_dict):
+    def select(self, budget, model_params):
         """
         Apply naive greedy method for data selection
 
         :param budget: The number of data points to be selected
         :type budget: int
-        :param model_dict: Python dictionary object containing models parameters
-        :type model_dict: OrderedDict
+        :param model_params: Python dictionary object containing models parameters
+        :type model_params: OrderedDict
         :return: List containing indices of the best datapoints, 
                 list containing gradients of datapoints present in greedySet
         :rtype: list, list
         """
-        self.update_model(model_dict)
+        self.update_model(model_params)
         start_time = time.time()
         self.compute_gradients()
         end_time = time.time()

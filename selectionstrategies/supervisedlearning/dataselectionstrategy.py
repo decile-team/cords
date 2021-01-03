@@ -31,7 +31,7 @@ class DataSelectionStrategy(object):
         self.linear_layer = linear_layer
 
 
-    def select(self, budget, model_dict):
+    def select(self, budget, model_params):
         pass
 
 
@@ -39,6 +39,7 @@ class DataSelectionStrategy(object):
         """
         Computes the gradient of each element
         """
+
         embDim = self.model.get_embedding_dim()
         for batch_idx, (inputs, targets) in enumerate(self.trainloader):
             inputs, targets = inputs.to(self.device), targets.to(self.device, non_blocking=True)
@@ -71,12 +72,12 @@ class DataSelectionStrategy(object):
         else:
             self.grads_per_elem = l0_grads
 
-    def update_model(self, model_dict):
+    def update_model(self, model_params):
         """
         Update the models parameters
 
-        :param model_dict: Python dictionary object containing models parameters
-        :type model_dict: OrderedDict
+        :param model_params: Python dictionary object containing models parameters
+        :type model_params: OrderedDict
         """
 
-        self.model.load_state_dict(model_dict)
+        self.model.load_state_dict(model_params)

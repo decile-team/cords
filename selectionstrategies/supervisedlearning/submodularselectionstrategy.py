@@ -7,10 +7,10 @@ from selectionstrategies.supervisedlearning.dataselectionstrategy import DataSel
 from torch.utils.data.sampler import SubsetRandomSampler
 
 
-class CRAIGStrategy(DataSelectionStrategy):
+class SubmodularSelectionStrategy(DataSelectionStrategy):
     """
     This class extends :class:`selectionstrategies.supervisedlearning.dataselectionstrategy.DataSelectionStrategy`
-    which includes Facility Location submodular optmization function of apricot for data selection.
+    to include submodular optmization functions using apricot for data selection.
 
     :param trainloader: Loading the training data using pytorch DataLoader
     :type trainloader: class
@@ -30,10 +30,13 @@ class CRAIGStrategy(DataSelectionStrategy):
     :type if_convex: bool
     :param selection_type: PerClass or Supervised
     :type selection_type: str
+    :param submod_func_type: The type of submodular optimization function. Must be one of
+                    'facility-location', 'graph-cut', 'sum-redundancy', 'saturated-coverage'
+    :type submod_func_type: str    
     """
 
     def __init__(self, trainloader, valloader, model, loss_type,
-                 device, num_classes, linear_layer, if_convex, selection_type):
+                 device, num_classes, linear_layer, if_convex, selection_type, submod_func_type):
         """
         Constructer method
         """
@@ -45,6 +48,7 @@ class CRAIGStrategy(DataSelectionStrategy):
         self.num_classes = num_classes
         self.if_convex = if_convex
         self.selection_type = selection_type
+        self.submod_func_type = submod_func_type
 
 
     def distance(self, x, y, exp=2):
@@ -112,7 +116,7 @@ class CRAIGStrategy(DataSelectionStrategy):
                         g_is.append(torch.cat((l0_grads, l1_grads), dim=1))
                     else:
                         g_is.append(l0_grads)
-
+                        
             self.dist_mat = torch.zeros([self.N, self.N], dtype=torch.float32)
             first_i = True
             for i, g_i in enumerate(g_is, 0):
@@ -186,7 +190,7 @@ class CRAIGStrategy(DataSelectionStrategy):
         :param optimizer: The optimization approach for data selection. Must be one of
                     'random', 'modular', 'naive', 'lazy', 'approximate-lazy', 'two-stage',
                     'stochastic', 'sample', 'greedi', 'bidirectional'
-        :type optimizer: str 
+        :type optimizer: str
         :return: List containing indices of the best datapoints, 
                 list containing gradients of datapoints present in greedySet
         :rtype: list, list
@@ -194,9 +198,9 @@ class CRAIGStrategy(DataSelectionStrategy):
 
         for batch_idx, (inputs, targets) in enumerate(self.trainloader):
             if batch_idx == 0:
-                labels = targets
+                x_trn, labels = inputs, targets
             else:
-                tmp_target_i = targets
+                tmp_inputs, tmp_target_i = inputs, targets
                 labels = torch.cat((labels, tmp_target_i), dim=0)
         per_class_bud = int(budget / self.num_classes)
         total_greedy_list = []
@@ -205,13 +209,25 @@ class CRAIGStrategy(DataSelectionStrategy):
             for i in range(self.num_classes):
                 idxs = torch.where(labels == i)[0]
                 self.compute_score(model_params, idxs)
-                fl = apricot.functions.facilityLocation.FacilityLocationSelection(random_state=0, metric='precomputed',
-                                                                                  n_samples=per_class_bud, optimizer=optimizer)
+                if self.submod_func_type == 'facility-location':                    
+                    fl = apricot.functions.facilityLocation.FacilityLocationSelection(random_state=0, metric='precomputed',
+                                                                              n_samples=per_class_bud, optimizer=optimizer)
+                elif self.submod_func_type == 'graph-cut':
+                    fl = apricot.functions.graphCut.GraphCutSelection(random_state=0, metric='precomputed',
+                                                                              n_samples=per_class_bud, optimizer=optimizer)
+                elif self.submod_func_type == 'sum-redundancy':
+                    fl = apricot.functions.sumRedundancy.SumRedundancySelection(random_state=0, metric='precomputed',
+                                                                              n_samples=per_class_bud, optimizer=optimizer)
+                elif self.submod_func_type == 'saturated-coverage':
+                    fl = apricot.functions.saturatedCoverage.SaturatedCoverageSelection(random_state=0, metric='precomputed',
+                                                                              n_samples=per_class_bud, optimizer=optimizer)
+                
                 sim_sub = fl.fit_transform(self.dist_mat)
                 greedyList = list(np.argmax(sim_sub, axis=1))
-                gamma = self.compute_gamma(greedyList)
+                gamma = self.compute_gamma(greedyList)                    
                 total_greedy_list.extend(idxs[greedyList])
                 gammas.extend(gamma)
+
         elif self.selection_type == 'Supervised':
             for i in range(self.num_classes):
                 if i == 0:
@@ -229,9 +245,20 @@ class CRAIGStrategy(DataSelectionStrategy):
                     col = torch.cat((col, idxs.repeat(N)), dim=0)
                     data = np.concatenate([data, self.dist_mat.flatten()], axis=0)
             sparse_simmat = csr_matrix((data, (row.numpy(), col.numpy())), shape=(self.N_trn, self.N_trn))
-            self.dist_mat = sparse_simmat
-            fl = apricot.functions.facilityLocation.FacilityLocationSelection(random_state=0, metric='precomputed',
-                                                                              n_samples=budget, optimizer=optimizer)
+            self.dist_mat = sparse_simmat            
+            if self.submod_func_type == 'facility-location':
+                fl = apricot.functions.facilityLocation.FacilityLocationSelection(random_state=0, metric='precomputed',
+                                                                              n_samples=per_class_bud, optimizer=optimizer)
+            elif self.submod_func_type == 'graph-cut':
+                fl = apricot.functions.graphCut.GraphCutSelection(random_state=0, metric='precomputed',
+                                                                              n_samples=per_class_bud, optimizer=optimizer)
+            elif self.submod_func_type == 'sum-redundancy':
+                fl = apricot.functions.sumRedundancy.SumRedundancySelection(random_state=0, metric='precomputed',
+                                                                              n_samples=per_class_bud, optimizer=optimizer)
+            elif self.submod_func_type == 'saturated-coverage':
+                fl = apricot.functions.saturatedCoverage.SaturatedCoverageSelection(random_state=0, metric='precomputed',
+                                                                              n_samples=per_class_bud, optimizer=optimizer)
+
             sim_sub = fl.fit_transform(sparse_simmat)
             total_greedy_list = list(np.array(np.argmax(sim_sub, axis=1)).reshape(-1))
             gammas = self.compute_gamma(total_greedy_list)
