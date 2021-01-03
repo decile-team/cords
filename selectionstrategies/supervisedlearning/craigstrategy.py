@@ -8,9 +8,36 @@ from scipy.sparse import csr_matrix
 
 
 class CRAIGStrategy(DataSelectionStrategy):
+    """
+    This class extends :class:`selectionstrategies.supervisedlearning.dataselectionstrategy.DataSelectionStrategy`
+    to include submodular optmization functions using apricot for data selection.
+
+    :param trainloader: Loading the training data using pytorch DataLoader
+    :type trainloader: class
+    :param valloader: Loading the validation data using pytorch DataLoader
+    :type valloader: class
+    :param model: Model architecture used for training
+    :type model: class
+    :param loss_type: The type of loss criterion
+    :type loss_type: class
+    :param device: The device being utilized - cpu | cuda
+    :type device: str
+    :param num_classes: The number of target classes in the dataset
+    :type num_classes: int
+    :param linear_layer: Apply linear transformation to the data
+    :type linear_layer: bool
+    :param if_convex: If convex or not
+    :type if_convex: bool
+    :param selection_type: PerClass or Supervised
+    :type selection_type: str
+    """
 
     def __init__(self, trainloader, valloader, model, loss_type,
                  device, num_classes, linear_layer, if_convex, selection_type):
+        """
+        Constructer method
+        """
+
         super().__init__(trainloader, valloader, model, linear_layer)
 
         self.loss_type = loss_type  # Make sure it has reduction='none' instead of default
@@ -19,7 +46,21 @@ class CRAIGStrategy(DataSelectionStrategy):
         self.if_convex = if_convex
         self.selection_type = selection_type
 
+
     def distance(self, x, y, exp=2):
+        """
+        Compute the distance.
+ 
+        :param x: first input tensor
+        :type x: Tensor
+        :param y: second input tensor
+        :type y: Tensor
+        :param exp: The exponent value, defaults to 2
+        :type exp: float, optional
+        :return: Output tensor 
+        :rtype: Tensor
+        """
+
         n = x.size(0)
         m = y.size(0)
         d = x.size(1)
@@ -29,7 +70,16 @@ class CRAIGStrategy(DataSelectionStrategy):
         #dist = torch.exp(-1 * torch.pow(x - y, 2).sum(2))
         return dist
 
+
     def compute_score(self, model_params, idxs):
+        """
+        Compute the score of the indices.
+        :param model_params: Python dictionary object containing models parameters
+        :type model_params: OrderedDict
+        :param idxs: The indices
+        :type idxs: list
+        """
+
         trainset = self.trainloader.sampler.data_source
         subset_loader = torch.utils.data.DataLoader(trainset, batch_size=self.trainloader.batch_size, shuffle=False,
                                                    sampler=SubsetRandomSampler(idxs),
@@ -74,7 +124,16 @@ class CRAIGStrategy(DataSelectionStrategy):
         self.const = torch.max(self.dist_mat).item()
         self.dist_mat = (self.const - self.dist_mat).numpy()
 
+
     def compute_gamma(self, idxs):
+        """
+        Compute the gamma values for the indices.
+        :param idxs: The indices
+        :type idxs: list
+        :return: gamma values 
+        :rtype: list
+        """
+
         if self.selection_type == 'PerClass':
             gamma = [0 for i in range(len(idxs))]
             best = self.dist_mat[idxs]  # .to(self.device)
@@ -89,7 +148,14 @@ class CRAIGStrategy(DataSelectionStrategy):
                 gamma[rep[0, i]] += 1
         return gamma
 
+
     def get_similarity_kernel(self):
+        """
+        Obtain the similarity kernel.
+        :return: array of kernel values
+        :rtype: ndarray
+        """
+
         for batch_idx, (inputs, targets) in enumerate(self.trainloader):
             if batch_idx == 0:
                 tmp_target = targets
@@ -104,7 +170,23 @@ class CRAIGStrategy(DataSelectionStrategy):
                 kernel[i, x] = 1
         return kernel
 
+
     def select(self, budget, model_params, optimizer):
+        """
+        Data selection method using different submodular optimization
+        functions.
+ 
+        :param budget: The number of data points to be selected
+        :type budget: int
+        :param model_params: Python dictionary object containing models parameters
+        :type model_params: OrderedDict
+        :param optimizer: The list of submodular functions to mix together
+        :type optimizer: list  
+        :return: List containing indices of the best datapoints, 
+                list containing gradients of datapoints present in greedySet
+        :rtype: list, list
+        """
+
         for batch_idx, (inputs, targets) in enumerate(self.trainloader):
             if batch_idx == 0:
                 labels = targets

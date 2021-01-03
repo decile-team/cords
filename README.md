@@ -1,4 +1,4 @@
-# CORDS: CORsets and Data Subset selection
+# CORDS: COResets and Data Subset selection
 
 ## Outerloop skeleton (PyTorch)
 
