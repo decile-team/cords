@@ -83,8 +83,9 @@ class Tree(nn.Module):
 
 
 class DLA(nn.Module):
-    def __init__(self, block=BasicBlock, num_classes=10):
+    def __init__(self, num_classes=10, block=BasicBlock):
         super(DLA, self).__init__()
+        self.embDim = 512
         self.base = nn.Sequential(
             nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1, bias=False),
             nn.BatchNorm2d(16),
@@ -118,9 +119,15 @@ class DLA(nn.Module):
         out = self.layer5(out)
         out = self.layer6(out)
         out = F.avg_pool2d(out, 4)
-        out = out.view(out.size(0), -1)
-        out = self.linear(out)
-        return out
+        e = out.view(out.size(0), -1)
+        out = self.linear(e)
+        if last:
+            return out, e
+        else:
+            return out
+
+    def get_embedding_dim(self):
+        return self.embDim
 
 
 def test():

@@ -114,6 +114,7 @@ class EfficientNet(nn.Module):
                                stride=1,
                                padding=1,
                                bias=False)
+        self.embDim = cfg['out_channels'][-1]
         self.bn1 = nn.BatchNorm2d(32)
         self.layers = self._make_layers(in_channels=32)
         self.linear = nn.Linear(cfg['out_channels'][-1], num_classes)
@@ -143,15 +144,21 @@ class EfficientNet(nn.Module):
         out = swish(self.bn1(self.conv1(x)))
         out = self.layers(out)
         out = F.adaptive_avg_pool2d(out, 1)
-        out = out.view(out.size(0), -1)
+        e = out.view(out.size(0), -1)
         dropout_rate = self.cfg['dropout_rate']
         if self.training and dropout_rate > 0:
-            out = F.dropout(out, p=dropout_rate)
-        out = self.linear(out)
-        return out
+            e = F.dropout(e, p=dropout_rate)
+        out = self.linear(e)
+        if last:
+            return out, e
+        else:
+            return out
+
+    def get_embedding_dim(self):
+        return self.embDim
 
 
-def EfficientNetB0():
+def EfficientNetB0(num_classes=10):
     cfg = {
         'num_blocks': [1, 2, 2, 3, 3, 4, 1],
         'expansion': [1, 6, 6, 6, 6, 6, 6],
@@ -161,7 +168,7 @@ def EfficientNetB0():
         'dropout_rate': 0.2,
         'drop_connect_rate': 0.2,
     }
-    return EfficientNet(cfg)
+    return EfficientNet(cfg, num_classes)
 
 
 def test():

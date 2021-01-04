@@ -37,7 +37,7 @@ class DenseNet(nn.Module):
     def __init__(self, block, nblocks, growth_rate=12, reduction=0.5, num_classes=10):
         super(DenseNet, self).__init__()
         self.growth_rate = growth_rate
-
+        self.embDim = num_planes
         num_planes = 2*growth_rate
         self.conv1 = nn.Conv2d(3, num_planes, kernel_size=3, padding=1, bias=False)
 
@@ -72,31 +72,37 @@ class DenseNet(nn.Module):
             in_planes += self.growth_rate
         return nn.Sequential(*layers)
 
-    def forward(self, x):
+    def forward(self, x, last=False):
         out = self.conv1(x)
         out = self.trans1(self.dense1(out))
         out = self.trans2(self.dense2(out))
         out = self.trans3(self.dense3(out))
         out = self.dense4(out)
         out = F.avg_pool2d(F.relu(self.bn(out)), 4)
-        out = out.view(out.size(0), -1)
-        out = self.linear(out)
-        return out
+        e = out.view(out.size(0), -1)
+        out = self.linear(w)
+        if last:
+            return out, e
+        else:
+            return out
 
-def DenseNet121():
-    return DenseNet(Bottleneck, [6,12,24,16], growth_rate=32)
+    def get_embedding_dim(self):
+        return self.embDim
 
-def DenseNet169():
-    return DenseNet(Bottleneck, [6,12,32,32], growth_rate=32)
+def DenseNet121(num_classes = 10):
+    return DenseNet(Bottleneck, [6,12,24,16], growth_rate=32, reduction=0.5, num_classes)
 
-def DenseNet201():
-    return DenseNet(Bottleneck, [6,12,48,32], growth_rate=32)
+def DenseNet169(num_classes = 10):
+    return DenseNet(Bottleneck, [6,12,32,32], growth_rate=32, reduction=0.5, num_classes)
 
-def DenseNet161():
-    return DenseNet(Bottleneck, [6,12,36,24], growth_rate=48)
+def DenseNet201(num_classes = 10):
+    return DenseNet(Bottleneck, [6,12,48,32], growth_rate=32, reduction=0.5, num_classes)
 
-def densenet_cifar():
-    return DenseNet(Bottleneck, [6,12,24,16], growth_rate=12)
+def DenseNet161(num_classes = 10):
+    return DenseNet(Bottleneck, [6,12,36,24], growth_rate=48, reduction=0.5, num_classes)
+
+def densenet_cifar(num_classes = 10):
+    return DenseNet(Bottleneck, [6,12,24,16], growth_rate=12, reduction=0.5, num_classes)
 
 def test():
     net = densenet_cifar()
