@@ -17,37 +17,78 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'CORDS'
-copyright = '2021, Krishnateja Killamsetty, Dheeraj N Bhat, Rishabh Iyer'
-author = 'Krishnateja Killamsetty, Dheeraj N Bhat, Rishabh Iyer'
+project = 'cords'
+copyright = '2021, Krishnateja Killamsetty, Dheeraj Bhat, Rishabh Iyer'
+author = 'Krishnateja Killamsetty, Dheeraj Bhat, Rishabh Iyer'
 
 # The full version, including alpha/beta/rc tags
 release = 'v0.1'
+master_doc = 'index'
 
+import sys
+import os
+import subprocess
 
-# -- General configuration ---------------------------------------------------
+#subprocess.call('pip install numpydoc', shell=True)
+subprocess.call('pip install torch', shell=True)
+sys.path.insert(0, os.path.abspath('../..'))
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
+    'sphinx.ext.doctest',
+    'sphinx.ext.todo',
+    'sphinx.ext.coverage',
+    'sphinx.ext.mathjax',
+    'sphinx.ext.viewcode',
+    #'numpydoc'
+    'sphinxcontrib.napoleon'
 ]
+
+autosummary_generate = True
+numpydoc_show_class_members = False
+class_members_toctree = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
+# The suffix(es) of source filenames.
+# You can specify multiple suffix as a list of string:
+# source_suffix = ['.rst', '.md']
+source_suffix = '.rst'
+
+# The version info for the project you're documenting, acts as replacement for
+# |version| and |release|, also used in various other places throughout the
+# built documents.
+
+
+# The short X.Y version.
+# If you really want the short one use the next line.
+# version = '.'.join(pomegranate.__version__.split('.')[0:2])
+# Use this version if you want the full version string in the document
+#version = apricot.__version__
+# The full version, including alpha/beta/rc tags.
+#release = apricot.__version__
+
+
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = []
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 
 # -- Options for HTML output -------------------------------------------------
 
+# The name of the Pygments (syntax highlighting) style to use.
+pygments_style = 'sphinx'
+
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+html_theme = 'sphinx_rtd_theme'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

@@ -2,7 +2,46 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="45c47c08-f163-460a-8dc3-e579582dd153" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/LICENSE.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/cords/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/cords/selectionstrategies/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/cords/selectionstrategies/supervisedlearning/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/cords/utils/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/cords/utils/models/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/docs/Makefile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/source/conf.py" beforeDir="false" afterPath="$PROJECT_DIR$/docs/source/conf.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/source/index.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/source/index.rst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/glister_example.py" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/glister_example.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/selectionstrategies/supervisedlearning/craigstrategy.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/selectionstrategies/supervisedlearning/dataselectionstrategy.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/selectionstrategies/supervisedlearning/glisterstrategy.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/selectionstrategies/supervisedlearning/randomstrategy.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/selectionstrategies/supervisedlearning/submodularselectionstrategy.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/custom_dataset.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/models/cifar10net.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/models/densenet.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/models/dla.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/models/dla_simple.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/models/dpn.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/models/efficientnet.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/models/googlenet.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/models/lenet.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/models/logreg_net.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/models/mnist_net.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/models/mobilenet.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/models/mobilenetv2.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/models/pnasnet.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/models/preact_resnet.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/models/regnet.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/models/resnet.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/models/resnext.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/models/senet.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/models/shufflenet.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/models/shufflenetv2.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/models/simpleNN_net.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/models/vgg.py" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -14,6 +53,17 @@
       <list>
         <option value="Python Script" />
       </list>
+    </option>
+  </component>
+  <component name="FlaskConsoleOptions" custom-start-script="import sys&#10;sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;from flask.cli import ScriptInfo&#10;locals().update(ScriptInfo(create_app=None).load_app().make_shell_context())&#10;print(&quot;Python %s on %s\nApp: %s [%s]\nInstance: %s&quot; % (sys.version, sys.platform, app.import_name, app.env, app.instance_path))">
+    <envs>
+      <env key="FLASK_APP" value="app" />
+    </envs>
+    <option name="myCustomStartScript" value="import sys&#10;sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;from flask.cli import ScriptInfo&#10;locals().update(ScriptInfo(create_app=None).load_app().make_shell_context())&#10;print(&quot;Python %s on %s\nApp: %s [%s]\nInstance: %s&quot; % (sys.version, sys.platform, app.import_name, app.env, app.instance_path))" />
+    <option name="myEnvs">
+      <map>
+        <entry key="FLASK_APP" value="app" />
+      </map>
     </option>
   </component>
   <component name="Git.Settings">
@@ -33,13 +83,14 @@
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../distil" />
     <property name="node.js.detected.package.eslint" value="true" />
     <property name="node.js.detected.package.tslint" value="true" />
     <property name="node.js.path.for.package.eslint" value="project" />
     <property name="node.js.path.for.package.tslint" value="project" />
     <property name="node.js.selected.package.eslint" value="(autodetect)" />
     <property name="node.js.selected.package.tslint" value="(autodetect)" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RunManager">
     <configuration default="true" type="PythonConfigurationType" factoryName="Python">
@@ -68,9 +119,6 @@
       <module name="cords" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
       <option name="SDK_HOME" value="" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/notebooks" />
       <option name="IS_MODULE_SDK" value="true" />
@@ -103,7 +151,8 @@
       <workItem from="1609347998735" duration="2597000" />
       <workItem from="1609380793062" duration="4008000" />
       <workItem from="1609641183985" duration="2189000" />
-      <workItem from="1609644737598" duration="621000" />
+      <workItem from="1609644737598" duration="1956000" />
+      <workItem from="1609869274212" duration="12170000" />
     </task>
     <servers />
   </component>
@@ -124,6 +173,38 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/selectionstrategies/supervisedlearning/glisterstrategy.py</url>
+          <line>180</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/selectionstrategies/supervisedlearning/glisterstrategy.py</url>
+          <line>186</line>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/selectionstrategies/supervisedlearning/glisterstrategy.py</url>
+          <line>187</line>
+          <option name="timeStamp" value="3" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/selectionstrategies/supervisedlearning/glisterstrategy.py</url>
+          <line>123</line>
+          <option name="timeStamp" value="4" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/docs/source/conf.py</url>
+          <line>38</line>
+          <option name="timeStamp" value="5" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/docs/source/conf.py</url>
+          <line>29</line>
+          <option name="timeStamp" value="6" />
+        </line-breakpoint>
+      </breakpoints>
       <default-breakpoints>
         <breakpoint type="python-exception">
           <properties notifyOnTerminate="true" exception="BaseException">
@@ -134,7 +215,7 @@
     </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/cords$glister_example.coverage" NAME="glister_example Coverage Results" MODIFIED="1609579891184" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/notebooks" />
+    <SUITE FILE_PATH="coverage/cords$glister_example.coverage" NAME="glister_example Coverage Results" MODIFIED="1609870133024" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/notebooks" />
     <SUITE FILE_PATH="coverage/cords$glister_tutorial.coverage" NAME="glister_tutorial Coverage Results" MODIFIED="1609523363001" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/notebooks" />
   </component>
 </project>

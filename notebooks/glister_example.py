@@ -81,15 +81,15 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 print("Using Device:", device)
 
 ## Convert to this argparse
-datadir = '../../data/dna/'
-data_name = 'dna'
+datadir = '../../data/mnist/'
+data_name = 'mnist'
 fraction = float(0.1)
 num_epochs = int(200)
 select_every = int(1)
 feature = 'dss'# 70
 warm_method = 0  # whether to use warmstart-onestep (1) or online (0)
 num_runs = 1  # number of random runs
-learning_rate = 0.05
+learning_rate = 0.01
 all_logs_dir = './results/' + data_name +'/' + feature +'/' + str(fraction) + '/' + str(select_every)
 print(all_logs_dir)
 subprocess.run(["mkdir", "-p", all_logs_dir])
@@ -101,8 +101,8 @@ print(exp_name)
 exp_start_time = datetime.datetime.now()
 print("=======================================", file=logfile)
 print(exp_name, str(exp_start_time), file=logfile)
-fullset, valset, testset, M, num_cls = load_dataset_custom(datadir, data_name, feature, False)
-#fullset, valset, testset, num_cls = load_mnist_cifar(datadir, data_name, feature)
+#fullset, valset, testset, M, num_cls = load_dataset_custom(datadir, data_name, feature, False)
+fullset, valset, testset, num_cls = load_mnist_cifar(datadir, data_name, feature)
 # Validation Data set is 10% of the Entire Trainset.
 validation_set_fraction = 0.1
 num_fulltrn = len(fullset)
@@ -139,8 +139,8 @@ def train_model_craig(start_rand_idxs, bud):
     elif data_name == 'cifar10':
         model = ResNet18(num_cls)
         num_channels = 3
-    else:
-        model = TwoLayerNet(M, num_cls, 50)
+    #else:
+    #    model = TwoLayerNet(M, num_cls, 50)
     model = model.to(device)
     idxs = start_rand_idxs
     criterion = nn.CrossEntropyLoss()
@@ -298,11 +298,11 @@ def train_model_glister_closed(start_rand_idxs, bud):
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_epochs)
     if data_name == 'mnist':
         setf_model = Strategy(trainloader, valloader, model, criterion,
-                              learning_rate, device, num_cls, True, 'RModular')
+                              learning_rate, device, num_cls, True, 'RGreedy', r=bud)
         num_channels = 1
     elif data_name == 'cifar10':
         setf_model = Strategy(trainloader, valloader, model, criterion,
-                              learning_rate, device, num_cls, True, 'RModular')
+                              learning_rate, device, num_cls, True, 'Naive')
         num_channels = 3
     print("Starting Greedy Online OneStep Run with taylor!")
     substrn_losses = np.zeros(num_epochs)
@@ -680,7 +680,7 @@ def train_model_mod_online(start_rand_idxs, bud):
 
 start_idxs = np.random.choice(N, size=bud, replace=False)
 random_subset_idx = [trainset.indices[x] for x in start_idxs]
-
+"""
 craig_val_valacc, craig_val_tstacc, craig_val_subtrn_acc, craig_val_full_trn_acc, craig_val_valloss, craig_val_tstloss,  craig_val_subtrnloss, \
 craig_val_full_trn_loss, craig_fval_val_losses, craig_fval_substrn_losses, craig_fval_fulltrn_losses, craig_subset_idxs, \
 craig_step_time, craig_timing, craig_val_accuracies, craig_tst_accuracies= \
@@ -698,7 +698,7 @@ closed_val_valacc, closed_val_tstacc, closed_val_subtrn_acc, closed_val_full_trn
 closed_val_full_trn_loss, closed_fval_val_losses, closed_fval_substrn_losses, closed_fval_fulltrn_losses, closed_subset_idxs, \
 closed_step_time, closed_timing, closed_val_accuracies, closed_tst_accuracies= \
 train_model_glister_closed(start_idxs, bud)
-
+"""
 #mod_cum_timing = np.zeros(num_epochs)
 closed_cum_timing = np.zeros(num_epochs)
 
