@@ -61,7 +61,7 @@ class ResNeXt(nn.Module):
         self.bottleneck_width *= 2
         return nn.Sequential(*layers)
 
-    def forward(self, x,last=False):
+    def forward(self, x, last=False):
         out = F.relu(self.bn1(self.conv1(x)))
         out = self.layer1(out)
         out = self.layer2(out)
@@ -80,16 +80,16 @@ class ResNeXt(nn.Module):
 
 
 def ResNeXt29_2x64d(num_classes=10):
-    return ResNeXt(num_blocks=[3,3,3], cardinality=2, bottleneck_width=64, num_classes)
+    return ResNeXt([3,3,3], 2, 64, num_classes)
 
 def ResNeXt29_4x64d(num_classes=10):
-    return ResNeXt(num_blocks=[3,3,3], cardinality=4, bottleneck_width=64, num_classes)
+    return ResNeXt([3,3,3], 4, 64, num_classes)
 
 def ResNeXt29_8x64d(num_classes=10):
-    return ResNeXt(num_blocks=[3,3,3], cardinality=8, bottleneck_width=64, num_classes)
+    return ResNeXt([3,3,3], 8, 64, num_classes)
 
 def ResNeXt29_32x4d(num_classes=10):
-    return ResNeXt(num_blocks=[3,3,3], cardinality=32, bottleneck_width=4, num_classes)
+    return ResNeXt([3,3,3], 32, 4, num_classes)
 
 def test_resnext():
     net = ResNeXt29_2x64d()

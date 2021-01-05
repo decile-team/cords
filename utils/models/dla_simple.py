@@ -103,7 +103,7 @@ class SimpleDLA(nn.Module):
         self.layer6 = Tree(block, 256, 512, level=1, stride=2)
         self.linear = nn.Linear(512, num_classes)
 
-    def forward(self, x):
+    def forward(self, x, last=False):
         out = self.base(x)
         out = self.layer1(out)
         out = self.layer2(out)

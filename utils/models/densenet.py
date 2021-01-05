@@ -37,8 +37,9 @@ class DenseNet(nn.Module):
     def __init__(self, block, nblocks, growth_rate=12, reduction=0.5, num_classes=10):
         super(DenseNet, self).__init__()
         self.growth_rate = growth_rate
-        self.embDim = num_planes
+        
         num_planes = 2*growth_rate
+        self.embDim = num_planes
         self.conv1 = nn.Conv2d(3, num_planes, kernel_size=3, padding=1, bias=False)
 
         self.dense1 = self._make_dense_layers(block, num_planes, nblocks[0])
@@ -80,7 +81,7 @@ class DenseNet(nn.Module):
         out = self.dense4(out)
         out = F.avg_pool2d(F.relu(self.bn(out)), 4)
         e = out.view(out.size(0), -1)
-        out = self.linear(w)
+        out = self.linear(e)
         if last:
             return out, e
         else:
@@ -90,19 +91,19 @@ class DenseNet(nn.Module):
         return self.embDim
 
 def DenseNet121(num_classes = 10):
-    return DenseNet(Bottleneck, [6,12,24,16], growth_rate=32, reduction=0.5, num_classes)
+    return DenseNet(Bottleneck, [6,12,24,16], 32, 0.5, num_classes)
 
 def DenseNet169(num_classes = 10):
-    return DenseNet(Bottleneck, [6,12,32,32], growth_rate=32, reduction=0.5, num_classes)
+    return DenseNet(Bottleneck, [6,12,32,32], 32, 0.5, num_classes)
 
 def DenseNet201(num_classes = 10):
-    return DenseNet(Bottleneck, [6,12,48,32], growth_rate=32, reduction=0.5, num_classes)
+    return DenseNet(Bottleneck, [6,12,48,32], 32, 0.5, num_classes)
 
 def DenseNet161(num_classes = 10):
-    return DenseNet(Bottleneck, [6,12,36,24], growth_rate=48, reduction=0.5, num_classes)
+    return DenseNet(Bottleneck, [6,12,36,24], 48, 0.5, num_classes)
 
 def densenet_cifar(num_classes = 10):
-    return DenseNet(Bottleneck, [6,12,24,16], growth_rate=12, reduction=0.5, num_classes)
+    return DenseNet(Bottleneck, [6,12,24,16], 12, 0.5, num_classes)
 
 def test():
     net = densenet_cifar()
