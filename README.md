@@ -11,7 +11,7 @@ pip install -i https://test.pypi.org/simple/ cords
 Please make sure to enter the space between simple/ and cords in the above command while installing CORDS package
 ---
 
-##Package Requirements
+## Package Requirements
 1) "numpy >= 1.14.2",
 2) "scipy >= 1.0.0",
 3) "numba >= 0.43.0",
