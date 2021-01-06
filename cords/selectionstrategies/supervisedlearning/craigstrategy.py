@@ -8,30 +8,31 @@ from torch.utils.data.sampler import SubsetRandomSampler
 
 
 class CRAIGStrategy(DataSelectionStrategy):
-    """Implementation of the Clustered function.
-            Given a function and a clustering, clustered function internally creates a mixture of function on each cluster. It is defined as
-
-            .. math::
-                    f(X) = \\sum_i f_{C_i}(X \\cap C_i)
-
-            .. note::
-                    When the clusters are labels, this becomes supervised subset selection.
-            Parameters
-            ----------
-            n : int
-                Number of elements in the ground set
-            f_name : string
-                Name of particular instantiated set function whose clustered version is desired
-            data : numpy ndarray, optional
-                Data matrix which will be used for computing the similarity matrix
-            cluster_lab : list, optional
-                Its a list that contains cluster label corrosponding to ith datapoint
-            metric : string
-                similarity metric to be used while computing similarity kernel for each cluster. By default, its cosine
-            num_cluster : int, optional
-                number of clusters to be created (if only data matrix is provided) or number of clusters being used (if precreated cluster labels are also provided along with data matrix).
-                Note that num_cluster must be provided if cluster_lab has been provided
-
+    """
+    Implementation of CRAIG Strategy.
+    This class extends :class:`selectionstrategies.supervisedlearning.dataselectionstrategy.DataSelectionStrategy`
+    to include PerClass and Supervised selection techniques to select the indices.
+            
+    Parameters
+	----------
+    trainloader: class
+        Loading the training data using pytorch DataLoader   
+    valloader: class
+        Loading the validation data using pytorch DataLoader
+    model: class
+        Model architecture used for training
+    loss_type: class
+        The type of loss criterion
+    device: str
+        The device being utilized - cpu | cuda
+    num_classes: int
+        The number of target classes in the dataset
+    linear_layer: bool
+        Apply linear transformation to the data
+    if_convex: bool
+        If convex or not
+    selection_type: str
+        Type of selection - 'PerClass' | 'Supervised' 
     """
 
     def __init__(self, trainloader, valloader, model, loss_type,
@@ -53,14 +54,19 @@ class CRAIGStrategy(DataSelectionStrategy):
         """
         Compute the distance.
  
-        :param x: first input tensor
-        :type x: Tensor
-        :param y: second input tensor
-        :type y: Tensor
-        :param exp: The exponent value, defaults to 2
-        :type exp: float, optional
-        :return: Output tensor 
-        :rtype: Tensor
+        Parameters
+        ----------
+        x: Tensor
+            First input tensor
+        y: Tensor
+            Second input tensor
+        exp: float, optional
+            The exponent value (default: 2)
+            
+        Returns
+        ----------
+        dist: Tensor
+            Output tensor 
         """
 
         n = x.size(0)
@@ -77,10 +83,12 @@ class CRAIGStrategy(DataSelectionStrategy):
         """
         Compute the score of the indices.
 
-        :param model_params: Python dictionary object containing models parameters
-        :type model_params: OrderedDict
-        :param idxs: The indices
-        :type idxs: list
+        Parameters
+        ----------
+        model_params: OrderedDict
+            Python dictionary object containing models parameters
+        idxs: list
+            The indices
         """
 
         trainset = self.trainloader.sampler.data_source
@@ -132,10 +140,15 @@ class CRAIGStrategy(DataSelectionStrategy):
         """
         Compute the gamma values for the indices.
 
-        :param idxs: The indices
-        :type idxs: list
-        :return: gamma values 
-        :rtype: list
+        Parameters
+        ----------
+        idxs: list
+            The indices
+        
+        Returns
+        ----------
+        gamma: list
+            Gradient values of the input indices 
         """
 
         if self.selection_type == 'PerClass':
@@ -157,8 +170,10 @@ class CRAIGStrategy(DataSelectionStrategy):
         """
         Obtain the similarity kernel.
 
-        :return: array of kernel values
-        :rtype: ndarray
+        Returns
+        ----------
+        kernel: ndarray
+            Array of kernel values
         """
 
         for batch_idx, (inputs, targets) in enumerate(self.trainloader):
@@ -181,17 +196,23 @@ class CRAIGStrategy(DataSelectionStrategy):
         Data selection method using different submodular optimization
         functions.
  
-        :param budget: The number of data points to be selected
-        :type budget: int
-        :param model_params: Python dictionary object containing models parameters
-        :type model_params: OrderedDict
-        :param optimizer: The optimization approach for data selection. Must be one of
-                    'random', 'modular', 'naive', 'lazy', 'approximate-lazy', 'two-stage',
-                    'stochastic', 'sample', 'greedi', 'bidirectional'
-        :type optimizer: str 
-        :return: List containing indices of the best datapoints, 
-                list containing gradients of datapoints present in greedySet
-        :rtype: list, list
+        Parameters
+        ----------
+        budget: int
+            The number of data points to be selected
+        model_params: OrderedDict
+            Python dictionary object containing models parameters
+        optimizer: str
+            The optimization approach for data selection. Must be one of
+            'random', 'modular', 'naive', 'lazy', 'approximate-lazy', 'two-stage',
+            'stochastic', 'sample', 'greedi', 'bidirectional'
+        
+        Returns
+        ----------
+        total_greedy_list: list
+            List containing indices of the best datapoints 
+        gammas: list
+            List containing gradients of datapoints present in greedySet
         """
 
         for batch_idx, (inputs, targets) in enumerate(self.trainloader):

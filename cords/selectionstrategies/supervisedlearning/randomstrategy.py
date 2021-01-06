@@ -6,8 +6,10 @@ class RandomStrategy(object):
     """
     This is the Random Selection Strategy class.
     
-    :param trainloader: Loading the training data using pytorch DataLoader
-    :type trainloader: class
+    Parameters
+    ----------
+    trainloader: class
+        Loading the training data using pytorch DataLoader
     """
 
     def __init__(self, trainloader):
@@ -23,10 +25,17 @@ class RandomStrategy(object):
         """
         Perform random sampling of indices of size budget.
         
-        :param budget: The number of data points to be selected
-        :type budget: int
-        :return: Array of indices of size budget selected randomly, and gamma values
-        :rtype: ndarray, Tensor
+        Parameters
+        ----------
+        budget: int
+            The number of data points to be selected
+        
+        Returns
+        ----------
+        indxs: ndarray
+            Array of indices of size budget selected randomly
+        gammas: Tensor
+            Gradient values of selected indices
         """
 
         indxs = np.random.choice(self.N_trn, size=budget, replace=False)

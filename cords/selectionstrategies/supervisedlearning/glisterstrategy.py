@@ -7,30 +7,33 @@ from .dataselectionstrategy import DataSelectionStrategy
 
 
 class GLISTERStrategy(DataSelectionStrategy):
-    """Implementation of the Clustered function.
-        Given a function and a clustering, clustered function internally creates a mixture of function on each cluster. It is defined as
-
-        .. math::
-                f(X) = \\sum_i f_{C_i}(X \\cap C_i)
-
-        .. note::
-                When the clusters are labels, this becomes supervised subset selection.
-        Parameters
-        ----------
-        n : int
-            Number of elements in the ground set
-        f_name : string
-            Name of particular instantiated set function whose clustered version is desired
-        data : numpy ndarray, optional
-            Data matrix which will be used for computing the similarity matrix
-        cluster_lab : list, optional
-            Its a list that contains cluster label corrosponding to ith datapoint
-        metric : string
-            similarity metric to be used while computing similarity kernel for each cluster. By default, its cosine
-        num_cluster : int, optional
-            number of clusters to be created (if only data matrix is provided) or number of clusters being used (if precreated cluster labels are also provided along with data matrix).
-            Note that num_cluster must be provided if cluster_lab has been provided
-
+    """
+    Implementation of GLISTER Strategy.
+    This class extends :class:`selectionstrategies.supervisedlearning.dataselectionstrategy.DataSelectionStrategy`
+    to include Stochastic, RModular greedy and Naive greedy techniques to select the indices.
+    
+    Parameters
+	----------
+    trainloader: class
+        Loading the training data using pytorch DataLoader   
+    valloader: class
+        Loading the validation data using pytorch DataLoader
+    model: class
+        Model architecture used for training
+    loss_type: class
+        The type of loss criterion
+    eta: float
+        Learning rate. Step size for the one step gradient update
+    device: str
+        The device being utilized - cpu | cuda
+    num_classes: int
+        The number of target classes in the dataset
+    linear_layer: bool
+        Apply linear transformation to the data
+    selection_type: str
+        Type of selection - 'RGreedy' | 'Stochastic' | 'Naive'
+    r : int, optional
+        Regularization parameter (default: 15)
     """
 
     def __init__(self, trainloader, valloader, model, loss_type,
@@ -38,6 +41,7 @@ class GLISTERStrategy(DataSelectionStrategy):
         """
         Constructor method
         """
+        
         super().__init__(trainloader, valloader, model, linear_layer)
         self.loss_type = loss_type
         self.eta = eta  # step size for the one step gradient update
@@ -48,13 +52,17 @@ class GLISTERStrategy(DataSelectionStrategy):
         self.selection_type = selection_type
         self.r = r
 
+
     def _update_grads_val(self, grads_currX=None, first_init=False):
         """
         Update the gradient values
-        :param grad_currX: gradients of the current element, defaults to None
-        :type grad_currX: OrderedDict
-        :param first_init: gradients are initialized, defaults to False
-        :type first_init: bool
+        
+        Parameters
+        ----------
+        grad_currX: OrderedDict, optional
+            Gradients of the current element (default: None)
+        first_init: bool, optional
+            Gradient initialization (default: False)
         """
 
         self.model.zero_grad()
@@ -117,10 +125,16 @@ class GLISTERStrategy(DataSelectionStrategy):
     def eval_taylor_modular(self, grads):
         """
         Evaluate gradients
-        :param grads: gradients
-        :type grads: Tensor
-        :return: matrix product of two tensors
-        :rtype: Tensor
+        
+        Parameters
+        ----------
+        grads: Tensor
+            Gradients
+        
+        Returns
+        ----------
+        gains: Tensor
+            Matrix product of two tensors
         """
 
         grads_val = self.grads_val_curr
@@ -134,11 +148,14 @@ class GLISTERStrategy(DataSelectionStrategy):
         Update gradients of set X + element (basically adding element to X)
         Note that it modifies the inpute vector! Also grads_X is a list! grad_e is a tuple!
 
-        :param grads_X: gradients
-        :type grads_X: list
-        :param element: element that need to be added to the gradients
-        :type element: int
+        Parameters
+        ----------
+        grads_X: list
+            Gradients
+        element: int
+            Element that need to be added to the gradients
         """
+        
         if isinstance(element, list):
             grads_e = self.grads_per_elem[element].sum(dim=0)
             grads_X += grads_e
@@ -146,20 +163,26 @@ class GLISTERStrategy(DataSelectionStrategy):
             grads_e = self.grads_per_elem[element]
             grads_X += grads_e
 
-    # Same as before i.e full batch case! No use of dataloaders here!
-    # Everything is abstracted away in eval call
+    
     def select(self, budget, model_params):
         """
         Apply naive greedy method for data selection
 
-        :param budget: The number of data points to be selected
-        :type budget: int
-        :param model_params: Python dictionary object containing models parameters
-        :type model_params: OrderedDict
-        :return: List containing indices of the best datapoints, 
-                list containing gradients of datapoints present in greedySet
-        :rtype: list, list
+        Parameters
+        ----------
+        budget: int
+            The number of data points to be selected
+        model_params: OrderedDict
+            Python dictionary object containing models parameters
+        
+        Returns
+        ----------
+        greedySet: list
+            List containing indices of the best datapoints, 
+        budget: Tensor
+            Tensor containing gradients of datapoints present in greedySet
         """
+        
         self.update_model(model_params)
         start_time = time.time()
         self.compute_gradients()

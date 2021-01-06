@@ -4,7 +4,8 @@ import torch.nn.functional as F
 
 
 class DataSelectionStrategy(object):
-    """ This is the base Data Selection Strategy class.
+    """ 
+    Implementation of Data Selection Strategy class.
     """
 
     def __init__(self, trainloader, valloader, model, linear_layer):
@@ -66,8 +67,10 @@ class DataSelectionStrategy(object):
         """
         Update the models parameters
 
-        :param model_params: Python dictionary object containing models parameters
-        :type model_params: OrderedDict
+        Parameters
+        ----------
+        model_params: OrderedDict
+            Python dictionary object containing models parameters
         """
 
         self.model.load_state_dict(model_params)
