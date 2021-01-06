@@ -41,11 +41,10 @@ class CRAIGStrategy(DataSelectionStrategy):
         Constructer method
         """
 
-        super().__init__(trainloader, valloader, model, linear_layer)
+        super().__init__(trainloader, valloader, model, num_classes, linear_layer)
 
         self.loss_type = loss_type  # Make sure it has reduction='none' instead of default
         self.device = device
-        self.num_classes = num_classes
         self.if_convex = if_convex
         self.selection_type = selection_type
 

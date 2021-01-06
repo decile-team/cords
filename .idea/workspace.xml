@@ -2,13 +2,17 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="45c47c08-f163-460a-8dc3-e579582dd153" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/cords/selectionstrategies/helpers/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/cords/selectionstrategies/helpers/omp_solvers.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/cords/selectionstrategies/supervisedlearning/ompgradmatchstrategy.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cords/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/cords/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cords/selectionstrategies/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/cords/selectionstrategies/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cords/selectionstrategies/supervisedlearning/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/cords/selectionstrategies/supervisedlearning/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cords/utils/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/cords/utils/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cords/utils/models/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/cords/utils/models/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cords/selectionstrategies/supervisedlearning/craigstrategy.py" beforeDir="false" afterPath="$PROJECT_DIR$/cords/selectionstrategies/supervisedlearning/craigstrategy.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cords/selectionstrategies/supervisedlearning/dataselectionstrategy.py" beforeDir="false" afterPath="$PROJECT_DIR$/cords/selectionstrategies/supervisedlearning/dataselectionstrategy.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cords/selectionstrategies/supervisedlearning/glisterstrategy.py" beforeDir="false" afterPath="$PROJECT_DIR$/cords/selectionstrategies/supervisedlearning/glisterstrategy.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cords/selectionstrategies/supervisedlearning/submodularselectionstrategy.py" beforeDir="false" afterPath="$PROJECT_DIR$/cords/selectionstrategies/supervisedlearning/submodularselectionstrategy.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cords/utils/custom_dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/cords/utils/custom_dataset.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/glister_example.py" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/glister_example.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -50,7 +54,7 @@
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../distil" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../datklite" />
     <property name="node.js.detected.package.eslint" value="true" />
     <property name="node.js.detected.package.tslint" value="true" />
     <property name="node.js.path.for.package.eslint" value="project" />
@@ -58,6 +62,11 @@
     <property name="node.js.selected.package.eslint" value="(autodetect)" />
     <property name="node.js.selected.package.tslint" value="(autodetect)" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/cords/selectionstrategies/helpers" />
+    </key>
   </component>
   <component name="RunManager">
     <configuration default="true" type="PythonConfigurationType" factoryName="Python">
@@ -120,6 +129,7 @@
       <workItem from="1609641183985" duration="2189000" />
       <workItem from="1609644737598" duration="1956000" />
       <workItem from="1609869274212" duration="13380000" />
+      <workItem from="1609949861324" duration="13734000" />
     </task>
     <servers />
   </component>
@@ -171,6 +181,26 @@
           <line>29</line>
           <option name="timeStamp" value="6" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/cords/selectionstrategies/supervisedlearning/glisterstrategy.py</url>
+          <line>262</line>
+          <option name="timeStamp" value="8" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/cords/selectionstrategies/supervisedlearning/ompgradmatchstrategy.py</url>
+          <line>161</line>
+          <option name="timeStamp" value="16" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/cords/selectionstrategies/supervisedlearning/ompgradmatchstrategy.py</url>
+          <line>152</line>
+          <option name="timeStamp" value="17" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/cords/selectionstrategies/supervisedlearning/ompgradmatchstrategy.py</url>
+          <line>145</line>
+          <option name="timeStamp" value="18" />
+        </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
         <breakpoint type="python-exception">
@@ -182,7 +212,7 @@
     </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/cords$glister_example.coverage" NAME="glister_example Coverage Results" MODIFIED="1609870133024" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/notebooks" />
+    <SUITE FILE_PATH="coverage/cords$glister_example.coverage" NAME="glister_example Coverage Results" MODIFIED="1609965683053" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/notebooks" />
     <SUITE FILE_PATH="coverage/cords$glister_tutorial.coverage" NAME="glister_tutorial Coverage Results" MODIFIED="1609523363001" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/notebooks" />
   </component>
 </project>

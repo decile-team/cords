@@ -785,11 +785,10 @@ def load_mnist_cifar (datadir, dset_name,feature):
                         batch_subset_idxs = list(torch.where(fullset.targets == i)[0].cpu().numpy())
                     subset_idxs.extend(batch_subset_idxs)
             fullset = torch.utils.data.Subset(fullset, subset_idxs)
-        
-        valset = torchvision.datasets.MNIST(root='../data', train=True, download=True, transform=mnist_val_transform)
+
         testset = torchvision.datasets.MNIST(root='../data', train=False, download=True, transform=mnist_transform)
         
-        return fullset, valset, testset, num_cls
+        return fullset, testset, num_cls
 
     elif dset_name == "fashion-mnist":
 
@@ -824,11 +823,9 @@ def load_mnist_cifar (datadir, dset_name,feature):
                         batch_subset_idxs = list(torch.where(fullset.targets == i)[0].cpu().numpy())
                     subset_idxs.extend(batch_subset_idxs)
             fullset = torch.utils.data.Subset(fullset, subset_idxs)
-        
-        valset = torchvision.datasets.FashionMNIST(root='../data', train=True, download=True, transform=mnist_val_transform)
         testset = torchvision.datasets.FashionMNIST(root='../data', train=False, download=True, transform=mnist_transform)
         
-        return fullset, valset, testset, num_cls
+        return fullset, testset, num_cls
 
     
     elif dset_name == "cifar10":
@@ -844,7 +841,6 @@ def load_mnist_cifar (datadir, dset_name,feature):
         ])
         num_cls = 10
         fullset = torchvision.datasets.CIFAR10(root='../data', train=True, download=True, transform=cifar_transform)
-        valset = torchvision.datasets.CIFAR10(root='../data', train=True, download=True, transform=cifar_tst_transform)
         testset = torchvision.datasets.CIFAR10(root='../data', train=False, download=True, transform=cifar_tst_transform)
         if feature == 'classimb':
             samples_per_class = torch.zeros(num_cls)
@@ -869,4 +865,4 @@ def load_mnist_cifar (datadir, dset_name,feature):
                         batch_subset_idxs = list(torch.where(torch.Tensor(fullset.targets) == i)[0].cpu().numpy())
                     subset_idxs.extend(batch_subset_idxs)
             fullset = torch.utils.data.Subset(fullset, subset_idxs)
-        return fullset, valset, testset, num_cls
+        return fullset, testset, num_cls

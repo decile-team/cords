@@ -1,5 +1,5 @@
 import math
-import numpy as np
+import random
 import time
 import torch
 import torch.nn.functional as F
@@ -42,11 +42,10 @@ class GLISTERStrategy(DataSelectionStrategy):
         Constructor method
         """
         
-        super().__init__(trainloader, valloader, model, linear_layer)
+        super().__init__(trainloader, valloader, model, num_classes, linear_layer)
         self.loss_type = loss_type
         self.eta = eta  # step size for the one step gradient update
         self.device = device
-        self.num_classes = num_classes
         self.init_out = list()
         self.init_l1 = list()
         self.selection_type = selection_type
@@ -156,12 +155,10 @@ class GLISTERStrategy(DataSelectionStrategy):
             Element that need to be added to the gradients
         """
         
-        if isinstance(element, list):
-            grads_e = self.grads_per_elem[element].sum(dim=0)
-            grads_X += grads_e
-        else:
-            grads_e = self.grads_per_elem[element]
-            grads_X += grads_e
+        #if isinstance(element, list):
+        grads_X += self.grads_per_elem[element].sum(dim=0)
+        #else:
+        #    grads_X += self.grads_per_elem[element]
 
     
     def select(self, budget, model_params):
@@ -213,10 +210,10 @@ class GLISTERStrategy(DataSelectionStrategy):
                 selected_indices = [remainSet[index.item()] for index in indices[0:selection_size]]
                 greedySet.extend(selected_indices)
                 [remainSet.remove(idx) for idx in selected_indices]
-                if self.numSelected > 0:
-                    self._update_gradients_subset(grads_currX, selected_indices)
-                else:  # If 1st selection, then just set it to bestId grads
+                if self.numSelected == 0:
                     grads_currX = self.grads_per_elem[selected_indices].sum(dim=0).view(1, -1)
+                else:  # If 1st selection, then just set it to bestId grads
+                    self._update_gradients_subset(grads_currX, selected_indices)
                 # Update the grads_val_current using current greedySet grads
                 self._update_grads_val(grads_currX)
                 if self.numSelected % 1000 == 0:
@@ -232,13 +229,14 @@ class GLISTERStrategy(DataSelectionStrategy):
             while (self.numSelected < budget):
                 # Try Using a List comprehension here!
                 t_one_elem = time.time()
-                subset_selected = list(np.random.choice(np.array(remainSet), size=subset_size, replace=False))
+                subset_selected = random.sample(remainSet, k=subset_size)
                 rem_grads = self.grads_per_elem[subset_selected]
                 gains = self.eval_taylor_modular(rem_grads)
                 # Update the greedy set and remaining set
-                bestId = subset_selected[torch.argmax(gains).item()]
-                greedySet.append(bestId)
-                remainSet.remove(bestId)
+                _, indices = torch.sort(gains.view(-1), descending=True)
+                bestId = [subset_selected[indices[0].item()]]
+                greedySet.append(bestId[0])
+                remainSet.remove(bestId[0])
                 self.numSelected += 1
                 # Update info in grads_currX using element=bestId
                 if self.numSelected > 1:
@@ -260,15 +258,17 @@ class GLISTERStrategy(DataSelectionStrategy):
                 rem_grads = self.grads_per_elem[remainSet]
                 gains = self.eval_taylor_modular(rem_grads)
                 # Update the greedy set and remaining set
-                bestId = remainSet[torch.argmax(gains).item()]
-                greedySet.append(bestId)
-                remainSet.remove(bestId)
+                #_, maxid = torch.max(gains, dim=0)
+                _, indices = torch.sort(gains.view(-1), descending=True)
+                bestId = [remainSet[indices[0].item()]]
+                greedySet.append(bestId[0])
+                remainSet.remove(bestId[0])
                 self.numSelected += 1
                 # Update info in grads_currX using element=bestId
-                if self.numSelected > 1:
-                    self._update_gradients_subset(grads_currX, bestId)
+                if self.numSelected == 1:
+                    grads_currX = self.grads_per_elem[bestId[0]].view(1, -1)
                 else:  # If 1st selection, then just set it to bestId grads
-                    grads_currX = self.grads_per_elem[bestId].view(1, -1)  # Making it a list so that is mutable!
+                    self._update_gradients_subset(grads_currX, bestId)
                 # Update the grads_val_current using current greedySet grads
                 self._update_grads_val(grads_currX)
                 if (self.numSelected - 1) % 1000 == 0:
