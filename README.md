@@ -7,8 +7,8 @@ The latest version of  CORDS package can be installed using the following comman
 pip install -i https://test.pypi.org/simple/ cords
 ```
 ---
-**NOTE: **
-Please make sure to enter the space between simple/ and cords in the above command while installing CORDS package
+**NOTE**
+  Please make sure to enter the space between simple/ and cords in the above command while installing CORDS package
 ---
 
 ## Package Requirements
