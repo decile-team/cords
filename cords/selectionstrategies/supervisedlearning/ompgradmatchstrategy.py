@@ -1,5 +1,4 @@
 import math
-import random
 import time
 import torch
 import numpy as np
@@ -8,9 +7,8 @@ from ..helpers import OrthogonalMP_REG_Parallel, OrthogonalMP_REG
 
 class OMPGradMatchStrategy(DataSelectionStrategy):
     """
-    Implementation of OMPGradMatch Strategy.
-    This class extends :class:`selectionstrategies.supervisedlearning.dataselectionstrategy.DataSelectionStrategy`
-    to include Stochastic, RModular greedy and Naive greedy techniques to select the indices.
+    Implementation of OMPGradMatch Strategy from the paper :footcite:`sivasubramanian2020gradmatch` for supervised learning frameworks.
+    This class extends :class:`selectionstrategies.supervisedlearning.dataselectionstrategy.DataSelectionStrategy`.
 
     Parameters
 	----------
@@ -31,7 +29,7 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
     linear_layer: bool
         Apply linear transformation to the data
     selection_type: str
-        Type of selection - 'RGreedy' | 'Stochastic' | 'Naive'
+        Type of selection - 'PerClass' | 'PerClassPerGradient'
     r : int, optional
         Regularization parameter (default: 15)
     """

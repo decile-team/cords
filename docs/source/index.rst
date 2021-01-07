@@ -3,22 +3,16 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-.. title:: Introduction
-
-cords is an efficient and scalable library for data efficient machine learning built on top of pytorch.
-
-.. toctree::
-   :maxdepth: 1
-   :hidden:
-   :caption: cords
-
-   Introduction <self> 
+Welcome to CORDS's documentation!
+=================================
+CORDS:: COResets and Data Subset selection is an efficient and scalable library for data efficient machine learning built on top of pytorch.
 
 .. toctree::
-   :maxdepth: 1
-   :hidden:
-   :caption: Strategies
+   :maxdepth: 2
+   :caption: Contents:
 
-   strategies/dataselectionstrategy.rst
-   strategies/glisterstrategy.rst
-   strategies/craigstrategy.rst
+   strategies/modules
+
+
+
+

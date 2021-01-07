@@ -8,14 +8,12 @@ from .dataselectionstrategy import DataSelectionStrategy
 
 class GLISTERStrategy(DataSelectionStrategy):
     """
-    Implementation of GLISTER Strategy.
-    This class extends :class:`selectionstrategies.supervisedlearning.dataselectionstrategy.DataSelectionStrategy`
-    to include Stochastic, RModular greedy and Naive greedy techniques to select the indices.
-    
+    Implementation of GLISTER-ONLINE Strategy from the paper :footcite:`killamsetty2020glister`  for supervised learning frameworks.
+
     Parameters
 	----------
     trainloader: class
-        Loading the training data using pytorch DataLoader   
+        Loading the training data using pytorch DataLoader
     valloader: class
         Loading the validation data using pytorch DataLoader
     model: class

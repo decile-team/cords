@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 class DataSelectionStrategy(object):
     """ 
-    Implementation of Data Selection Strategy class.
+    Implementation of Data Selection Strategy class which serves as base class for other dataselectionstrategies for supervised learning frameworks.
     """
 
     def __init__(self, trainloader, valloader, model, num_classes, linear_layer):

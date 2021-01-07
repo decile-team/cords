@@ -18,7 +18,7 @@ from cords.utils.models.mnist_net import MnistNet
 from cords.utils.models.resnet import ResNet18
 from cords.utils.models.simpleNN_net import TwoLayerNet
 from cords.utils.custom_dataset import load_mnist_cifar, load_dataset_custom
-from torch.utils.data import random_split, SequentialSampler, BatchSampler, RandomSampler
+from torch.utils.data import random_split, Subset, SubsetRandomSampler, BatchSampler, RandomSampler
 from torch.autograd import Variable
 from cords.selectionstrategies.supervisedlearning.craigstrategy import CRAIGStrategy as CRAIG
 import math
@@ -439,6 +439,7 @@ def train_model_OMP(start_rand_idxs, bud):
     model = model.to(device)
     idxs = start_rand_idxs
     criterion = nn.CrossEntropyLoss()
+    criterion_nored = nn.CrossEntropyLoss(reduction='none')
     optimizer = optim.SGD(model.parameters(), lr=learning_rate,
                           momentum=0.9, weight_decay=5e-4)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_epochs)
@@ -477,12 +478,15 @@ def train_model_OMP(start_rand_idxs, bud):
             idxs = subset_idxs
             print("selEpoch: %d, Selection Ended at:" % (i), str(datetime.datetime.now()))
             model.load_state_dict(cached_state_dict)
+            data_sub = Subset(trainset, idxs)
             #actual_idxs = np.array(trainset.indices)[idxs]
-            subset_trnloader = torch.utils.data.DataLoader(trainset, batch_size=trn_batch_size,
-            			shuffle=False, sampler=SubsetRandomSampler(idxs), pin_memory=True)
+            subset_trnloader = torch.utils.data.DataLoader(data_sub, batch_size=trn_batch_size, shuffle=False,
+                                        pin_memory=True)
+            gammas = torch.from_numpy(np.array(gammas)).to(device).to(torch.float32)
             #batch_wise_indices = [actual_idxs[x] for x in list(BatchSampler(RandomSampler(actual_idxs), trn_batch_size, drop_last=False))]
         model.train()
         #for batch_idx in batch_wise_indices:
+        batch_wise_indices = list(subset_trnloader.batch_sampler)
         for batch_idx, (inputs, targets) in enumerate(subset_trnloader):
             #inputs = torch.cat(
             #    [fullset[x][0].view(-1, num_channels, fullset[x][0].shape[1], fullset[x][0].shape[2]) for x in batch_idx],
@@ -491,7 +495,8 @@ def train_model_OMP(start_rand_idxs, bud):
             inputs, targets = inputs.to(device), targets.to(device, non_blocking=True) # targets can have non_blocking=True.
             optimizer.zero_grad()
             outputs = model(inputs)
-            loss = criterion(outputs, targets)
+            loss = criterion_nored(outputs, targets)
+            loss = torch.dot(loss, gammas[batch_wise_indices[batch_idx]])/(len(batch_wise_indices[batch_idx]) * gammas[batch_wise_indices[batch_idx]].sum())
             subtrn_loss += loss.item()
             loss.backward()
             optimizer.step()

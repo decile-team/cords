@@ -4,7 +4,8 @@ import torch
 
 class RandomStrategy(object):
     """
-    This is the Random Selection Strategy class.
+    This is the Random Selection Strategy class where we select a set of random points as a datasubset
+    and often acts as baselines to compare other selection strategies.
     
     Parameters
     ----------

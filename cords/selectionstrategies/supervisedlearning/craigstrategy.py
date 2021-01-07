@@ -9,7 +9,7 @@ from torch.utils.data.sampler import SubsetRandomSampler
 
 class CRAIGStrategy(DataSelectionStrategy):
     """
-    Implementation of CRAIG Strategy.
+    Implementation of CRAIG Strategy from the paper :footcite:`mirzasoleiman2020coresets` for supervised learning frameworks.
     This class extends :class:`selectionstrategies.supervisedlearning.dataselectionstrategy.DataSelectionStrategy`
     to include PerClass and Supervised selection techniques to select the indices.
             

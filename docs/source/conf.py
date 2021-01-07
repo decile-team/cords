@@ -45,9 +45,11 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     #'numpydoc'
-    'sphinxcontrib.napoleon'
+    'sphinxcontrib.napoleon',
+    'sphinxcontrib.bibtex'
 ]
 
+bibtex_bibfiles = ['refs.bib']
 autosummary_generate = True
 numpydoc_show_class_members = False
 class_members_toctree = False
