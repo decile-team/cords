@@ -3,7 +3,7 @@ import setuptools
 
 setup(
     name='cords',
-    version='0.0.4',
+    version='0.0.5',
     author='Krishnateja Killamsetty, Dheeraj Bhat, Rishabh Iyer',
     author_email='krishnatejakillamsetty@gmail.com',
     #packages=['cords', 'cords/selectionstrategies', 'cords/utils'],
@@ -17,6 +17,9 @@ setup(
         "numba >= 0.43.0",
         "tqdm >= 4.24.0",
         "torch >= 1.4.0",
-        "apricot-select >= 0.6.0"
+        "apricot-select >= 0.6.0",
+        "sphinxcontrib-napoleon",
+        "sphinxcontrib-bibtex",
+        "sphinx-rtd-theme"
     ],
 )

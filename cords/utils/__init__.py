@@ -7,4 +7,3 @@ from .custom_dataset import load_dataset_custom
 from .custom_dataset import load_mnist_cifar
 
 
-__version__ = '0.0.4'

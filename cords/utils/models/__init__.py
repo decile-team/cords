@@ -38,4 +38,3 @@ from .simpleNN_net import TwoLayerNet
 from .simpleNN_net import ThreeLayerNet
 from .vgg import VGG
 
-__version__ = '0.0.3'
