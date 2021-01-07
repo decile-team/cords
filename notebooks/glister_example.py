@@ -471,7 +471,7 @@ def train_model_OMP(start_rand_idxs, bud):
             clone_dict = copy.deepcopy(model.state_dict())
             print("selEpoch: %d, Starting Selection:" % i, str(datetime.datetime.now()))
             subset_start_time = time.time()
-            subset_idxs, grads_idxs = setf_model.select(int(bud), clone_dict)
+            subset_idxs, gammas = setf_model.select(int(bud), clone_dict)
             subset_end_time = time.time() - subset_start_time
             print("Subset Selection Time is:" + str(subset_end_time))
             idxs = subset_idxs

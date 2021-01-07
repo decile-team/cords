@@ -140,16 +140,16 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
             for i in range(self.num_classes):
                 trn_subset_idx = torch.where(self.trn_lbls == i)
                 trn_gradients = self.grads_per_elem[trn_subset_idx]
-                #tmp_gradients = trn_gradients[:, i].view(-1, 1)
-                trn_gradients = trn_gradients[: , self.num_classes + (embDim * i) : self.num_classes + (embDim * (i + 1))]
-                #trn_gradients = torch.cat((tmp_gradients, tmp1_gradients), dim=1)
+                tmp_gradients = trn_gradients[:, i].view(-1, 1)
+                tmp1_gradients = trn_gradients[: , self.num_classes + (embDim * i) : self.num_classes + (embDim * (i + 1))]
+                trn_gradients = torch.cat((tmp_gradients, tmp1_gradients), dim=1)
                 if self.valid:
                     val_subset_idx = torch.where(self.val_lbls == i)
                     val_gradients = self.val_grads_per_elem[val_subset_idx]
-                    #tmp_gradients = val_gradients[:, i].view(-1, 1)
-                    val_gradients = val_gradients[:,
+                    tmp_gradients = val_gradients[:, i].view(-1, 1)
+                    tmp1_gradients = val_gradients[:,
                                      self.num_classes + (embDim * i): self.num_classes + (embDim * (i + 1))]
-                    #val_gradients = torch.cat((tmp_gradients, tmp1_gradients), dim=1)
+                    val_gradients = torch.cat((tmp_gradients, tmp1_gradients), dim=1)
                     sum_val_grad = torch.sum(val_gradients, dim=0)
                 else:
                     sum_val_grad = torch.sum(trn_gradients, dim=0)

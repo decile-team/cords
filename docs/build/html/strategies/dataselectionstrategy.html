@@ -156,8 +156,31 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="dataselectionstrategy">
-<span id="functions-dataselectionstrategy"></span><h1>DataSelectionStrategy<a class="headerlink" href="#dataselectionstrategy" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-cords.selectionstrategies.supervisedlearning.dataselectionstrategy">
+<span id="dataselectionstrategy"></span><span id="functions-dataselectionstrategy"></span><h1>DataSelectionStrategy<a class="headerlink" href="#module-cords.selectionstrategies.supervisedlearning.dataselectionstrategy" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="cords.selectionstrategies.supervisedlearning.dataselectionstrategy.DataSelectionStrategy">
+<em class="property">class </em><code class="sig-prename descclassname">cords.selectionstrategies.supervisedlearning.dataselectionstrategy.</code><code class="sig-name descname">DataSelectionStrategy</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">trainloader</span></em>, <em class="sig-param"><span class="n">valloader</span></em>, <em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">num_classes</span></em>, <em class="sig-param"><span class="n">linear_layer</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cords/selectionstrategies/supervisedlearning/dataselectionstrategy.html#DataSelectionStrategy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cords.selectionstrategies.supervisedlearning.dataselectionstrategy.DataSelectionStrategy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implementation of Data Selection Strategy class.</p>
+<dl class="py method">
+<dt id="cords.selectionstrategies.supervisedlearning.dataselectionstrategy.DataSelectionStrategy.compute_gradients">
+<code class="sig-name descname">compute_gradients</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">valid</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cords/selectionstrategies/supervisedlearning/dataselectionstrategy.html#DataSelectionStrategy.compute_gradients"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cords.selectionstrategies.supervisedlearning.dataselectionstrategy.DataSelectionStrategy.compute_gradients" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the gradient of each element</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cords.selectionstrategies.supervisedlearning.dataselectionstrategy.DataSelectionStrategy.update_model">
+<code class="sig-name descname">update_model</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model_params</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cords/selectionstrategies/supervisedlearning/dataselectionstrategy.html#DataSelectionStrategy.update_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cords.selectionstrategies.supervisedlearning.dataselectionstrategy.DataSelectionStrategy.update_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update the models parameters</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>model_params</strong> (<em>OrderedDict</em>) – Python dictionary object containing models parameters</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 
 
