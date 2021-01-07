@@ -14,7 +14,7 @@ GLISTER
 CRAIG
 ----------------------------------------------------
 
-.. automodule:: cords.selectionstrategies.supervisedlearning.glisterstrategy
+.. automodule:: cords.selectionstrategies.supervisedlearning.craigstrategy
    :members:
    :undoc-members:
    :show-inheritance:
@@ -22,7 +22,7 @@ CRAIG
 OMPGradMatch
 ------------------------------------------------------------
 
-.. automodule:: cords.selectionstrategies.supervisedlearning.ompgradmatch
+.. automodule:: cords.selectionstrategies.supervisedlearning.ompgradmatchstrategy
    :members:
    :undoc-members:
    :show-inheritance:
