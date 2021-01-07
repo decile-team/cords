@@ -3,3 +3,4 @@ data
 .idea
 cords.egg-info
 build
+dist
