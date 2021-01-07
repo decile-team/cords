@@ -10,8 +10,26 @@ from torch.utils.data.sampler import SubsetRandomSampler
 class CRAIGStrategy(DataSelectionStrategy):
     """
     Implementation of CRAIG Strategy from the paper :footcite:`mirzasoleiman2020coresets` for supervised learning frameworks.
-    This class extends :class:`selectionstrategies.supervisedlearning.dataselectionstrategy.DataSelectionStrategy`
-    to include PerClass and Supervised selection techniques to select the indices.
+
+    CRAIG strategy tries to solve the optimization problem given below for convex loss functions:
+
+    .. math::
+        \\sum_{i\\in \\mathcal{U}} \\min_{j \\in S, |S| \\leq k} \\| x^i - x^j \\|
+
+    In the above equation, :math:`\\mathcal{U}` denotes the training set where :math:`(x^i, y^i)` denotes the :math:`i^{th}` training data point and label respectively,
+    :math:`L_T` denotes the training loss, :math:`S` denotes the data subset selected at each round, and :math:`k` is the budget for the subset.
+
+    Since, the above optimization problem is not dependent on model parameters, we run the subset selection only once right before the start of the training.
+
+    CRAIG strategy tries to solve the optimization problem given below for non-convex loss functions:
+
+    .. math::
+        \\sum_{i\\in \\mathcal{U}} \\min_{j \\in S, |S| \\leq k} \\| \\nabla_{\\theta} {L_T}^i(\\theta) - \\nabla_{\\theta} {L_T}^j(\\theta) \\|
+
+    In the above equation, :math:`\\mathcal{U}` denotes the training set, :math:`L_T` denotes the training loss, :math:`S` denotes the data subset selected at each round,
+    and :math:`k` is the budget for the subset. In this case, CRAIG acts an adaptive subset selection strategy that selects a new subset every epoch.
+
+    Both the optimization problems given above are an instance of facility location problems which is a submodular function. Hence, it can be optimally solved using greedy selection methods.
             
     Parameters
 	----------
@@ -32,7 +50,9 @@ class CRAIGStrategy(DataSelectionStrategy):
     if_convex: bool
         If convex or not
     selection_type: str
-        Type of selection - 'PerClass' | 'Supervised' 
+        Type of selection:
+         - 'PerClass': PerClass Implementation where the facility location problem is solved for each class seperately for speed ups.
+         - 'Supervised':  Supervised Implementation where the facility location problem is solved using a sparse similarity matrix by assigning the similarity of a point with other points of different class to zero.
     """
 
     def __init__(self, trainloader, valloader, model, loss_type,

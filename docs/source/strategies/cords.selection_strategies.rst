@@ -1,7 +1,12 @@
 Data Selection Strategies
 ===========================================
-We are developing data selection strategies for various machine learning frameworks like supervised learning
-, semi-supervised learning and meta learning.
+We are working on bringing the data selection strategies for various machine learning frameworks like:
+
+- Supervised learning
+- Semi-supervised learning
+- Meta learning.
+
+In our current version, we deployed data subset selection strategies in supervised learning setting.
 
 .. toctree::
    :maxdepth: 5

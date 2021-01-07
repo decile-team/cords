@@ -9,6 +9,39 @@ from .dataselectionstrategy import DataSelectionStrategy
 class GLISTERStrategy(DataSelectionStrategy):
     """
     Implementation of GLISTER-ONLINE Strategy from the paper :footcite:`killamsetty2020glister`  for supervised learning frameworks.
+    GLISTER-ONLINE methods tries to solve the  bi-level optimization problem given below:
+
+    .. math::
+        \\overbrace{\\underset{{S \\subseteq {\\mathcal U}, |S| \\leq k}}{\\operatorname{argmin\\hspace{0.7mm}}} L_V(\\underbrace{\\underset{\\theta}{\\operatorname{argmin\\hspace{0.7mm}}} L_T( \\theta, S)}_{inner-level}, {\\mathcal V})}^{outer-level}
+
+    In the above equation, :math:`\\mathcal{U}` denotes the training set, :math:`\\mathcal{V}` denotes the validation set that guides the subset selection process, :math:`L_T` denotes the
+    training loss, :math:`L_V` denotes the validation loss, :math:`S` denotes the data subset selected at each round,  and :math:`k` is the budget for the subset.
+
+    Since, solving the complete inner-optimization is expensive, GLISTER-ONLINE adopts a online one-step meta approximation where we approximate the solution to inner problem
+    by taking a single gradient step.
+
+    The optimization problem after the approximation is as follows:
+
+    .. math::
+        \\overbrace{\\underset{{S \\subseteq {\\mathcal U}, |S| \\leq k}}{\\operatorname{argmin\\hspace{0.7mm}}} L_V(\\underbrace{\\theta - \\eta \\nabla_{\\theta}L_T(\\theta, S)}_{inner-level}, {\\mathcal V})}^{outer-level}
+
+    In the above equation, :math:`\\eta` denotes the step-size used for one-step gradient update.
+
+    GLISTER-ONLINE also makes an additional approximation called Taylor-Series approximation to easily solve the outer problem using a greedy selection algorithm.
+    The Taylor series approximation is as follows:
+
+    .. math::
+        L_V(\\theta - \\eta \\nabla_{\\theta}L_T(\\theta, S), {\\mathcal V}) \\approx L_V(\\theta) - \\eta {\\nabla_{\\theta}L_T(\\theta, S)}^T \\nabla_{\\theta}L_V(\\theta, {\\mathcal V})
+
+    The Optimization problem after the Taylor series approximation is as follows:
+
+    .. math::
+        \\underset{{S \\subseteq {\\mathcal U}, |S| \\leq k}}{\\operatorname{argmin\\hspace{0.7mm}}}L_V(\\theta - \\eta \\nabla_{\\theta}L_T(\\theta, S), {\\mathcal V}) \\approx L_V(\\theta) - \\eta {\\nabla_{\\theta}L_T(\\theta, S)}^T \\nabla_{\\theta}L_V(\\theta, {\\mathcal V})
+
+    Taylor's series approximation reduces the time complexity by reducing the need of calculating the validation loss for each element during greedy selection step which
+    means reducing the number of forward passes required.
+
+    GLISTER-ONLINE is an adaptive subset selection algorithm that tries to select a subset every :math:`L` epochs and the parameter `L` can be set in the original training loop.
 
     Parameters
 	----------
@@ -29,9 +62,12 @@ class GLISTERStrategy(DataSelectionStrategy):
     linear_layer: bool
         Apply linear transformation to the data
     selection_type: str
-        Type of selection - 'RGreedy' | 'Stochastic' | 'Naive'
+        Type of selection -
+        - 'RGreedy' : RGreedy Selection method is a variant of naive greedy where we just perform r rounds of greedy selection by choosing k/r points in each round.
+        - 'Stochastic' : Stochastic greedy selection method is based on the algorithm presented in this paper :footcite:`mirzasoleiman2014lazier`
+        - 'Naive' : Normal naive greedy selection method that selects a single best element every step until the budget is fulfilled
     r : int, optional
-        Regularization parameter (default: 15)
+        Number of greedy selection rounds when selection method is RGreedy (default: 15)
     """
 
     def __init__(self, trainloader, valloader, model, loss_type,

@@ -6,9 +6,20 @@ from .dataselectionstrategy import DataSelectionStrategy
 from ..helpers import OrthogonalMP_REG_Parallel, OrthogonalMP_REG
 
 class OMPGradMatchStrategy(DataSelectionStrategy):
+
     """
     Implementation of OMPGradMatch Strategy from the paper :footcite:`sivasubramanian2020gradmatch` for supervised learning frameworks.
-    This class extends :class:`selectionstrategies.supervisedlearning.dataselectionstrategy.DataSelectionStrategy`.
+
+    OMPGradMatch strategy tries to solve the optimization problem given below:
+
+    .. math::
+        \\min_{\\mathbf{w}, S: |S| \\leq k} \\Vert \\sum_{i \\in S} w_i \\nabla_{\\theta}L_T^i(\\theta) -  \\nabla_{\\theta}L(\\theta)\\Vert
+
+    In the above equation, :math:`\\mathbf{w}` denotes the weight vector that contains the weights for each data instance, :math:`\mathcal{U}` training set where :math:`(x^i, y^i)` denotes the :math:`i^{th}` training data point and label respectively,
+    :math:`L_T` denotes the training loss, :math:`L` denotes either training loss or validation loss depending on the parameter valid,
+    :math:`S` denotes the data subset selected at each round, and :math:`k` is the budget for the subset.
+
+    The above optimization problem is solved using the Orthogonal Matching Pursuit(OMP) algorithm.
 
     Parameters
 	----------
@@ -29,9 +40,11 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
     linear_layer: bool
         Apply linear transformation to the data
     selection_type: str
-        Type of selection - 'PerClass' | 'PerClassPerGradient'
-    r : int, optional
-        Regularization parameter (default: 15)
+        Type of selection -
+        - 'PerClass': PerClass method is where OMP algorithm is applied on each class data points seperately.
+        - 'PerClassPerGradient': PerClassPerGradient method is same as PerClass but we use the gradient corresponding to classification layer of that class only.
+    valid : bool, optional
+        If valid==True we use validation dataset gradient sum in OMP otherwise we use training dataset (default: False)
     """
 
     def __init__(self, trainloader, valloader, model, loss_type,
