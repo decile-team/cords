@@ -1,5 +1,5 @@
 Supervised Learning Data Selection Strategies
-===========================================
+==============================================
 In this section, we consider data selection strategies for standard supervised learning framework
 where we have a training dataset that is labeled.
 
