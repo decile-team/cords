@@ -22,7 +22,6 @@ setup(
         "sphinxcontrib-bibtex",
         "sphinx-rtd-theme",
         "scikit-learn",
-        "torchvision",
-        "python >= 3.6.0"
+        "torchvision"
     ],
 )
