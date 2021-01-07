@@ -10,7 +10,7 @@ utils
 ----------
 
 cords.utils.CustomDataset module
--------------------------------
+----------------------------------
 
 .. automodule:: cords.utils.CustomDataset
    :members:
@@ -18,7 +18,7 @@ cords.utils.CustomDataset module
    :show-inheritance:
 
 cords.utils.load_dataset_custom module
----------------------------
+----------------------------------------
 
 .. automodule:: cords.utils.load_dataset_custom
    :members:
@@ -26,7 +26,7 @@ cords.utils.load_dataset_custom module
    :show-inheritance:
 
 cords.utils.load_mnist_cifar module
----------------------------
+------------------------------------
 
 .. automodule:: cords.utils.load_mnist_cifar
    :members:
@@ -34,7 +34,7 @@ cords.utils.load_mnist_cifar module
    :show-inheritance:
 
 Module contents
----------------
+----------------
 
 .. automodule:: cords.utils
    :members:
