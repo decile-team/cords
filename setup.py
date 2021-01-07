@@ -22,6 +22,7 @@ setup(
         "sphinxcontrib-bibtex",
         "sphinx-rtd-theme",
         "scikit-learn",
-        "torchvision"
+        "torchvision",
+        "matplotlib"
     ],
 )

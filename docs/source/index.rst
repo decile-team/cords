@@ -40,7 +40,7 @@ Unfortunately, the compute required to train models on huge data sets might not 
 
 .. attention:: Training a Yolo V5X Model may take 8 days on a single V-100 GPU.
 
-Instead of relying on random subsampling, one could instead select a subset using some submodularity based data selection strategies.
+Instead of relying on random subsampling, one could instead select a subset using various data selection strategies.
 The CORDS repo contains some of the state of the art data subset selection strategies that achieves close to full training accuracy even
 when trained on a meager 10% subset of data while achieving significant speed ups.
 
