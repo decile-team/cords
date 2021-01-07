@@ -31,6 +31,18 @@ import subprocess
 
 #subprocess.call('pip install numpydoc', shell=True)
 subprocess.call('pip install torch', shell=True)
+subprocess.call('pip install torchvision', shell=True)
+subprocess.call('pip install scikit-learn', shell=True)
+subprocess.call('pip install torchvision', shell=True)
+subprocess.call('pip install apricot-select', shell=True)
+subprocess.call('pip install numba', shell=True)
+subprocess.call('pip install numpy', shell=True)
+subprocess.call('pip install scipy', shell=True)
+subprocess.call('pip install tqdm', shell=True)
+subprocess.call('pip install sphinxcontrib-napoleon', shell=True)
+subprocess.call('pip install sphinxcontrib-bibtex', shell=True)
+subprocess.call('pip install sphinx-rtd-theme', shell=True)
+
 sys.path.insert(0, os.path.abspath('../..'))
 
 # Add any Sphinx extension module names here, as strings. They can be

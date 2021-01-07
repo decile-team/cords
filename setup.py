@@ -21,6 +21,8 @@ setup(
         "sphinxcontrib-napoleon",
         "sphinxcontrib-bibtex",
         "sphinx-rtd-theme",
-        "scikit-learn"
+        "scikit-learn",
+        "torchvision",
+        "python >= 3.6.0"
     ],
 )
