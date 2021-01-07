@@ -36,6 +36,11 @@ pip install -i https://test.pypi.org/simple/ cords
   Please make sure to enter the space between simple/ and cords in the above command while installing CORDS package
 ---
 
+## Tutorials
+The below link contains the jupyter notebook link for cifar10 timing analysis experiments
+
+[CIFAR10 Notebook](https://colab.research.google.com/drive/1xT6sGmDGMz8XBDmOKs5cl1cipX0Ss1sh?usp=sharing)
+
 ## Package Requirements
 1) "numpy >= 1.14.2",
 2) "scipy >= 1.0.0",
