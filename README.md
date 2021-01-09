@@ -3,8 +3,9 @@ Reduce end to end training time from days to hours and hours to minutes using co
 
 - GLISTER [1]
 - GradMatchOMP [2]
+- GradMatchFixed [2] 
 - CRAIG [2,3]
-- SubmodualrSelection [4,5,6]
+- SubmodularSelection [4,5,6]
   - Facility Location
   - Feature Based Functions
   - Coverage
@@ -41,7 +42,7 @@ The below link contains the jupyter notebook link for cifar10 timing analysis ex
 
 [CIFAR10 Notebook](https://colab.research.google.com/drive/1xT6sGmDGMz8XBDmOKs5cl1cipX0Ss1sh?usp=sharing)
 
-## Package Requirements
+## Package Requirements (this toolkit is built on top of the following packages)
 1) "numpy >= 1.14.2",
 2) "scipy >= 1.0.0",
 3) "numba >= 0.43.0",
