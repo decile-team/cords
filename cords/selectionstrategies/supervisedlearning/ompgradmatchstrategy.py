@@ -170,5 +170,10 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
                 idxs.extend(list(trn_subset_idx[0].cpu().numpy()[idxs_temp]))
                 gammas.extend(gammas_temp)
         omp_end_time = time.time()
+        rand_indices = np.random.permutation(len(idxs))
+        idxs = np.array(idxs)
+        gammas = np.array(gammas)
+        idxs = list(idxs[rand_indices])
+        gammas = list(gammas[rand_indices])
         print("OMP algorithm Subset Selection time is: ", omp_end_time - omp_start_time)
         return idxs, gammas

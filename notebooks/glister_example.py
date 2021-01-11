@@ -488,17 +488,13 @@ def train_model_OMP(start_rand_idxs, bud):
         #for batch_idx in batch_wise_indices:
         batch_wise_indices = list(subset_trnloader.batch_sampler)
         for batch_idx, (inputs, targets) in enumerate(subset_trnloader):
-            #inputs = torch.cat(
-            #    [fullset[x][0].view(-1, num_channels, fullset[x][0].shape[1], fullset[x][0].shape[2]) for x in batch_idx],
-            #    dim=0).type(torch.float)
-            #targets = torch.tensor([fullset[x][1] for x in batch_idx])
             inputs, targets = inputs.to(device), targets.to(device, non_blocking=True) # targets can have non_blocking=True.
             optimizer.zero_grad()
             outputs = model(inputs)
             loss = criterion_nored(outputs, targets)
-            loss = torch.dot(loss, gammas[batch_wise_indices[batch_idx]])/(len(batch_wise_indices[batch_idx]) * gammas[batch_wise_indices[batch_idx]].sum())
-            subtrn_loss += loss.item()
+            loss = torch.dot(loss, gammas[batch_wise_indices[batch_idx]])/(len(batch_wise_indices[batch_idx]))
             loss.backward()
+            subtrn_loss += loss.item()
             optimizer.step()
             _, predicted = outputs.max(1)
             subtrn_total += targets.size(0)
