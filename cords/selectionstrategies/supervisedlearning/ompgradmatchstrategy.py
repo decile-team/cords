@@ -45,14 +45,17 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
         - 'PerClassPerGradient': PerClassPerGradient method is same as PerClass but we use the gradient corresponding to classification layer of that class only.
     valid : bool, optional
         If valid==True we use validation dataset gradient sum in OMP otherwise we use training dataset (default: False)
+    lam : float
+        Regularization constant of OMP solver
+    eps : float
+        Epsilon parameter to which the above optimization problem is solved using OMP algorithm
     """
 
     def __init__(self, trainloader, valloader, model, loss_type,
-                 eta, device, num_classes, linear_layer, selection_type, valid=True):
+                 eta, device, num_classes, linear_layer, selection_type, valid=True, lam=0, eps=1e-4):
         """
         Constructor method
         """
-
         super().__init__(trainloader, valloader, model, num_classes, linear_layer)
         self.loss_type = loss_type
         self.eta = eta  # step size for the one step gradient update
@@ -61,6 +64,8 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
         self.init_l1 = list()
         self.selection_type = selection_type
         self.valid = valid
+        self.lam = lam
+        self.eps = eps
 
     def gen_rand_prior_indices(self, curr_size, remainList=None):
         per_sample_budget = int(curr_size / self.num_classes)
@@ -97,11 +102,11 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
             ind = np.nonzero(reg)[0]
         else:
             reg = OrthogonalMP_REG_Parallel(X, Y, nnz=bud,
-                                          positive=True,
-                                          lam=0, device=self.device)
+                                          positive=True, lam=self.lam,
+                                          tol=self.eps, device=self.device)
             ind = torch.nonzero(reg).view(-1)
-
         return ind.tolist(), reg[ind].tolist()
+
 
     def select(self, budget, model_params):
         """
@@ -127,8 +132,6 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
         self.compute_gradients(self.valid)
         end_time = time.time()
         print("Per Element gradient computation time is: ", end_time - start_time)
-        #trn_gradients = []
-        #val_gradients = []
         if self.selection_type == 'PerClass':
             idxs = []
             gammas = []
