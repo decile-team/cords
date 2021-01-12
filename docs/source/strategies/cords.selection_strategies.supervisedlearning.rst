@@ -2,6 +2,13 @@ Supervised Learning Data Selection Strategies
 ==============================================
 In this section, we consider different data selection strategies available for standard supervised learning framework.
 
+Data Selection Strategy
+-----------------------------------------------
+
+.. automodule:: cords.selectionstrategies.supervisedlearning.dataselectionstrategy
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 GLISTER
 ------------------------------------------------
@@ -30,14 +37,6 @@ Random Strategy
 ---------------------------------------------------------------------
 
 .. automodule:: cords.selectionstrategies.supervisedlearning.randomstrategy
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Data Selection Strategy
------------------------------------------------
-
-.. automodule:: cords.selectionstrategies.supervisedlearning.dataselectionstrategy
    :members:
    :undoc-members:
    :show-inheritance:
