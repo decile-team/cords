@@ -5,13 +5,15 @@ import torch.nn.functional as F
 
 class DataSelectionStrategy(object):
     """ 
-    Implementation of Data Selection Strategy class which serves as base class for other dataselectionstrategies for supervised learning frameworks.
+    Implementation of Data Selection Strategy class which serves as base class for other 
+    dataselectionstrategies for supervised learning frameworks.
     """
 
     def __init__(self, trainloader, valloader, model, num_classes, linear_layer):
         """
         Constructer method
         """
+        
         self.trainloader = trainloader  # assume its a sequential loader.
         self.valloader = valloader
         self.model = model
@@ -30,8 +32,33 @@ class DataSelectionStrategy(object):
 
     def compute_gradients(self, valid=False):
         """
-        Computes the gradient of each element
+        Computes the gradient of each element.
+        
+        Here, the gradients are computed in a closed form using CrossEntropyLoss with reduction set to 'none'.
+        This is done by calculating the gradients in last layer through addition of softmax layer.
+                       
+        Using different loss functions, the way we calculate the gradients will change.
+
+        For LogisticLoss we measure the Mean Absolute Error(MAE) between the pairs of observations. 
+        With reduction set to 'none', the loss is formulated as:
+
+        .. math::
+            \\ell(x, y) = L = \\{l_1,\\dots,l_N\\}^\\top, \\quad
+            l_n = \\left| x_n - y_n \\right|,
+
+        where :math:`N` is the batch size.
+
+    
+        For MSELoss, we measure the Mean Square Error(MSE) between the pairs of observations. 
+        With reduction set to 'none', the loss is formulated as:
+
+        .. math::
+            \\ell(x, y) = L = \\{l_1,\\dots,l_N\\}^\\top, \\quad
+            l_n = \\left( x_n - y_n \\right)^2,
+
+        where :math:`N` is the batch size.
         """
+        
         embDim = self.model.get_embedding_dim()
         for batch_idx, (inputs, targets) in enumerate(self.trainloader):
             inputs, targets = inputs.to(self.device), targets.to(self.device, non_blocking=True)
