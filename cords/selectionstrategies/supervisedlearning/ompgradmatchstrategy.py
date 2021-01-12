@@ -171,7 +171,7 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
                 gammas.extend(gammas_temp)
         omp_end_time = time.time()
         diff = budget - len(idxs)
-        remainList = np.arange(self.N_trn)
+        remainList = set(np.arange(self.N_trn)).difference(set(idxs))
         new_idxs = np.random.choice(list(remainList), size=diff, replace=False)
         idxs.extend(new_idxs)
         gammas.extend([1 for _ in range(diff)])
