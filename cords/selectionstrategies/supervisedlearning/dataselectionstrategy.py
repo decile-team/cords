@@ -43,8 +43,8 @@ class DataSelectionStrategy(object):
         With reduction set to 'none', the loss is formulated as:
 
         .. math::
-            \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad
-            l_n = \left| x_n - y_n \right|,
+            \\ell(x, y) = L = \\{l_1,\\dots,l_N\\}^\\top, \\quad
+            l_n = \\left| x_n - y_n \\right|,
 
         where :math:`N` is the batch size.
 
@@ -53,8 +53,8 @@ class DataSelectionStrategy(object):
         With reduction set to 'none', the loss is formulated as:
 
         .. math::
-            \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad
-            l_n = \left( x_n - y_n \right)^2,
+            \\ell(x, y) = L = \\{l_1,\\dots,l_N\\}^\\top, \\quad
+            l_n = \\left( x_n - y_n \\right)^2,
 
         where :math:`N` is the batch size.
         """
