@@ -85,8 +85,8 @@ print("Using Device:", device)
 datadir = '../../../data/cifar10/'
 data_name = 'cifar10'
 fraction = float(0.1)
-num_epochs = int(200)
-select_every = int(1)
+num_epochs = int(300)
+select_every = int(20)
 feature = 'dss'# 70
 warm_method = 0  # whether to use warmstart-onestep (1) or online (0)
 num_runs = 1  # number of random runs
@@ -438,6 +438,7 @@ def train_model_OMP(start_rand_idxs, bud):
         model = ResNet18(num_cls)
     model = model.to(device)
     idxs = start_rand_idxs
+    gammas = torch.ones(len(idxs)).to(device)
     criterion = nn.CrossEntropyLoss()
     criterion_nored = nn.CrossEntropyLoss(reduction='none')
     optimizer = optim.SGD(model.parameters(), lr=learning_rate,
@@ -449,7 +450,7 @@ def train_model_OMP(start_rand_idxs, bud):
         num_channels = 1
     elif data_name == 'cifar10':
         setf_model = Strategy(trainloader, valloader, model, criterion,
-                              learning_rate, device, num_cls, True, 'PerClassPerGradient', True)
+                              learning_rate, device, num_cls, True, 'PerClassPerGradient', False)
         num_channels = 3
     print("Starting OMP Algorithm Run!")
     substrn_losses = np.zeros(num_epochs)
@@ -460,8 +461,10 @@ def train_model_OMP(start_rand_idxs, bud):
     tst_acc = np.zeros(num_epochs)
     full_trn_acc = np.zeros(num_epochs)
     subtrn_acc = np.zeros(num_epochs)
-    subset_trnloader = torch.utils.data.DataLoader(trainset, batch_size=trn_batch_size,
-            			shuffle=False, sampler=SubsetRandomSampler(idxs), pin_memory=True)
+    data_sub = Subset(trainset, idxs)
+    # actual_idxs = np.array(trainset.indices)[idxs]
+    subset_trnloader = torch.utils.data.DataLoader(data_sub, batch_size=trn_batch_size, shuffle=False,
+                                                   pin_memory=True)
     for i in range(0, num_epochs):
         subtrn_loss = 0
         subtrn_correct = 0
@@ -491,8 +494,8 @@ def train_model_OMP(start_rand_idxs, bud):
             inputs, targets = inputs.to(device), targets.to(device, non_blocking=True) # targets can have non_blocking=True.
             optimizer.zero_grad()
             outputs = model(inputs)
-            loss = criterion_nored(outputs, targets)
-            loss = torch.dot(loss, gammas[batch_wise_indices[batch_idx]])/(len(batch_wise_indices[batch_idx]))
+            losses = criterion_nored(outputs, targets)
+            loss = torch.dot(losses, gammas[batch_wise_indices[batch_idx]])/(len(batch_wise_indices[batch_idx]))
             loss.backward()
             subtrn_loss += loss.item()
             optimizer.step()

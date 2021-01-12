@@ -3,7 +3,7 @@ import setuptools
 
 setup(
     name='cords',
-    version='0.0.6',
+    version='0.0.7',
     author='Krishnateja Killamsetty, Dheeraj Bhat, Rishabh Iyer',
     author_email='krishnatejakillamsetty@gmail.com',
     #packages=['cords', 'cords/selectionstrategies', 'cords/utils'],
@@ -22,7 +22,7 @@ setup(
         "sphinxcontrib-bibtex",
         "sphinx-rtd-theme",
         "scikit-learn",
-        "torchvision",
+        "torchvision >= 0.5.0",
         "matplotlib"
     ],
 )

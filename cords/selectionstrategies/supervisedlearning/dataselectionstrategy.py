@@ -12,7 +12,6 @@ class DataSelectionStrategy(object):
         """
         Constructer method
         """
-
         self.trainloader = trainloader  # assume its a sequential loader.
         self.valloader = valloader
         self.model = model
