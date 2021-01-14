@@ -17,6 +17,7 @@ class SE(nn.Module):
         self.se1 = nn.Conv2d(in_planes, se_planes, kernel_size=1, bias=True)
         self.se2 = nn.Conv2d(se_planes, in_planes, kernel_size=1, bias=True)
 
+
     def forward(self, x):
         out = F.adaptive_avg_pool2d(x, (1, 1))
         out = F.relu(self.se1(out))
@@ -54,6 +55,7 @@ class Block(nn.Module):
                 nn.BatchNorm2d(w_out)
             )
 
+
     def forward(self, x):
         out = F.relu(self.bn1(self.conv1(x)))
         out = F.relu(self.bn2(self.conv2(out)))
@@ -70,6 +72,8 @@ class RegNet(nn.Module):
         super(RegNet, self).__init__()
         self.cfg = cfg
         self.in_planes = 64
+        self.embDim = self.cfg['widths'][-1]
+        
         self.conv1 = nn.Conv2d(3, 64, kernel_size=3,
                                stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
@@ -78,6 +82,7 @@ class RegNet(nn.Module):
         self.layer3 = self._make_layer(2)
         self.layer4 = self._make_layer(3)
         self.linear = nn.Linear(self.cfg['widths'][-1], num_classes)
+
 
     def _make_layer(self, idx):
         depth = self.cfg['depths'][idx]
@@ -95,16 +100,24 @@ class RegNet(nn.Module):
             self.in_planes = width
         return nn.Sequential(*layers)
 
-    def forward(self, x):
+
+    def forward(self, x, last=False):
         out = F.relu(self.bn1(self.conv1(x)))
         out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
         out = self.layer4(out)
         out = F.adaptive_avg_pool2d(out, (1, 1))
-        out = out.view(out.size(0), -1)
-        out = self.linear(out)
-        return out
+        e = out.view(out.size(0), -1)
+        out = self.linear(e)
+        if last:
+            return out, e
+        else:
+            return out
+
+
+    def get_embedding_dim(self):
+        return self.embDim
 
 
 def RegNetX_200MF():

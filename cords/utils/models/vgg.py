@@ -15,13 +15,9 @@ class VGG(nn.Module):
     def __init__(self, vgg_name):
         super(VGG, self).__init__()
         self.features = self._make_layers(cfg[vgg_name])
+        self.embDim = 512
         self.classifier = nn.Linear(512, 10)
 
-    def forward(self, x):
-        out = self.features(x)
-        out = out.view(out.size(0), -1)
-        out = self.classifier(out)
-        return out
 
     def _make_layers(self, cfg):
         layers = []
@@ -36,6 +32,20 @@ class VGG(nn.Module):
                 in_channels = x
         layers += [nn.AvgPool2d(kernel_size=1, stride=1)]
         return nn.Sequential(*layers)
+
+
+    def forward(self, x, last=False):
+        out = self.features(x)
+        e = out.view(out.size(0), -1)
+        out = self.classifier(e)
+        if last:
+            return out, e
+        else:
+            return out
+        
+
+    def get_embedding_dim(self):
+        return self.embDim
 
 
 def test():

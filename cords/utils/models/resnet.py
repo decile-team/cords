@@ -54,6 +54,7 @@ class Bottleneck(nn.Module):
                 nn.BatchNorm2d(self.expansion*planes)
             )
 
+
     def forward(self, x):
         out = F.relu(self.bn1(self.conv1(x)))
         out = F.relu(self.bn2(self.conv2(out)))
@@ -68,6 +69,7 @@ class ResNet(nn.Module):
         super(ResNet, self).__init__()
         self.in_planes = 64
         self.embDim = 8 * self.in_planes * block.expansion
+        
         self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
         self.layer1 = self._make_layer(block, 64, num_blocks[0], stride=1)
@@ -76,6 +78,7 @@ class ResNet(nn.Module):
         self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
         self.linear = nn.Linear(512*block.expansion, num_classes)
 
+
     def _make_layer(self, block, planes, num_blocks, stride):
         strides = [stride] + [1]*(num_blocks-1)
         layers = []
@@ -83,6 +86,7 @@ class ResNet(nn.Module):
             layers.append(block(self.in_planes, planes, stride))
             self.in_planes = planes * block.expansion
         return nn.Sequential(*layers)
+
 
     def forward(self, x, last=False):
         out = F.relu(self.bn1(self.conv1(x)))
@@ -98,29 +102,35 @@ class ResNet(nn.Module):
         else:
             return out
 
+
     def get_embedding_dim(self):
         return self.embDim
+
 
 def ResNet18(num_classes=10):
     return ResNet(BasicBlock, [2,2,2,2], num_classes)
 
+
 def ResNet34(num_classes=10):
     return ResNet(BasicBlock, [3,4,6,3], num_classes)
+
 
 def ResNet50(num_classes=10):
     return ResNet(Bottleneck, [3,4,6,3], num_classes)
 
+
 def ResNet101(num_classes=10):
     return ResNet(Bottleneck, [3,4,23,3], num_classes)
+
 
 def ResNet152(num_classes=10):
     return ResNet(Bottleneck, [3,8,36,3], num_classes)
 
 
-# def test():
-#     net = ResNet18()
-#     y = net(torch.randn(1,3,32,32))
-#     print(y)
-#     print(y.size())
+def test():
+    net = ResNet18()
+    y = net(torch.randn(1,3,32,32))
+    print(y)
+    print(y.size())
 
 #test()

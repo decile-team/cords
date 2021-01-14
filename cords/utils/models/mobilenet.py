@@ -10,12 +10,14 @@ import torch.nn.functional as F
 
 class Block(nn.Module):
     '''Depthwise conv + Pointwise conv'''
+    
     def __init__(self, in_planes, out_planes, stride=1):
         super(Block, self).__init__()
         self.conv1 = nn.Conv2d(in_planes, in_planes, kernel_size=3, stride=stride, padding=1, groups=in_planes, bias=False)
         self.bn1 = nn.BatchNorm2d(in_planes)
         self.conv2 = nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=1, padding=0, bias=False)
         self.bn2 = nn.BatchNorm2d(out_planes)
+
 
     def forward(self, x):
         out = F.relu(self.bn1(self.conv1(x)))
@@ -29,10 +31,13 @@ class MobileNet(nn.Module):
 
     def __init__(self, num_classes=10):
         super(MobileNet, self).__init__()
+        self.embDim = 1024
+        
         self.conv1 = nn.Conv2d(3, 32, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(32)
         self.layers = self._make_layers(in_planes=32)
         self.linear = nn.Linear(1024, num_classes)
+
 
     def _make_layers(self, in_planes):
         layers = []
@@ -43,15 +48,22 @@ class MobileNet(nn.Module):
             in_planes = out_planes
         return nn.Sequential(*layers)
 
-    def forward(self, x):
+
+    def forward(self, x, last=False):
         out = F.relu(self.bn1(self.conv1(x)))
         out = self.layers(out)
         out = F.avg_pool2d(out, 2)
-        out = out.view(out.size(0), -1)
-        out = self.linear(out)
-        return out
+        e = out.view(out.size(0), -1)
+        out = self.linear(e)
+        if last:
+            return out, e
+        else:
+            return out
 
+    def get_embedding_dim(self):
+        return self.embDim
 
+        
 def test():
     net = MobileNet()
     x = torch.randn(1,3,32,32)

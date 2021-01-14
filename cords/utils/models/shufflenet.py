@@ -12,6 +12,7 @@ class ShuffleBlock(nn.Module):
         super(ShuffleBlock, self).__init__()
         self.groups = groups
 
+
     def forward(self, x):
         '''Channel shuffle: [N,C,H,W] -> [N,g,C/g,H,W] -> [N,C/g,g,H,w] -> [N,C,H,W]'''
         N,C,H,W = x.size()
@@ -23,9 +24,9 @@ class Bottleneck(nn.Module):
     def __init__(self, in_planes, out_planes, stride, groups):
         super(Bottleneck, self).__init__()
         self.stride = stride
-
-        mid_planes = out_planes/4
+        mid_planes = int(out_planes/4)
         g = 1 if in_planes==24 else groups
+        
         self.conv1 = nn.Conv2d(in_planes, mid_planes, kernel_size=1, groups=g, bias=False)
         self.bn1 = nn.BatchNorm2d(mid_planes)
         self.shuffle1 = ShuffleBlock(groups=g)
@@ -37,6 +38,7 @@ class Bottleneck(nn.Module):
         self.shortcut = nn.Sequential()
         if stride == 2:
             self.shortcut = nn.Sequential(nn.AvgPool2d(3, stride=2, padding=1))
+
 
     def forward(self, x):
         out = F.relu(self.bn1(self.conv1(x)))
@@ -54,7 +56,8 @@ class ShuffleNet(nn.Module):
         out_planes = cfg['out_planes']
         num_blocks = cfg['num_blocks']
         groups = cfg['groups']
-
+        self.embDim = out_planes[2]
+        
         self.conv1 = nn.Conv2d(3, 24, kernel_size=1, bias=False)
         self.bn1 = nn.BatchNorm2d(24)
         self.in_planes = 24
@@ -62,6 +65,7 @@ class ShuffleNet(nn.Module):
         self.layer2 = self._make_layer(out_planes[1], num_blocks[1], groups)
         self.layer3 = self._make_layer(out_planes[2], num_blocks[2], groups)
         self.linear = nn.Linear(out_planes[2], 10)
+
 
     def _make_layer(self, out_planes, num_blocks, groups):
         layers = []
@@ -72,16 +76,24 @@ class ShuffleNet(nn.Module):
             self.in_planes = out_planes
         return nn.Sequential(*layers)
 
-    def forward(self, x):
+
+    def forward(self, x, last=False):
         out = F.relu(self.bn1(self.conv1(x)))
         out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
         out = F.avg_pool2d(out, 4)
-        out = out.view(out.size(0), -1)
-        out = self.linear(out)
-        return out
+        e = out.view(out.size(0), -1)
+        out = self.linear(e)
+        if last:
+            return out, e
+        else:
+            return out
 
+
+    def get_embedding_dim(self):
+        return self.embDim
+        
 
 def ShuffleNetG2():
     cfg = {
@@ -90,6 +102,7 @@ def ShuffleNetG2():
         'groups': 2
     }
     return ShuffleNet(cfg)
+
 
 def ShuffleNetG3():
     cfg = {

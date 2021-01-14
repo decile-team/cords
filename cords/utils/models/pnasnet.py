@@ -17,6 +17,7 @@ class SepConv(nn.Module):
                                bias=False, groups=in_planes)
         self.bn1 = nn.BatchNorm2d(out_planes)
 
+
     def forward(self, x):
         return self.bn1(self.conv1(x))
 
@@ -30,12 +31,14 @@ class CellA(nn.Module):
             self.conv1 = nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=1, padding=0, bias=False)
             self.bn1 = nn.BatchNorm2d(out_planes)
 
+
     def forward(self, x):
         y1 = self.sep_conv1(x)
         y2 = F.max_pool2d(x, kernel_size=3, stride=self.stride, padding=1)
         if self.stride==2:
             y2 = self.bn1(self.conv1(y2))
         return F.relu(y1+y2)
+
 
 class CellB(nn.Module):
     def __init__(self, in_planes, out_planes, stride=1):
@@ -53,6 +56,7 @@ class CellB(nn.Module):
         self.conv2 = nn.Conv2d(2*out_planes, out_planes, kernel_size=1, stride=1, padding=0, bias=False)
         self.bn2 = nn.BatchNorm2d(out_planes)
 
+
     def forward(self, x):
         # Left branch
         y1 = self.sep_conv1(x)
@@ -68,12 +72,14 @@ class CellB(nn.Module):
         y = torch.cat([b1,b2], 1)
         return F.relu(self.bn2(self.conv2(y)))
 
+
 class PNASNet(nn.Module):
     def __init__(self, cell_type, num_cells, num_planes):
         super(PNASNet, self).__init__()
         self.in_planes = num_planes
         self.cell_type = cell_type
-
+        self.embDim = self.in_planes * 4
+        
         self.conv1 = nn.Conv2d(3, num_planes, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(num_planes)
 
@@ -85,6 +91,7 @@ class PNASNet(nn.Module):
 
         self.linear = nn.Linear(num_planes*4, 10)
 
+
     def _make_layer(self, planes, num_cells):
         layers = []
         for _ in range(num_cells):
@@ -92,12 +99,14 @@ class PNASNet(nn.Module):
             self.in_planes = planes
         return nn.Sequential(*layers)
 
+
     def _downsample(self, planes):
         layer = self.cell_type(self.in_planes, planes, stride=2)
         self.in_planes = planes
         return layer
 
-    def forward(self, x):
+
+    def forward(self, x, last=False):
         out = F.relu(self.bn1(self.conv1(x)))
         out = self.layer1(out)
         out = self.layer2(out)
@@ -105,12 +114,21 @@ class PNASNet(nn.Module):
         out = self.layer4(out)
         out = self.layer5(out)
         out = F.avg_pool2d(out, 8)
-        out = self.linear(out.view(out.size(0), -1))
-        return out
+        e = out.view(out.size(0), -1)
+        out = self.linear(e)
+        if last:
+            return out, e
+        else:
+            return out
+
+
+    def get_embedding_dim(self):
+        return self.embDim
 
 
 def PNASNetA():
     return PNASNet(CellA, num_cells=6, num_planes=44)
+
 
 def PNASNetB():
     return PNASNet(CellB, num_cells=6, num_planes=32)

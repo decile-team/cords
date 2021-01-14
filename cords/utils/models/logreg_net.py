@@ -28,6 +28,7 @@ class LogisticRegNet(nn.Module):
         self.linear = nn.Linear(input_dim, num_classes)
         self.feature_dim = input_dim
 
+
     def forward(self, x, last=False):
         scores = self.linear(x)
         if last:
@@ -35,8 +36,6 @@ class LogisticRegNet(nn.Module):
         else:
             return scores
 
+
     def get_embedding_dim(self):
         return self.feature_dim
-
-
-

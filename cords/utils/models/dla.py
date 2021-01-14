@@ -28,6 +28,7 @@ class BasicBlock(nn.Module):
                 nn.BatchNorm2d(self.expansion*planes)
             )
 
+
     def forward(self, x):
         out = F.relu(self.bn1(self.conv1(x)))
         out = self.bn2(self.conv2(out))
@@ -43,6 +44,7 @@ class Root(nn.Module):
             in_channels, out_channels, kernel_size,
             stride=1, padding=(kernel_size - 1) // 2, bias=False)
         self.bn = nn.BatchNorm2d(out_channels)
+
 
     def forward(self, xs):
         x = torch.cat(xs, 1)
@@ -68,6 +70,7 @@ class Tree(nn.Module):
             self.left_node = block(out_channels, out_channels, stride=1)
             self.right_node = block(out_channels, out_channels, stride=1)
 
+
     def forward(self, x):
         xs = [self.prev_root(x)] if self.level > 1 else []
         for i in reversed(range(1, self.level)):
@@ -86,6 +89,7 @@ class DLA(nn.Module):
     def __init__(self, num_classes=10, block=BasicBlock):
         super(DLA, self).__init__()
         self.embDim = 512
+        
         self.base = nn.Sequential(
             nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1, bias=False),
             nn.BatchNorm2d(16),
@@ -110,6 +114,7 @@ class DLA(nn.Module):
         self.layer6 = Tree(block, 256, 512, level=1, stride=2)
         self.linear = nn.Linear(512, num_classes)
 
+
     def forward(self, x, last=False):
         out = self.base(x)
         out = self.layer1(out)
@@ -125,6 +130,7 @@ class DLA(nn.Module):
             return out, e
         else:
             return out
+
 
     def get_embedding_dim(self):
         return self.embDim

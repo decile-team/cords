@@ -25,6 +25,7 @@ class PreActBlock(nn.Module):
                 nn.Conv2d(in_planes, self.expansion*planes, kernel_size=1, stride=stride, bias=False)
             )
 
+
     def forward(self, x):
         out = F.relu(self.bn1(x))
         shortcut = self.shortcut(out) if hasattr(self, 'shortcut') else x
@@ -52,6 +53,7 @@ class PreActBottleneck(nn.Module):
                 nn.Conv2d(in_planes, self.expansion*planes, kernel_size=1, stride=stride, bias=False)
             )
 
+
     def forward(self, x):
         out = F.relu(self.bn1(x))
         shortcut = self.shortcut(out) if hasattr(self, 'shortcut') else x
@@ -66,7 +68,8 @@ class PreActResNet(nn.Module):
     def __init__(self, block, num_blocks, num_classes=10):
         super(PreActResNet, self).__init__()
         self.in_planes = 64
-
+        self.embDim = 8 * self.in_planes * block.expansion
+        
         self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
         self.layer1 = self._make_layer(block, 64, num_blocks[0], stride=1)
         self.layer2 = self._make_layer(block, 128, num_blocks[1], stride=2)
@@ -82,29 +85,41 @@ class PreActResNet(nn.Module):
             self.in_planes = planes * block.expansion
         return nn.Sequential(*layers)
 
-    def forward(self, x):
+
+    def forward(self, x, last=False):
         out = self.conv1(x)
         out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
         out = self.layer4(out)
         out = F.avg_pool2d(out, 4)
-        out = out.view(out.size(0), -1)
-        out = self.linear(out)
-        return out
+        e = out.view(out.size(0), -1)
+        out = self.linear(e)
+        if last:
+            return out, e
+        else:
+            return out
+
+
+    def get_embedding_dim(self):
+        return self.embDim
 
 
 def PreActResNet18():
     return PreActResNet(PreActBlock, [2,2,2,2])
 
+
 def PreActResNet34():
     return PreActResNet(PreActBlock, [3,4,6,3])
+
 
 def PreActResNet50():
     return PreActResNet(PreActBottleneck, [3,4,6,3])
 
+
 def PreActResNet101():
     return PreActResNet(PreActBottleneck, [3,4,23,3])
+
 
 def PreActResNet152():
     return PreActResNet(PreActBottleneck, [3,8,36,3])

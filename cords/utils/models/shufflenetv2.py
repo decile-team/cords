@@ -12,6 +12,7 @@ class ShuffleBlock(nn.Module):
         super(ShuffleBlock, self).__init__()
         self.groups = groups
 
+
     def forward(self, x):
         '''Channel shuffle: [N,C,H,W] -> [N,g,C/g,H,W] -> [N,C/g,g,H,w] -> [N,C,H,W]'''
         N, C, H, W = x.size()
@@ -23,6 +24,7 @@ class SplitBlock(nn.Module):
     def __init__(self, ratio):
         super(SplitBlock, self).__init__()
         self.ratio = ratio
+
 
     def forward(self, x):
         c = int(x.size(1) * self.ratio)
@@ -44,6 +46,7 @@ class BasicBlock(nn.Module):
                                kernel_size=1, bias=False)
         self.bn3 = nn.BatchNorm2d(in_channels)
         self.shuffle = ShuffleBlock()
+
 
     def forward(self, x):
         x1, x2 = self.split(x)
@@ -79,6 +82,7 @@ class DownBlock(nn.Module):
 
         self.shuffle = ShuffleBlock()
 
+
     def forward(self, x):
         # left
         out1 = self.bn1(self.conv1(x))
@@ -98,7 +102,8 @@ class ShuffleNetV2(nn.Module):
         super(ShuffleNetV2, self).__init__()
         out_channels = configs[net_size]['out_channels']
         num_blocks = configs[net_size]['num_blocks']
-
+        self.embDim = out_channels[3]
+        
         self.conv1 = nn.Conv2d(3, 24, kernel_size=3,
                                stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(24)
@@ -111,6 +116,7 @@ class ShuffleNetV2(nn.Module):
         self.bn2 = nn.BatchNorm2d(out_channels[3])
         self.linear = nn.Linear(out_channels[3], 10)
 
+
     def _make_layer(self, out_channels, num_blocks):
         layers = [DownBlock(self.in_channels, out_channels)]
         for i in range(num_blocks):
@@ -118,7 +124,8 @@ class ShuffleNetV2(nn.Module):
             self.in_channels = out_channels
         return nn.Sequential(*layers)
 
-    def forward(self, x):
+
+    def forward(self, x, last=False):
         out = F.relu(self.bn1(self.conv1(x)))
         # out = F.max_pool2d(out, 3, stride=2, padding=1)
         out = self.layer1(out)
@@ -126,10 +133,17 @@ class ShuffleNetV2(nn.Module):
         out = self.layer3(out)
         out = F.relu(self.bn2(self.conv2(out)))
         out = F.avg_pool2d(out, 4)
-        out = out.view(out.size(0), -1)
-        out = self.linear(out)
-        return out
+        e = out.view(out.size(0), -1)
+        out = self.linear(e)
+        if last:
+            return out, e
+        else:
+            return out
 
+
+    def get_embedding_dim(self):
+        return self.embDim
+        
 
 configs = {
     0.5: {

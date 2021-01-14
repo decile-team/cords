@@ -32,6 +32,7 @@ class SE(nn.Module):
         self.se2 = nn.Conv2d(se_channels, in_channels,
                              kernel_size=1, bias=True)
 
+
     def forward(self, x):
         out = F.adaptive_avg_pool2d(x, (1, 1))
         out = swish(self.se1(out))
@@ -92,6 +93,7 @@ class Block(nn.Module):
         # Skip connection if in and out shapes are the same (MV-V2 style)
         self.has_skip = (stride == 1) and (in_channels == out_channels)
 
+
     def forward(self, x):
         out = x if self.expand_ratio == 1 else swish(self.bn1(self.conv1(x)))
         out = swish(self.bn2(self.conv2(out)))
@@ -119,6 +121,7 @@ class EfficientNet(nn.Module):
         self.layers = self._make_layers(in_channels=32)
         self.linear = nn.Linear(cfg['out_channels'][-1], num_classes)
 
+
     def _make_layers(self, in_channels):
         layers = []
         cfg = [self.cfg[k] for k in ['expansion', 'out_channels', 'num_blocks', 'kernel_size',
@@ -140,6 +143,7 @@ class EfficientNet(nn.Module):
                 in_channels = out_channels
         return nn.Sequential(*layers)
 
+
     def forward(self, x, last=False):
         out = swish(self.bn1(self.conv1(x)))
         out = self.layers(out)
@@ -153,6 +157,7 @@ class EfficientNet(nn.Module):
             return out, e
         else:
             return out
+
 
     def get_embedding_dim(self):
         return self.embDim

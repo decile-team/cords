@@ -9,6 +9,7 @@ class TwoLayerNet(nn.Module):
         self.linear2 = nn.Linear(hidden_units, num_classes)
         self.feature_dim = hidden_units
     
+
     def forward(self, x, last=False):
         l1scores = F.relu(self.linear1(x))
         scores = self.linear2(l1scores)
@@ -17,8 +18,10 @@ class TwoLayerNet(nn.Module):
         else:
             return scores
 
+
     def get_feature_dim(self):
         return self.feature_dim
+
 
     def get_embedding_dim(self):
         return self.feature_dim
@@ -31,6 +34,7 @@ class ThreeLayerNet(nn.Module):
         self.linear2 = nn.Linear(h1, h2)
         self.linear3 = nn.Linear(h2, num_classes)
         self.feature_dim = h2
+
     
     def forward(self, x, last=False):
         l1scores = F.relu(self.linear1(x))
@@ -41,8 +45,10 @@ class ThreeLayerNet(nn.Module):
         else:
             return scores
 
+
     def get_feature_dim(self):
         return self.feature_dim
+
 
     def get_embedding_dim(self):
         return self.feature_dim

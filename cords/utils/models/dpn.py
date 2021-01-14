@@ -24,6 +24,7 @@ class Bottleneck(nn.Module):
                 nn.BatchNorm2d(out_planes+dense_depth)
             )
 
+
     def forward(self, x):
         out = F.relu(self.bn1(self.conv1(x)))
         out = F.relu(self.bn2(self.conv2(out)))
@@ -40,7 +41,8 @@ class DPN(nn.Module):
         super(DPN, self).__init__()
         in_planes, out_planes = cfg['in_planes'], cfg['out_planes']
         num_blocks, dense_depth = cfg['num_blocks'], cfg['dense_depth']
-
+        self.embDim = out_planes[3]+(num_blocks[3]+1)*dense_depth[3]
+        
         self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
         self.last_planes = 64
@@ -50,6 +52,7 @@ class DPN(nn.Module):
         self.layer4 = self._make_layer(in_planes[3], out_planes[3], num_blocks[3], dense_depth[3], stride=2)
         self.linear = nn.Linear(out_planes[3]+(num_blocks[3]+1)*dense_depth[3], 10)
 
+
     def _make_layer(self, in_planes, out_planes, num_blocks, dense_depth, stride):
         strides = [stride] + [1]*(num_blocks-1)
         layers = []
@@ -58,16 +61,24 @@ class DPN(nn.Module):
             self.last_planes = out_planes + (i+2) * dense_depth
         return nn.Sequential(*layers)
 
-    def forward(self, x):
+
+    def forward(self, x, last=False):
         out = F.relu(self.bn1(self.conv1(x)))
         out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
         out = self.layer4(out)
         out = F.avg_pool2d(out, 4)
-        out = out.view(out.size(0), -1)
-        out = self.linear(out)
-        return out
+        e = out.view(out.size(0), -1)
+        out = self.linear(e)
+        if last:
+            return out, e
+        else:
+            return out
+      
+      
+    def get_embedding_dim(self):
+        return self.embDim
 
 
 def DPN26():
@@ -78,6 +89,7 @@ def DPN26():
         'dense_depth': (16,32,24,128)
     }
     return DPN(cfg)
+
 
 def DPN92():
     cfg = {
