@@ -124,7 +124,8 @@ valloader = torch.utils.data.DataLoader(validset, batch_size=val_batch_size, shu
 testloader = torch.utils.data.DataLoader(testset, batch_size=tst_batch_size,
                                          shuffle=False, pin_memory=True)
 
-bud = int(fraction * N)
+#bud = int(fraction * N)
+bud = 13500
 print("Budget, fraction and N:", bud, fraction, N)
 # Transfer all the data to GPU
 print_every = 3
@@ -447,11 +448,11 @@ def train_model_OMP(start_rand_idxs, bud):
     if data_name == 'mnist':
         setf_model = Strategy(trainloader, valloader, model, criterion,
                               learning_rate, device, num_cls, True, 'PerClassPerGradient', True)
-        num_channels = 1
+        #num_channels = 1
     elif data_name == 'cifar10':
         setf_model = Strategy(trainloader, valloader, model, criterion,
-                              learning_rate, device, num_cls, True, 'PerClassPerGradient', False)
-        num_channels = 3
+                              learning_rate, device, num_cls, True, 'PerClassPerGradient', False, eps=1e-100, lam=10)
+        #num_channels = 3
     print("Starting OMP Algorithm Run!")
     substrn_losses = np.zeros(num_epochs)
     fulltrn_losses = np.zeros(num_epochs)
