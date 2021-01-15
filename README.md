@@ -59,3 +59,4 @@ The below link contains the jupyter notebook link for cifar10 timing analysis ex
 4) "tqdm >= 4.24.0",
 5) "torch >= 1.4.0",
 6) "apricot-select >= 0.6.0"
+# cords
