@@ -4,6 +4,3 @@
 
 from .custom_dataset import CustomDataset
 from .custom_dataset import load_dataset_custom
-from .custom_dataset import load_mnist_cifar
-
-
