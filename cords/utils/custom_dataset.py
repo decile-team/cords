@@ -7,6 +7,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data import Dataset, random_split
 from torchvision import transforms
+import PIL.Image as Image
 
 
 ## Custom PyTorch Dataset Class wrapper
@@ -299,7 +300,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=True):
             fullset = CustomDataset(torch.from_numpy(x_trn), torch.from_numpy(y_trn))
             valset = CustomDataset(torch.from_numpy(x_val), torch.from_numpy(y_val))
             testset = CustomDataset(torch.from_numpy(x_tst), torch.from_numpy(y_tst))
-        return fullset, valset, testset, data_dims, num_cls
+        return fullset, valset, testset, num_cls
 
     elif dset_name == "adult":
         trn_file = os.path.join(datadir, 'a9a.trn')
@@ -335,7 +336,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=True):
             valset = CustomDataset(torch.from_numpy(x_val), torch.from_numpy(y_val))
             testset = CustomDataset(torch.from_numpy(x_tst), torch.from_numpy(y_tst))
 
-        return fullset, valset, testset, data_dims, num_cls
+        return fullset, valset, testset, num_cls
 
     elif dset_name == "connect_4":
         trn_file = os.path.join(datadir, 'connect_4.trn')
@@ -371,7 +372,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=True):
             valset = CustomDataset(torch.from_numpy(x_val), torch.from_numpy(y_val))
             testset = CustomDataset(torch.from_numpy(x_tst), torch.from_numpy(y_tst))
 
-        return fullset, valset, testset, data_dims, num_cls
+        return fullset, valset, testset, num_cls
 
     elif dset_name == "letter":
         trn_file = os.path.join(datadir, 'letter.scale.trn')
@@ -408,7 +409,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=True):
             valset = CustomDataset(torch.from_numpy(x_val), torch.from_numpy(y_val))
             testset = CustomDataset(torch.from_numpy(x_tst), torch.from_numpy(y_tst))
 
-        return fullset, valset, testset, data_dims, num_cls
+        return fullset, valset, testset, num_cls
 
     elif dset_name == "satimage":
         np.random.seed(42)
@@ -448,7 +449,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=True):
             valset = CustomDataset(torch.from_numpy(x_val), torch.from_numpy(y_val))
             testset = CustomDataset(torch.from_numpy(x_tst), torch.from_numpy(y_tst))
 
-        return fullset, valset, testset, data_dims, num_cls
+        return fullset, valset, testset, num_cls
 
     elif dset_name == "svmguide1":
         np.random.seed(42)
@@ -483,7 +484,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=True):
             valset = CustomDataset(torch.from_numpy(x_val), torch.from_numpy(y_val))
             testset = CustomDataset(torch.from_numpy(x_tst), torch.from_numpy(y_tst))
 
-        return fullset, valset, testset, data_dims, num_cls
+        return fullset, valset, testset, num_cls
 
     elif dset_name == "usps":
         trn_file = os.path.join(datadir, 'usps.trn_full')
@@ -518,7 +519,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=True):
             valset = CustomDataset(torch.from_numpy(x_val), torch.from_numpy(y_val))
             testset = CustomDataset(torch.from_numpy(x_tst), torch.from_numpy(y_tst))
 
-        return fullset, valset, testset, data_dims, num_cls
+        return fullset, valset, testset, num_cls
 
     elif dset_name == "ijcnn1":
         trn_file = os.path.join(datadir, 'ijcnn1.trn')
@@ -557,7 +558,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=True):
             valset = CustomDataset(torch.from_numpy(x_val), torch.from_numpy(y_val))
             testset = CustomDataset(torch.from_numpy(x_tst), torch.from_numpy(y_tst))
 
-        return fullset, valset, testset, data_dims, num_cls
+        return fullset, valset, testset, num_cls
 
     elif dset_name == "sklearn-digits":
 
@@ -590,7 +591,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=True):
             valset = CustomDataset(torch.from_numpy(x_val), torch.from_numpy(y_val))
             testset = CustomDataset(torch.from_numpy(x_tst), torch.from_numpy(y_tst))
 
-        return fullset, valset, testset, x_trn.shape[1], num_cls
+        return fullset, valset, testset, num_cls
 
     elif dset_name in ['prior_shift_large_linsep_4', 'conv_shift_large_linsep_4', 'red_large_linsep_4',
                        'expand_large_linsep_4',
@@ -622,7 +623,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=True):
             valset = CustomDataset(x_val, y_val)
             testset = CustomDataset(x_tst, y_tst)
 
-        return fullset, valset, testset, data_dims, num_cls
+        return fullset, valset, testset, num_cls
 
     elif dset_name in ['prior_shift_clf_2', 'prior_shift_gauss_2', 'conv_shift_clf_2', 'conv_shift_gauss_2', "gauss_2",
                        "clf_2", "linsep"]:
@@ -658,11 +659,10 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=True):
             valset = CustomDataset(x_val, y_val)
             testset = CustomDataset(x_tst, y_tst)
 
-        return fullset, valset, testset, data_dims, num_cls
+        return fullset, valset, testset, num_cls
 
     elif dset_name == "covertype":
         trn_file = os.path.join(datadir, 'covtype.data')
-
         data_dims = 54
         num_cls = 7
         x_trn, y_trn = csv_file_load(trn_file, dim=data_dims)
@@ -694,7 +694,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=True):
             valset = CustomDataset(x_val, y_val)
             testset = CustomDataset(x_tst, y_tst)
 
-        return fullset, valset, testset, data_dims, num_cls
+        return fullset, valset, testset, num_cls
 
     elif dset_name == "census":
         trn_file = os.path.join(datadir, 'adult.data')
@@ -728,7 +728,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=True):
             valset = CustomDataset(x_val, y_val)
             testset = CustomDataset(x_tst, y_tst)
 
-        return fullset, valset, testset, data_dims, num_cls
+        return fullset, valset, testset, num_cls
 
 
     elif dset_name == "mnist":
@@ -741,8 +741,6 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=True):
             torchvision.transforms.ToTensor(),
             torchvision.transforms.Normalize((0.1307,), (0.3081,))
         ])
-
-        data_dims = 784
         num_cls = 10
 
         fullset = torchvision.datasets.MNIST(root=datadir, train=True, download=True, transform=mnist_transform)
@@ -779,7 +777,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=True):
         num_trn = num_fulltrn - num_val
         trainset, valset = random_split(fullset, [num_trn, num_val])
 
-        return trainset, valset, testset, data_dims, num_cls
+        return trainset, valset, testset, num_cls
 
 
     elif dset_name == "fashion-mnist":
@@ -793,8 +791,6 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=True):
             torchvision.transforms.ToTensor(),
             torchvision.transforms.Normalize((0.1307,), (0.3081,))
         ])
-
-        data_dims = 784
         num_cls = 10
 
         fullset = torchvision.datasets.FashionMNIST(root=datadir, train=True, download=True,
@@ -833,7 +829,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=True):
         num_trn = num_fulltrn - num_val
         trainset, valset = random_split(fullset, [num_trn, num_val])
 
-        return trainset, valset, testset, data_dims, num_cls
+        return trainset, valset, testset, num_cls
 
     elif dset_name == "cifar10":
         cifar_transform = transforms.Compose([
@@ -848,7 +844,6 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=True):
             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
         ])
 
-        data_dims = 1024
         num_cls = 10
 
         fullset = torchvision.datasets.CIFAR10(root=datadir, train=True, download=True, transform=cifar_transform)
@@ -888,7 +883,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=True):
         num_trn = num_fulltrn - num_val
         trainset, valset = random_split(fullset, [num_trn, num_val])
 
-        return trainset, valset, testset, data_dims, num_cls
+        return trainset, valset, testset, num_cls
 
 
     elif dset_name == "cifar100":
@@ -904,7 +899,6 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=True):
             transforms.Normalize((0.5071, 0.4865, 0.4409), (0.2673, 0.2564, 0.2762)),
         ])
 
-        data_dims = 1024
         num_cls = 100
 
         fullset = torchvision.datasets.CIFAR100(root=datadir, train=True, download=True, transform=cifar100_transform)
@@ -944,7 +938,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=True):
         num_trn = num_fulltrn - num_val
         trainset, valset = random_split(fullset, [num_trn, num_val])
 
-        return trainset, valset, testset, data_dims, num_cls
+        return trainset, valset, testset, num_cls
 
 
     elif dset_name == "svhn":
@@ -960,7 +954,6 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=True):
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ])
 
-        data_dims = 1024
         num_cls = 10
 
         fullset = torchvision.datasets.SVHN(root=datadir, split='train', download=True, transform=svhn_transform)
@@ -999,7 +992,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=True):
         num_trn = num_fulltrn - num_val
         trainset, valset = random_split(fullset, [num_trn, num_val])
 
-        return trainset, valset, testset, data_dims, num_cls
+        return trainset, valset, testset, num_cls
 
 
     elif dset_name == "kmnist":
@@ -1015,7 +1008,6 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=True):
             transforms.Normalize(np.array([0.1904]), np.array([0.3475])),
         ])
 
-        data_dims = 784
         num_cls = 10
 
         fullset = torchvision.datasets.KMNIST(root=datadir, train=True, download=True, transform=kmnist_transform)
@@ -1055,7 +1047,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=True):
         num_trn = num_fulltrn - num_val
         trainset, valset = random_split(fullset, [num_trn, num_val])
 
-        return trainset, valset, testset, data_dims, num_cls
+        return trainset, valset, testset, num_cls
 
 
     elif dset_name == "stl10":
@@ -1073,7 +1065,6 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=True):
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ])
 
-        data_dims = 9216
         num_cls = 10
 
         fullset = torchvision.datasets.STL10(root=datadir, split='train', download=True, transform=stl10_transform)
@@ -1112,7 +1103,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=True):
         num_trn = num_fulltrn - num_val
         trainset, valset = random_split(fullset, [num_trn, num_val])
 
-        return trainset, valset, testset, data_dims, num_cls
+        return trainset, valset, testset, num_cls
 
 
     elif dset_name == "emnist":
@@ -1126,7 +1117,6 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=True):
             torchvision.transforms.Normalize((0.1307,), (0.3081,))
         ])
 
-        data_dims = 784
         num_cls = 10
 
         fullset = torchvision.datasets.EMNIST(root=datadir, split='digits', train=True, download=True,
@@ -1164,4 +1154,59 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=True):
         num_val = int(num_fulltrn * validation_set_fraction)
         num_trn = num_fulltrn - num_val
         trainset, valset = random_split(fullset, [num_trn, num_val])
-        return trainset, valset, testset, data_dims, num_cls
+        return trainset, valset, testset, num_cls
+
+    elif dset_name == "celeba":
+        crop_size = 108
+        re_size = 64
+        offset_height = (218 - crop_size) // 2
+        offset_width = (178 - crop_size) // 2
+        crop = lambda x: x[:, offset_height:offset_height + crop_size, offset_width:offset_width + crop_size]
+
+        celeba_transform = transforms.Compose(
+            [transforms.ToTensor(),
+             transforms.Lambda(crop),
+             transforms.ToPILImage(),
+             transforms.Scale(size=(re_size, re_size), interpolation=Image.BICUBIC),
+             transforms.ToTensor(),
+             transforms.Normalize(mean=[0.5] * 3, std=[0.5] * 3)])
+
+        num_cls = 10177
+
+        trainset = torchvision.datasets.CelebA(root=datadir, split='train', target_type=['identity'],
+                                              transform=celeba_transform, download=True)
+
+        testset = torchvision.datasets.CelebA(root=datadir, split='test', target_type=['identity'],
+                                              transform=celeba_transform, download=True)
+
+        valset = torchvision.datasets.CelebA(root=datadir, split='valid', target_type=['identity'],
+                                              transform=celeba_transform, download=True)
+
+        trainset.identity.sub_(1)
+        valset.identity.sub_(1)
+        testset.identity.sub_(1)
+
+        if feature == 'classimb':
+            samples_per_class = torch.zeros(num_cls)
+            for i in range(num_cls):
+                samples_per_class[i] = len(torch.where(trainset.identity == i)[0])
+            min_samples = int(torch.min(samples_per_class) * 0.1)
+            selected_classes = np.random.choice(np.arange(num_cls), size=int(0.3 * num_cls), replace=False)
+            for i in range(num_cls):
+                if i == 0:
+                    if i in selected_classes:
+                        subset_idxs = list(
+                            np.random.choice(torch.where(trainset.identity == i)[0].cpu().numpy(), size=min_samples,
+                                             replace=False))
+                    else:
+                        subset_idxs = list(torch.where(trainset.identity == i)[0].cpu().numpy())
+                else:
+                    if i in selected_classes:
+                        batch_subset_idxs = list(
+                            np.random.choice(torch.where(trainset.identity == i)[0].cpu().numpy(), size=min_samples,
+                                             replace=False))
+                    else:
+                        batch_subset_idxs = list(torch.where(trainset.identity == i)[0].cpu().numpy())
+                    subset_idxs.extend(batch_subset_idxs)
+            trainset = torch.utils.data.Subset(trainset, subset_idxs)
+        return trainset, valset, testset, num_cls

@@ -52,7 +52,7 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
     """
 
     def __init__(self, trainloader, valloader, model, loss_type,
-                 eta, device, num_classes, linear_layer, selection_type, valid=True, lam=0, eps=1e-4):
+                 eta, device, num_classes, linear_layer, selection_type, valid=True, lam=0, eps=1e-4, r=1):
         """
         Constructor method
         """
@@ -67,46 +67,16 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
         self.lam = lam
         self.eps = eps
 
-    def gen_rand_prior_indices(self, curr_size, remainList=None):
-        per_sample_budget = int(curr_size / self.num_classes)
-        if remainList is None:
-            per_sample_count = [len(torch.where(self.trn_lbls == x)[0]) for x in np.arange(self.num_classes)]
-            total_set = list(np.arange(self.N_trn))
-        else:
-            per_sample_count = [len(torch.where(self.trn_lbls[remainList] == x)[0]) for x in np.arange(self.num_classes)]
-            total_set = remainList
-        indices = []
-        count = 0
-        for i in range(self.num_classes):
-            if remainList is None:
-                label_idxs = torch.where(self.trn_lbls == i)[0].cpu().numpy()
-            else:
-                label_idxs = torch.where(self.trn_lbls[remainList] == i)[0].cpu().numpy()
-                label_idxs = np.array(remainList)[label_idxs]
-
-            if per_sample_count[i] > per_sample_budget:
-                indices.extend(list(np.random.choice(label_idxs, size=per_sample_budget, replace=False)))
-            else:
-                indices.extend(label_idxs)
-                count += (per_sample_budget - per_sample_count[i])
-
-        for i in indices:
-            total_set.remove(i)
-
-        indices.extend(list(np.random.choice(total_set, size=count, replace=False)))
-        return indices
-
     def ompwrapper(self, X, Y, bud):
         if self.device == "cpu":
             reg = OrthogonalMP_REG(X.cpu().numpy(), Y.cpu().numpy(), nnz=bud, positive=True, lam=0)
             ind = np.nonzero(reg)[0]
+            return ind.tolist(), reg[ind].tolist()
         else:
-            reg = OrthogonalMP_REG_Parallel(X, Y, nnz=bud,
+            ind, wts = OrthogonalMP_REG_Parallel(X, Y, nnz=bud,
                                           positive=True, lam=self.lam,
                                           tol=self.eps, device=self.device)
-            ind = torch.nonzero(reg).view(-1)
-        return ind.tolist(), reg[ind].tolist()
-
+            return ind, wts
 
     def select(self, budget, model_params):
         """
