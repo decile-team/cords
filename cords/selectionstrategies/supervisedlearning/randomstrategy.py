@@ -13,14 +13,16 @@ class RandomStrategy(object):
         Loading the training data using pytorch DataLoader
     """
 
-    def __init__(self, trainloader):
+    def __init__(self, trainloader, online=False):
         """
-        Constructer method
+        Constructor method
         """
 
         self.trainloader = trainloader
         self.N_trn = len(trainloader.sampler.data_source)
-
+        self.online = online
+        self.indices = None
+        self.gammas = None
 
     def select(self, budget):
         """
@@ -33,12 +35,12 @@ class RandomStrategy(object):
         
         Returns
         ----------
-        indxs: ndarray
+        indices: ndarray
             Array of indices of size budget selected randomly
         gammas: Tensor
-            Gradient values of selected indices
+            Gradient weight values of selected indices
         """
-
-        indxs = np.random.choice(self.N_trn, size=budget, replace=False)
-        gammas = torch.ones(budget)
-        return indxs, gammas
+        if self.online or (self.indices is None) :
+            self.indices = np.random.choice(self.N_trn, size=budget, replace=False)
+            self.gammas = torch.ones(budget)
+        return self.indices, self.gammas
