@@ -227,8 +227,6 @@ class GLISTERStrategy(DataSelectionStrategy):
         self.numSelected = 0
         greedySet = list()
         remainSet = list(range(self.N_trn))
-
-
         #RModular Greedy Selection Algorithm
         if self.selection_type == 'RGreedy':
             t_ng_start = time.time()  # naive greedy start time

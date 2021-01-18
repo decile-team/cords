@@ -380,8 +380,10 @@ def OrthogonalMP_REG_Parallel(A, b, tol=1E-4, nnz=None, positive=False, lam=1, d
             index = torch.argmax(projections)
         else:
             index = torch.argmax(torch.abs(projections))
+
         if index in indices:
             break
+
         indices.append(index)
         if len(indices) == 1:
             A_i = A[:, index]

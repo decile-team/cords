@@ -1,27 +1,21 @@
-import time
 import copy
 import datetime
 import numpy as np
 import os
 import subprocess
-import sys
 import time
 import torch
-import torch.backends.cudnn as cudnn
 import torch.nn as nn
 import torch.optim as optim
-from matplotlib import pyplot as plt
 from torch.utils.data.sampler import SubsetRandomSampler
 from cords.selectionstrategies.supervisedlearning.ompgradmatchstrategy import OMPGradMatchStrategy as Strategy
 #from cords.selectionstrategies.supervisedlearning.glisterstrategy import GLISTERStrategy as Strategy
 from cords.utils.models.mnist_net import MnistNet
 from cords.utils.models.resnet import ResNet18
-from cords.utils.models.simpleNN_net import TwoLayerNet
 from cords.utils.custom_dataset import load_dataset_custom
 from torch.utils.data import random_split, Subset, SubsetRandomSampler, BatchSampler, RandomSampler
 from torch.autograd import Variable
-from cords.selectionstrategies.supervisedlearning.craigstrategy import CRAIGStrategy as CRAIG
-import math
+
 
 def model_eval_loss(data_loader, model, criterion):
     total_loss = 0
@@ -103,7 +97,7 @@ exp_start_time = datetime.datetime.now()
 print("=======================================", file=logfile)
 print(exp_name, str(exp_start_time), file=logfile)
 #fullset, valset, testset, M, num_cls = load_dataset_custom(datadir, data_name, feature, False)
-trainset, validset, testset, M, num_cls = load_dataset_custom(datadir, data_name, feature)
+trainset, validset, testset, num_cls = load_dataset_custom(datadir, data_name, feature)
 # Validation Data set is 10% of the Entire Trainset.
 validation_set_fraction = 0.1
 N = len(trainset)
