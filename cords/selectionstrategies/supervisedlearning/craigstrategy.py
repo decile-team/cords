@@ -5,6 +5,7 @@ import torch.nn.functional as F
 from scipy.sparse import csr_matrix
 from .dataselectionstrategy import DataSelectionStrategy
 from torch.utils.data.sampler import SubsetRandomSampler
+import math
 
 
 class CRAIGStrategy(DataSelectionStrategy):
@@ -240,7 +241,7 @@ class CRAIGStrategy(DataSelectionStrategy):
             else:
                 tmp_target_i = targets
                 labels = torch.cat((labels, tmp_target_i), dim=0)
-        per_class_bud = int(budget / self.num_classes)
+        #per_class_bud = int(budget / self.num_classes)
         total_greedy_list = []
         gammas = []
         if self.selection_type == 'PerClass':
@@ -248,7 +249,7 @@ class CRAIGStrategy(DataSelectionStrategy):
                 idxs = torch.where(labels == i)[0]
                 self.compute_score(model_params, idxs)
                 fl = apricot.functions.facilityLocation.FacilityLocationSelection(random_state=0, metric='precomputed',
-                                                                                  n_samples=per_class_bud, optimizer=optimizer)
+                                                                                  n_samples= math.ceil(budget * len(idxs) / self.N_trn), optimizer=optimizer)
                 sim_sub = fl.fit_transform(self.dist_mat)
                 greedyList = list(np.argmax(sim_sub, axis=1))
                 gamma = self.compute_gamma(greedyList)
