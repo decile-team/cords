@@ -265,7 +265,7 @@ def create_noisy(y_trn, num_cls, noise_ratio=0.8):
     return y_trn
 
 
-def load_dataset_custom(datadir, dset_name, feature, isnumpy=True):
+def load_dataset_custom(datadir, dset_name, feature, isnumpy=False):
     if dset_name == "dna":
         np.random.seed(42)
         trn_file = os.path.join(datadir, 'dna.scale.trn')
