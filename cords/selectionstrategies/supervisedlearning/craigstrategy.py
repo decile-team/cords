@@ -210,7 +210,7 @@ class CRAIGStrategy(DataSelectionStrategy):
         return kernel
 
 
-    def select(self, budget, model_params):
+    def select(self, budget, model_params, optmizer):
         """
         Data selection method using different submodular optimization
         functions.
