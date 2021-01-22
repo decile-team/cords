@@ -255,6 +255,9 @@ class CRAIGStrategy(DataSelectionStrategy):
                 gamma = self.compute_gamma(greedyList)
                 total_greedy_list.extend(idxs[greedyList])
                 gammas.extend(gamma)
+            rand_indices = np.random.permutation(len(total_greedy_list))
+            total_greedy_list= list(np.array(total_greedy_list)[rand_indices])
+            gammas = list(np.array(gammas)[rand_indices])
         elif self.selection_type == 'Supervised':
             for i in range(self.num_classes):
                 if i == 0:
