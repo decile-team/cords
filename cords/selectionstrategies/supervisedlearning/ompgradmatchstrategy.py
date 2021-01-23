@@ -137,7 +137,7 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
             else:
                 sum_val_grad = torch.sum(trn_gradients, dim=0)
             idxs_temp, gammas_temp = self.ompwrapper(torch.transpose(trn_gradients, 0, 1),
-                                                     sum_val_grad, math.floor(budget/self.trainloader.batch_size))
+                                                     sum_val_grad, math.ceil(budget/self.trainloader.batch_size))
             batch_wise_indices = list(self.trainloader.batch_sampler)
             for i in range(len(idxs_temp)):
                 tmp = batch_wise_indices[idxs_temp[i]]

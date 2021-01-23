@@ -172,7 +172,7 @@ def train_model(num_epochs, dataset_name, datadir, feature, model_name, fraction
     elif strategy == 'CRAIG':
         # CRAIG Selection strategy
         setf_model = CRAIGStrategy(trainloader, valloader, model1, criterion,
-                                   device, num_cls, False, False, 'PerClass')
+                                   device, num_cls, False, False, 'PerBatch')
 
 
     elif strategy == 'CRAIG-Explore':
@@ -388,7 +388,7 @@ datadir = '../../data'
 data_name = 'cifar10'
 fraction = float(0.05)
 num_epochs = int(300)
-select_every = int(20)
+select_every = int(1)
 feature = 'dss'
 num_runs = 1  # number of random runs
 learning_rate = 0.01

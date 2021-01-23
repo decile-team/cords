@@ -123,13 +123,20 @@ class CRAIGStrategy(DataSelectionStrategy):
             if self.if_convex:
                 for batch_idx, (inputs, targets) in enumerate(subset_loader):
                     inputs, targets = inputs, targets
-                    self.N += inputs.size()[0]
-                    g_is.append(inputs.view(inputs.size()[0], -1))
+                    if self.selection_type == 'PerBatch':
+                        self.N += 1
+                        g_is.append(inputs.view(inputs.size()[0], -1).mean(dim=0).view(1, -1))
+                    else:
+                        self.N += inputs.size()[0]
+                        g_is.append(inputs.view(inputs.size()[0], -1))
             else:
                 embDim = self.model.get_embedding_dim()
                 for batch_idx, (inputs, targets) in enumerate(subset_loader):
                     inputs, targets = inputs.to(self.device), targets.to(self.device, non_blocking=True)
-                    self.N += inputs.size()[0]
+                    if self.selection_type == 'PerBatch':
+                        self.N += 1
+                    else:
+                        self.N += inputs.size()[0]
                     with torch.no_grad():
                         out, l1 = self.model(inputs, last=True)
                         data = F.softmax(out, dim=1)
@@ -139,19 +146,29 @@ class CRAIGStrategy(DataSelectionStrategy):
                     if self.linear_layer:
                         l0_expand = torch.repeat_interleave(l0_grads, embDim, dim=1)
                         l1_grads = l0_expand * l1.repeat(1, self.num_classes)
-                        g_is.append(torch.cat((l0_grads, l1_grads), dim=1))
+                        if self.selection_type == 'PerBatch':
+                            g_is.append(torch.cat((l0_grads, l1_grads), dim=1).mean(dim=0).view(1, -1))
+                        else:
+                            g_is.append(torch.cat((l0_grads, l1_grads), dim=1))
                     else:
-                        g_is.append(l0_grads)
+                        if self.selection_type == 'PerBatch':
+                            g_is.append(l0_grads.mean(dim=0).view(1, -1))
+                        else:
+                            g_is.append(l0_grads)
 
             self.dist_mat = torch.zeros([self.N, self.N], dtype=torch.float32)
             first_i = True
-            for i, g_i in enumerate(g_is, 0):
-                if first_i:
-                    size_b = g_i.size(0)
-                    first_i = False
-                for j, g_j in enumerate(g_is, 0):
-                    self.dist_mat[i * size_b: i * size_b + g_i.size(0),
-                    j * size_b: j * size_b + g_j.size(0)] = self.distance(g_i, g_j)
+            if self.selection_type == 'PerBatch':
+                g_is = torch.cat(g_is, dim=0)
+                self.dist_mat = self.distance(g_is, g_is).cpu()
+            else:
+                for i, g_i in enumerate(g_is, 0):
+                    if first_i:
+                        size_b = g_i.size(0)
+                        first_i = False
+                    for j, g_j in enumerate(g_is, 0):
+                        self.dist_mat[i * size_b: i * size_b + g_i.size(0),
+                        j * size_b: j * size_b + g_j.size(0)] = self.distance(g_i, g_j).cpu()
         self.const = torch.max(self.dist_mat).item()
         self.dist_mat = (self.const - self.dist_mat).numpy()
 
@@ -171,7 +188,7 @@ class CRAIGStrategy(DataSelectionStrategy):
             Gradient values of the input indices 
         """
 
-        if self.selection_type == 'PerClass':
+        if self.selection_type in ['PerClass', 'PerBatch']:
             gamma = [0 for i in range(len(idxs))]
             best = self.dist_mat[idxs]  # .to(self.device)
             rep = np.argmax(best, axis=0)
@@ -281,4 +298,19 @@ class CRAIGStrategy(DataSelectionStrategy):
             sim_sub = fl.fit_transform(sparse_simmat)
             total_greedy_list = list(np.array(np.argmax(sim_sub, axis=1)).reshape(-1))
             gammas = self.compute_gamma(total_greedy_list)
+        elif self.selection_type == 'PerBatch':
+
+            idxs = torch.arange(self.N_trn)
+            N = len(idxs)
+            self.compute_score(model_params, idxs)
+            fl = apricot.functions.facilityLocation.FacilityLocationSelection(random_state=0, metric='precomputed',
+                                                                              n_samples=math.ceil(budget/self.trainloader.batch_size), optimizer=optimizer)
+            sim_sub = fl.fit_transform(self.dist_mat)
+            temp_list = list(np.array(np.argmax(sim_sub, axis=1)).reshape(-1))
+            gammas_temp = self.compute_gamma(temp_list)
+            batch_wise_indices = list(self.trainloader.batch_sampler)
+            for i in range(len(temp_list)):
+                tmp = batch_wise_indices[temp_list[i]]
+                total_greedy_list.extend(tmp)
+                gammas.extend(list(gammas_temp[i] * np.ones(len(tmp))))
         return total_greedy_list, gammas
