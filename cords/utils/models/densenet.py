@@ -67,8 +67,8 @@ class DenseNet(nn.Module):
         number of classification classes
     """
 
-    def __init__(self, growth_rate=32, block_config=(6, 12, 24, 16),
-                 num_init_features=64, bn_size=4, drop_rate=0, num_classes=10):
+    def __init__(self, num_init_features=64, growth_rate=32, block_config=(6, 12, 24, 16),
+                 bn_size=4, drop_rate=0, num_classes=10):
 
         super(DenseNet, self).__init__()
         self.embDim = 2 * growth_rate
@@ -126,21 +126,17 @@ class DenseNet(nn.Module):
 
 
 def DenseNet121(**kwargs):
-    return DenseNet(num_init_features=64, growth_rate=32, block_config=(6, 12, 24, 16),
-                     **kwargs)
+    return DenseNet(num_init_features=64, growth_rate=32, block_config=(6, 12, 24, 16), **kwargs)
 
 
 def DenseNet169(**kwargs):
-    return DenseNet(num_init_features=64, growth_rate=32, block_config=(6, 12, 32, 32),
-                     **kwargs)
+    return DenseNet(num_init_features=64, growth_rate=32, block_config=(6, 12, 32, 32), **kwargs)
     
 
-def DenseNet201(pretrained=False, **kwargs):
-    return DenseNet(num_init_features=64, growth_rate=32, block_config=(6, 12, 48, 32),
-                     **kwargs)
+def DenseNet201(**kwargs):
+    return DenseNet(num_init_features=64, growth_rate=32, block_config=(6, 12, 48, 32), **kwargs)
     
 
-def DenseNet161(pretrained=False, **kwargs):
-    return DenseNet(num_init_features=96, growth_rate=48, block_config=(6, 12, 36, 24),
-                     **kwargs)
+def DenseNet161(**kwargs):
+    return DenseNet(num_init_features=96, growth_rate=48, block_config=(6, 12, 36, 24), **kwargs)
 
