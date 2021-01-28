@@ -71,7 +71,6 @@ class DenseNet(nn.Module):
                  bn_size=4, drop_rate=0, num_classes=10):
 
         super(DenseNet, self).__init__()
-        self.embDim = 2 * growth_rate
 
         # First convolution
         self.features = nn.Sequential(OrderedDict([
@@ -93,9 +92,12 @@ class DenseNet(nn.Module):
                 self.features.add_module('transition%d' % (i + 1), trans)
                 num_features = num_features // 2
 
+        # Embedding dimension
+        self.embDim = num_features
+        
         # Final batch norm
         self.features.add_module('norm5', nn.BatchNorm2d(num_features))
-
+        
         # Linear layer
         self.classifier = nn.Linear(num_features, num_classes)
 
