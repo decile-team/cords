@@ -21,7 +21,7 @@ from matplotlib import pyplot as plt
 from torch.utils.data.sampler import SubsetRandomSampler
 from cords.selectionstrategies.supervisedlearning import OMPGradMatchStrategy, GLISTERStrategy, RandomStrategy, \
     CRAIGStrategy
-from cords.utils.models import ResNet18, MnistNet
+from cords.utils.models import ResNet18, MnistNet, LogisticRegNet
 from cords.utils.custom_dataset import load_dataset_custom
 from torch.utils.data import random_split, SequentialSampler, BatchSampler, RandomSampler, Subset
 from torch.autograd import Variable
@@ -46,11 +46,13 @@ def model_eval_loss(data_loader, model, criterion):
 """
 
 
-def create_model(name, num_cls, device):
+def create_model(name, num_cls, device, dim=0):
     if name == 'ResNet18':
         model = ResNet18(num_cls)
     elif name == 'MnistNet':
         model = MnistNet()
+    elif name == 'LogisticRegNet':
+        model = LogisticRegNet(dim, num_cls)
     model = model.to(device)
     return model
 
@@ -100,7 +102,9 @@ def train_model(num_epochs, dataset_name, datadir, feature, model_name, fraction
                 device, strategy):
     # Loading the Dataset
     trainset, validset, testset, num_cls = load_dataset_custom(datadir, dataset_name, feature)
+    num_cls = 1
     N = len(trainset)
+    M = trainset.data.shape[1]
     trn_batch_size = 20
     val_batch_size = 1000
     tst_batch_size = 1000
@@ -147,8 +151,8 @@ def train_model(num_epochs, dataset_name, datadir, feature, model_name, fraction
     print(exp_name)
 
     # Model Creation
-    model = create_model(model_name, num_cls, device)
-    model1 = create_model(model_name, num_cls, device)
+    model = create_model(model_name, num_cls, device, M)
+    model1 = create_model(model_name, num_cls, device, M)
     # Loss Functions
     criterion, criterion_nored = loss_function()
 
@@ -385,14 +389,14 @@ def train_model(num_epochs, dataset_name, datadir, feature, model_name, fraction
 """#Training Arguments"""
 
 datadir = '../../data'
-data_name = 'cifar10'
+data_name = 'boston'
 fraction = float(0.05)
-num_epochs = int(300)
+num_epochs = int(200)
 select_every = int(1)
 feature = 'dss'
 num_runs = 1  # number of random runs
 learning_rate = 0.01
-model_name = 'ResNet18'
+model_name = 'LogisticRegNet'
 device = "cuda" if torch.cuda.is_available() else "cpu"
 strategy = "GLISTER"
 print("Using Device:", device)
@@ -401,7 +405,7 @@ print("Using Device:", device)
 
 for run in range(num_runs):
     train_model(num_epochs, data_name, datadir, feature, model_name, fraction, select_every, learning_rate, run, device,
-                'CRAIG')
+                'GLISTER')
     train_model(num_epochs, data_name, datadir, feature, model_name, fraction, select_every, learning_rate, run, device,
                 'CRAIG-Explore')
     # train_model(num_epochs, data_name, datadir, feature, model_name, fraction, select_every, learning_rate, run, device, 'GLISTER-Explore')

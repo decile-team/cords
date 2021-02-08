@@ -8,7 +8,7 @@ from sklearn.preprocessing import StandardScaler
 from torch.utils.data import Dataset, random_split
 from torchvision import transforms
 import PIL.Image as Image
-
+from sklearn.datasets import load_boston
 
 ## Custom PyTorch Dataset Class wrapper
 class CustomDataset(Dataset):
@@ -300,6 +300,26 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False):
             fullset = CustomDataset(torch.from_numpy(x_trn), torch.from_numpy(y_trn))
             valset = CustomDataset(torch.from_numpy(x_val), torch.from_numpy(y_val))
             testset = CustomDataset(torch.from_numpy(x_tst), torch.from_numpy(y_tst))
+        return fullset, valset, testset, num_cls
+
+    elif dset_name == "boston":
+        num_cls = 1
+        x_trn, y_trn = load_boston(return_X_y=True)
+
+        # create train and test indices
+        #train, test = train_test_split(list(range(X.shape[0])), test_size=.3)
+        x_trn, x_tst, y_trn, y_tst = train_test_split(x_trn, y_trn, test_size=0.2, random_state=42)
+        x_trn, x_val, y_trn, y_val = train_test_split(x_trn, y_trn, test_size=0.1, random_state=42)
+        if isnumpy:
+            fullset = (x_trn, y_trn)
+            valset = (x_val, y_val)
+            testset = (x_tst, y_tst)
+
+        else:
+            fullset = CustomDataset(torch.from_numpy(x_trn), torch.from_numpy(y_trn))
+            valset = CustomDataset(torch.from_numpy(x_val), torch.from_numpy(y_val))
+            testset = CustomDataset(torch.from_numpy(x_tst), torch.from_numpy(y_tst))
+
         return fullset, valset, testset, num_cls
 
     elif dset_name == "adult":

@@ -37,4 +37,4 @@ from .shufflenetv2 import ShuffleNetV2
 from .simpleNN_net import TwoLayerNet
 from .simpleNN_net import ThreeLayerNet
 from .vgg import VGG
-
+from .resnet164 import ResNet164
