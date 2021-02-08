@@ -227,7 +227,7 @@ def train_model(num_epochs, dataset_name, datadir, feature, model_name, fraction
 
     print("=======================================", file=logfile)
     kappa_epochs = int(0.5 * num_epochs)
-    full_epochs = floor(kappa_epochs/(int(fraction)*100))
+    full_epochs = floor(kappa_epochs/int(fraction*100))
 
     for i in range(num_epochs):
         subtrn_loss = 0
@@ -484,7 +484,7 @@ print("Using Device:", device)
 """#Training Runs"""
 
 for run in range(num_runs):
-    # train_model(num_epochs, data_name, datadir, feature, model_name, fraction, select_every, learning_rate, run, device, 'CRAIGPB')
+    train_model(num_epochs, data_name, datadir, feature, model_name, fraction, select_every, learning_rate, run, device, 'CRAIGPB')
     train_model(num_epochs, data_name, datadir, feature, model_name, fraction, select_every, learning_rate, run, device,
                 'CRAIGPB-Explore')
     # train_model(num_epochs, data_name, datadir, feature, model_name, fraction, select_every, learning_rate, run, device, 'CRAIG')
