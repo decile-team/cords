@@ -2,8 +2,7 @@
 Reduce end to end training time from days to hours and hours to minutes using coresets and data selection. CORDS implements a number of state of the art data subset selection algorithms and coreset algorithms. Some of the algorithms currently implemented with CORDS include:
 
 - GLISTER [1]
-- GradMatchOMP [2]
-- GradMatchFixed [2] 
+- GradMatch [2]
 - CRAIG [2,3]
 - SubmodularSelection [4,5,6]
   - Facility Location
