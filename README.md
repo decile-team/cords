@@ -1,9 +1,13 @@
 <p align="center">
     <br>
-        <img src="https://github.com/decile-team/cords/tree/main/docs/source/imgs/cords_logo.png" width="400"/>
-        COResets and Data Subset selection
+        &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+        <img src="https://github.com/decile-team/cords/blob/2d78caf54d871976bd703f9fd14e7906264fffa1/docs/source/imgs/cords_logo.png" width="500"/>
+    </br>
     <br>
-<p>
+        <strong> COResets and Data Subset selection </strong>
+    </br>
+</p>
+
 <p align="center">
     <a href="https://github.com/decile-team/cords/blob/main/LICENSE.txt">
         <img alt="GitHub" src="https://img.shields.io/github/license/decile-team/cords?color=blue">
