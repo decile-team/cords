@@ -1,0 +1,52 @@
+---
+#Learning setting
+setting: "supervised_learning"
+
+#Dataset
+dataset:
+  name: "cifar10"
+  datadir: "../../data"
+  feature: "dss"
+  type: "pre-defined"
+
+#Model Settings
+model:
+  architecture: "resnet18"
+  numclasses: 10
+  type: "pre-defined"
+
+#Loss Function
+loss:
+  name: "CrossEntropyLoss"
+
+#Optimizer Setting
+optimizer:
+  algorithm: "sgd"
+    momentum: 0.9
+    lr: 0.01
+    weight_decay: 5e-4
+
+#Learning Rate Scheduler
+scheduler:
+  algorithm: "cosine_annealing"
+    T_max: 300
+
+#Data Selection Strategy
+dss_strategy:
+  algorithm: "GradMatchPB"
+    fraction: 0.1
+    select_every: 20
+
+
+#Training Arguments
+training_args:
+  num_epochs: 300
+  device: "cuda"
+  print_every: "10"
+  log:
+    "val_acc"
+    "trn_acc"
+    "tst_acc"
+
+
+
