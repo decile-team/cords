@@ -42,5 +42,6 @@ training_args:
   num_epochs: 300
   device: "cuda"
   print_every: "10"
+  results_dir: "results/"
   log: ["val_acc", "trn_acc", "tst_acc"]
 

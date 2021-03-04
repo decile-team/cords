@@ -51,14 +51,14 @@ def model_eval_loss(data_loader, model, criterion):
 #Model Creation
 """
 
-def create_model(name, num_cls, device):
-    if name == 'ResNet18':
-        model = ResNet18(num_cls)
-    elif name == 'MnistNet':
+def create_model():
+    if data.model.architecture == 'ResNet18':
+        model = ResNet18(data.model.numclasses)
+    elif data.model.architecture == 'MnistNet':
         model = MnistNet()
-    elif name == 'ResNet164':
-        model = ResNet164(num_cls)
-    model = model.to(device)
+    elif data.model.architecture == 'ResNet164':
+        model = ResNet164(data.model.numclasses)
+    model = model.to(data.training_args.device)
     return model
 
 
@@ -69,13 +69,15 @@ def loss_function():
         criterion_nored = nn.CrossEntropyLoss(reduction='none')
     return criterion, criterion_nored
 
+def optimizer_with_scheduler(model):
+    if data.optimizer.algorithm == 'sgd':
+        optimizer = optim.SGD(model.parameters(), lr=data.optimizer.lr,
+                          momentum=data.optimizer.momentum, weight_decay=data.optimizer.weight_decay)
 
-def optimizer_with_scheduler(model, num_epochs, learning_rate, m=0.9, wd=5e-4):
-    optimizer = optim.SGD(model.parameters(), lr=learning_rate,
-                          momentum=m, weight_decay=wd)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_epochs)
+    if data.scheduler.algorithm == 'cosine_annealing':
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=data.scheduler.T_max)
+
     return optimizer, scheduler
-
 
 def generate_cumulative_timing(mod_timing):
     tmp = 0
@@ -85,10 +87,7 @@ def generate_cumulative_timing(mod_timing):
         mod_cum_timing[i] = tmp
     return mod_cum_timing / 3600
 
-
 from scipy.signal import lfilter
-
-
 def filter(y):
     n = 1  # the larger n is, the smoother curve will be
     b = [1.0 / n] * n
@@ -102,11 +101,10 @@ def filter(y):
 """
 
 
-def train_model(num_epochs, dataset_name, datadir, feature, model_name, fraction, select_every, learning_rate, run,
-                device, strategy):
+def train_model( ):
 
     # Loading the Dataset
-    trainset, validset, testset, num_cls = load_dataset_custom(datadir, dataset_name, feature)
+    trainset, validset, testset, num_cls = load_dataset_custom(data.dataset.datadir, data.dataset.name, data.dataset.feature)
     N = len(trainset)
     trn_batch_size = 20
     val_batch_size = 1000
@@ -123,8 +121,8 @@ def train_model(num_epochs, dataset_name, datadir, feature, model_name, fraction
                                              shuffle=False, pin_memory=True)
 
     # Budget for subset selection
-    bud = int(fraction * N)
-    print("Budget, fraction and N:", bud, fraction, N)
+    bud = int(data.dss_strategy.fraction * N)
+    print("Budget, fraction and N:", bud, data.dss_strategy.fraction, N)
 
     # Subset Selection and creating the subset data loader
     start_idxs = np.random.choice(N, size=bud, replace=False)
@@ -134,13 +132,13 @@ def train_model(num_epochs, dataset_name, datadir, feature, model_name, fraction
                                                    shuffle=False, pin_memory=True)
 
     # Variables to store accuracies
-    gammas = torch.ones(len(idxs)).to(device)
-    substrn_losses = np.zeros(num_epochs)
-    val_losses = np.zeros(num_epochs)
-    timing = np.zeros(num_epochs)
-    val_acc = np.zeros(num_epochs)
-    tst_acc = np.zeros(num_epochs)
-    subtrn_acc = np.zeros(num_epochs)
+    gammas = torch.ones(len(idxs)).to(data.training_args.device)
+    substrn_losses = np.zeros(data.training_args.num_epochs)
+    val_losses = np.zeros(data.training_args.num_epochs)
+    timing = np.zeros(data.training_args.num_epochs)
+    val_acc = np.zeros(data.training_args.num_epochs)
+    tst_acc = np.zeros(data.training_args.num_epochs)
+    subtrn_acc = np.zeros(data.training_args.num_epochs)
 
     # Results logging file
     print_every = 3
