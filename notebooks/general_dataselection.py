@@ -177,14 +177,14 @@ def train_model(num_epochs, dataset_name, datadir, feature, model_name, fraction
         setf_model = CRAIGStrategy(trainloader, valloader, model1, criterion,
                                    device, num_cls, False, False, 'PerBatch')
 
-    elif strategy == 'CRAIG-Explore':
+    elif strategy == 'CRAIG-Warm':
         # CRAIG Selection strategy
         setf_model = CRAIGStrategy(trainloader, valloader, model1, criterion,
                                    device, num_cls, False, False, 'PerClass')
         # Random-Online Selection strategy
         rand_setf_model = RandomStrategy(trainloader, online=True)
 
-    elif strategy == 'CRAIGPB-Explore':
+    elif strategy == 'CRAIGPB-Warm':
         # CRAIG Selection strategy
         setf_model = CRAIGStrategy(trainloader, valloader, model1, criterion,
                                    device, num_cls, False, False, 'PerBatch')
@@ -199,14 +199,14 @@ def train_model(num_epochs, dataset_name, datadir, feature, model_name, fraction
         # Random-Online Selection strategy
         setf_model = RandomStrategy(trainloader, online=True)
 
-    elif strategy == 'GLISTER-Explore':
+    elif strategy == 'GLISTER-Warm':
         # GLISTER Selection strategy
         setf_model = GLISTERStrategy(trainloader, valloader, model1, criterion,
                                      learning_rate, device, num_cls, False, 'Stochastic', r=int(bud))
         # Random-Online Selection strategy
         rand_setf_model = RandomStrategy(trainloader, online=True)
 
-    elif strategy == 'GradMatch-Explore':
+    elif strategy == 'GradMatch-Warm':
         # OMPGradMatch Selection strategy
         setf_model = OMPGradMatchStrategy(trainloader, valloader, model1, criterion,
                                           learning_rate, device, num_cls, True, 'PerClassPerGradient',
@@ -214,7 +214,7 @@ def train_model(num_epochs, dataset_name, datadir, feature, model_name, fraction
         # Random-Online Selection strategy
         rand_setf_model = RandomStrategy(trainloader, online=True)
 
-    elif strategy == 'GradMatchPB-Explore':
+    elif strategy == 'GradMatchPB-Warm':
         # OMPGradMatch Selection strategy
         setf_model = OMPGradMatchStrategy(trainloader, valloader, model1, criterion,
                                           learning_rate, device, num_cls, True, 'PerBatch',
@@ -257,8 +257,8 @@ def train_model(num_epochs, dataset_name, datadir, feature, model_name, fraction
                 gammas = torch.from_numpy(np.array(gammas)).to(device).to(torch.float32)
             subset_selection_time += (time.time() - start_time)
 
-        elif (strategy in ['GLISTER-Explore', 'GradMatch-Explore', 'GradMatchPB-Explore', 'CRAIG-Explore',
-                           'CRAIGPB-Explore']):
+        elif (strategy in ['GLISTER-Warm', 'GradMatch-Warm', 'GradMatchPB-Warm', 'CRAIG-Warm',
+                           'CRAIGPB-Warm']):
             start_time = time.time()
             if i < full_epochs:
                 subset_idxs, gammas = rand_setf_model.select(int(bud))
@@ -267,13 +267,13 @@ def train_model(num_epochs, dataset_name, datadir, feature, model_name, fraction
             elif ((i % select_every == 0) and (i >= kappa_epochs)):
                 cached_state_dict = copy.deepcopy(model.state_dict())
                 clone_dict = copy.deepcopy(model.state_dict())
-                if strategy in ['CRAIG-Explore', 'CRAIGPB-Explore']:
+                if strategy in ['CRAIG-Warm', 'CRAIGPB-Warm']:
                     subset_idxs, gammas = setf_model.select(int(bud), clone_dict, 'lazy')
                 else:
                     subset_idxs, gammas = setf_model.select(int(bud), clone_dict)
                 model.load_state_dict(cached_state_dict)
                 idxs = subset_idxs
-                if strategy in ['GradMatch-Explore', 'GradMatchPB-Explore', 'CRAIG-Explore', 'CRAIGPB-Explore']:
+                if strategy in ['GradMatch-Warm', 'GradMatchPB-Warm', 'CRAIG-Warm', 'CRAIGPB-Warm']:
                     gammas = torch.from_numpy(np.array(gammas)).to(device).to(torch.float32)
             subset_selection_time += (time.time() - start_time)
 
@@ -301,7 +301,7 @@ def train_model(num_epochs, dataset_name, datadir, feature, model_name, fraction
                 subtrn_correct += predicted.eq(targets).sum().item()
             train_time = time.time() - start_time
 
-        elif strategy in ['CRAIGPB-Explore', 'CRAIG-Explore', 'GradMatch-Explore', 'GradMatchPB-Explore']:
+        elif strategy in ['CRAIGPB-Warm', 'CRAIG-Warm', 'GradMatch-Warm', 'GradMatchPB-Warm']:
             start_time = time.time()
             if i < full_epochs:
                 for batch_idx, (inputs, targets) in enumerate(trainloader):
@@ -350,7 +350,7 @@ def train_model(num_epochs, dataset_name, datadir, feature, model_name, fraction
                 subtrn_correct += predicted.eq(targets).sum().item()
             train_time = time.time() - start_time
 
-        elif strategy in ['GLISTER-Explore']:
+        elif strategy in ['GLISTER-Warm']:
             start_time = time.time()
             if i < full_epochs:
                 for batch_idx, (inputs, targets) in enumerate(trainloader):
@@ -483,16 +483,16 @@ print("Using Device:", device)
 for run in range(num_runs):
     #train_model(num_epochs, data_name, datadir, feature, model_name, fraction, select_every, learning_rate, run, device, 'CRAIGPB')
     #train_model(num_epochs, data_name, datadir, feature, model_name, fraction, select_every, learning_rate, run, device,
-    #            'CRAIGPB-Explore')
+    #            'CRAIGPB-Warm')
     # train_model(num_epochs, data_name, datadir, feature, model_name, fraction, select_every, learning_rate, run, device, 'CRAIG')
     #train_model(num_epochs, data_name, datadir, feature, model_name, fraction, select_every, learning_rate, run, device,
-    #            'CRAIG-Explore')
+    #            'CRAIG-Warm')
     #train_model(num_epochs, data_name, datadir, feature, model_name, fraction, select_every, learning_rate, run, device,
-    #            'GLISTER-Explore')
+    #            'GLISTER-Warm')
     #train_model(num_epochs, data_name, datadir, feature, model_name, fraction, select_every, learning_rate, run, device,
-    #            'GradMatch-Explore')
+    #            'GradMatch-Warm')
     #train_model(num_epochs, data_name, datadir, feature, model_name, fraction, select_every, learning_rate, run, device,
-    #            'GradMatchPB-Explore')
+    #            'GradMatchPB-Warm')
     # train_model(num_epochs, data_name, datadir, feature, model_name, fraction, select_every, learning_rate, run, device, 'Random')
     train_model(num_epochs, data_name, datadir, feature, model_name, fraction, select_every, learning_rate, run, device, 'GLISTER')
     # train_model(num_epochs, data_name, datadir, feature, model_name, fraction, select_every, learning_rate, run, device, 'GradMatch')

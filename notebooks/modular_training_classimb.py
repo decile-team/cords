@@ -170,20 +170,20 @@ def train_model(num_epochs, dataset_name, datadir, feature, model_name, fraction
     elif strategy == 'Random-Online':
         #Random-Online Selection strategy
         setf_model = RandomStrategy(trainloader, online=True)
-    elif strategy == 'GLISTER-Explore':
+    elif strategy == 'GLISTER-Warm':
         #GLISTER Selection strategy
         setf_model = GLISTERStrategy(trainloader, valloader, model1, criterion,
                               learning_rate, device, num_cls, False, 'Stochastic', r=int(bud))
         #Random-Online Selection strategy
         rand_setf_model = RandomStrategy(trainloader, online=True)
-    elif strategy == 'GradMatch-Explore':
+    elif strategy == 'GradMatch-Warm':
         #OMPGradMatch Selection strategy
         setf_model = OMPGradMatchStrategy(trainloader, valloader, model1, criterion,
                                 learning_rate, device, num_cls, True, 'PerClassPerGradient',
                                   False, lam=0.5, eps=1e-100)
         #Random-Online Selection strategy
         rand_setf_model = RandomStrategy(trainloader, online=True)
-    elif strategy == 'GradMatchPB-Explore':
+    elif strategy == 'GradMatchPB-Warm':
         #OMPGradMatch Selection strategy
         setf_model = OMPGradMatchStrategy(trainloader, valloader, model1, criterion,
                                 learning_rate, device, num_cls, True, 'PerBatch',
@@ -216,7 +216,7 @@ def train_model(num_epochs, dataset_name, datadir, feature, model_name, fraction
             if strategy in ['GradMatch', 'GradMatchPB']:
                 gammas = torch.from_numpy(np.array(gammas)).to(device).to(torch.float32)
             subset_selection_time += (time.time() - start_time)
-        elif (strategy in ['GLISTER-Explore', 'GradMatch-Explore', 'GradMatchPB-Explore']) :
+        elif (strategy in ['GLISTER-Warm', 'GradMatch-Warm', 'GradMatchPB-Warm']) :
             start_time = time.time()
             if i < 99:
                 subset_idxs, gammas = rand_setf_model.select(int(bud))
@@ -228,7 +228,7 @@ def train_model(num_epochs, dataset_name, datadir, feature, model_name, fraction
                 subset_idxs, gammas = setf_model.select(int(bud), clone_dict)
                 model.load_state_dict(cached_state_dict)
                 idxs = subset_idxs
-                if strategy in ['GradMatch-Explore', 'GradMatchPB-Explore']:
+                if strategy in ['GradMatch-Warm', 'GradMatchPB-Warm']:
                     gammas = torch.from_numpy(np.array(gammas)).to(device).to(torch.float32)
             subset_selection_time += (time.time() - start_time)
 
@@ -239,7 +239,7 @@ def train_model(num_epochs, dataset_name, datadir, feature, model_name, fraction
         
         model.train()
         batch_wise_indices = list(subset_trnloader.batch_sampler)
-        if strategy in ['CRAIG', 'GradMatch', 'GradMatch-Explore', 'GradMatchPB', 'GradMatchPB-Explore']:
+        if strategy in ['CRAIG', 'GradMatch', 'GradMatch-Warm', 'GradMatchPB', 'GradMatchPB-Warm']:
           start_time = time.time()
           for batch_idx, (inputs, targets) in enumerate(subset_trnloader):
               inputs, targets = inputs.to(device), targets.to(device, non_blocking=True) # targets can have non_blocking=True.
@@ -254,7 +254,7 @@ def train_model(num_epochs, dataset_name, datadir, feature, model_name, fraction
               subtrn_total += targets.size(0)
               subtrn_correct += predicted.eq(targets).sum().item()
           train_time = time.time() - start_time
-        elif strategy in ['GLISTER', 'Random', 'Random-Online', 'GLISTER-Explore']:
+        elif strategy in ['GLISTER', 'Random', 'Random-Online', 'GLISTER-Warm']:
           start_time = time.time()
           for batch_idx, (inputs, targets) in enumerate(subset_trnloader):
               inputs, targets = inputs.to(device), targets.to(device, non_blocking=True) # targets can have non_blocking=True.
@@ -368,9 +368,9 @@ print("Using Device:", device)
 """#Training Runs"""
 
 for run in range(num_runs):
-  train_model(num_epochs, data_name, datadir, feature, model_name, fraction, select_every, learning_rate, run, device, 'GLISTER-Explore')
-  train_model(num_epochs, data_name, datadir, feature, model_name, fraction, select_every, learning_rate, run, device, 'GradMatch-Explore')
-  train_model(num_epochs, data_name, datadir, feature, model_name, fraction, select_every, learning_rate, run, device, 'GradMatchPB-Explore')
+  train_model(num_epochs, data_name, datadir, feature, model_name, fraction, select_every, learning_rate, run, device, 'GLISTER-Warm')
+  train_model(num_epochs, data_name, datadir, feature, model_name, fraction, select_every, learning_rate, run, device, 'GradMatch-Warm')
+  train_model(num_epochs, data_name, datadir, feature, model_name, fraction, select_every, learning_rate, run, device, 'GradMatchPB-Warm')
   train_model(num_epochs, data_name, datadir, feature, model_name, fraction, select_every, learning_rate, run, device, 'Random')
   train_model(num_epochs, data_name, datadir, feature, model_name, fraction, select_every, learning_rate, run, device, 'GLISTER')
   train_model(num_epochs, data_name, datadir, feature, model_name, fraction, select_every, learning_rate, run, device, 'GradMatch')

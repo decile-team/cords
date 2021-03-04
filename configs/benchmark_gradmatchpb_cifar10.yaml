@@ -11,7 +11,7 @@ dataset:
 
 #Model Settings
 model:
-  architecture: "resnet18"
+  architecture: "ResNet18"
   numclasses: 10
   type: "pre-defined"
 
@@ -24,7 +24,7 @@ optimizer:
   algorithm: "sgd"
   momentum: 0.9
   lr: 0.01
-  weight_decay: 5e-4
+  weight_decay: 5.e-04
 
 #Learning Rate Scheduler
 scheduler:
@@ -42,6 +42,6 @@ training_args:
   num_epochs: 300
   device: "cuda"
   print_every: "10"
-  results_dir: "results/"
+  results_dir: 'C:\Users\krish\OneDrive - The University of Texas at Dallas\Documents\PyCharmProjects\cords\results'
   log: ["val_acc", "trn_acc", "tst_acc"]
 
