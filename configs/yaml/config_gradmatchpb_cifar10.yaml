@@ -1,0 +1,54 @@
+---
+#Learning setting
+setting: "supervisedlearning"
+
+#Dataset
+dataset:
+  name: "cifar10"
+  datadir: "../../data"
+  feature: "dss"
+  type: "pre-defined"
+
+#DataLoader Settings
+dataloader:
+  shuffle: True
+  batch_size: 20
+  pin_memory: True
+
+#Model Settings
+model:
+  architecture: "ResNet18"
+  numclasses: 10
+  type: "pre-defined"
+
+#Loss Function
+loss:
+  name: "CrossEntropyLoss"
+
+#Optimizer Setting
+optimizer:
+  type: "sgd"
+  momentum: 0.9
+  lr: 0.01
+  weight_decay: 5.e-04
+
+#Learning Rate Scheduler
+scheduler:
+  type: "cosine_annealing"
+  T_max: 300
+
+#Data Selection Strategy
+dss_strategy:
+  type: "GradMatchPB"
+  fraction: 0.1
+  select_every: 20
+
+#Training Arguments
+training_args:
+  num_epochs: 300
+  device: "cuda"
+  print_every: 10
+  results_dir: 'C:\Users\krish\OneDrive - The University of Texas at Dallas\Documents\PyCharmProjects\cords\results'
+  log_args: ["val_loss", "val_acc", "tst_loss", "tst_acc"]
+  return_args: []
+

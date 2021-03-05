@@ -117,7 +117,7 @@ The following results in the table show that training data is reduced significan
 |                      | 5          | 99.282       | 0.08535   |
 |                      | 3          | 99.268       | 0.04533   |
 |                      | 1          | 99.026       | 0.05753   |
-| GradMatch-Explore    | 10         | 99.344       | 0.07969   |
+| GradMatch-Warm    | 10         | 99.344       | 0.07969   |
 |                      | 5          | 99.272       | 0.09255   |
 |                      | 3          | 99.276       | 0.04556   |
 |                      | 1          | 99.134       | 0.05752   |
@@ -125,7 +125,7 @@ The following results in the table show that training data is reduced significan
 |                      | 5          | 99.2         | 0.06756   |
 |                      | 3          | 99.984       | 0.02971   |
 |                      | 1          | 98.524       | 0.03247   |
-| GraddMatchPB-Explore | 10         | 99.28        | 0.06797   |
+| GraddMatchPB-Warm | 10         | 99.28        | 0.06797   |
 |                      | 5          | 99.214       | 0.06202   |
 |                      | 3          | 99.13        | 0.03352   |
 |                      | 1          | 99.754       | 0.02034   |
@@ -155,7 +155,7 @@ The following results in the table show that training data is reduced significan
 |                      | 5          | 89.922       | 0.06145   |
 |                      | 3          | 89.1         | 0.0534    |
 |                      | 1          | 86.47        | 0.05912   |
-| GradMatch-Explore    | 30         | 92.814       | 0.27953   |
+| GradMatch-Warm    | 30         | 92.814       | 0.27953   |
 |                      | 10         | 91.264       | 0.08533   |
 |                      | 5          | 90.744       | 0.06173   |
 |                      | 3          | 90.4484      | 0.05087   |
@@ -165,7 +165,7 @@ The following results in the table show that training data is reduced significan
 |                      | 5          | 91.494       | 0.03887   |
 |                      | 3          | 90.596       | 0.02853   |
 |                      | 1          | 88.092       | 0.0323    |
-| GraddMatchPB-Explore | 30         | 93.294       | 0.29461   |
+| GraddMatchPB-Warm | 30         | 93.294       | 0.29461   |
 |                      | 10         | 92.714       | 0.06553   |
 |                      | 5          | 92.144       | 0.03851   |
 |                      | 3          | 91.352       | 0.02855   |
