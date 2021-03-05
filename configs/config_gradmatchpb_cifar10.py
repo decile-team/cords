@@ -31,7 +31,7 @@ dss_strategy = dict(type = "GradMatchPB",
 train_args = dict(num_epochs=300,
                   device="cuda",
                   print_every = 10,
-                  results_dir = r'C:\Users\krish\OneDrive - The University of Texas at Dallas\Documents\PyCharmProjects\cords\results',
+                  results_dir = r'results',
                   log_args = ["val_loss", "val_acc", "tst_loss", "tst_acc"],
                   return_args = []
                   )
