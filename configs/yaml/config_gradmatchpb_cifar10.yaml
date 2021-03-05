@@ -9,6 +9,12 @@ dataset:
   feature: "dss"
   type: "pre-defined"
 
+#DataLoader Settings
+dataloader:
+  shuffle: True
+  batch_size: 20
+  pin_memory: True
+
 #Model Settings
 model:
   architecture: "ResNet18"
@@ -21,19 +27,19 @@ loss:
 
 #Optimizer Setting
 optimizer:
-  algorithm: "sgd"
+  type: "sgd"
   momentum: 0.9
   lr: 0.01
   weight_decay: 5.e-04
 
 #Learning Rate Scheduler
 scheduler:
-  algorithm: "cosine_annealing"
+  type: "cosine_annealing"
   T_max: 300
 
 #Data Selection Strategy
 dss_strategy:
-  algorithm: "GradMatchPB"
+  type: "GradMatchPB"
   fraction: 0.1
   select_every: 20
 
@@ -41,7 +47,8 @@ dss_strategy:
 training_args:
   num_epochs: 300
   device: "cuda"
-  print_every: "10"
+  print_every: 10
   results_dir: 'C:\Users\krish\OneDrive - The University of Texas at Dallas\Documents\PyCharmProjects\cords\results'
-  log: ["val_acc", "trn_acc", "tst_acc"]
+  log_args: ["val_loss", "val_acc", "tst_loss", "tst_acc"]
+  return_args: []
 

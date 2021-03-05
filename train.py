@@ -32,7 +32,6 @@ if configdata['setting'] == 'supervisedlearning':
     from cords.selectionstrategies.supervisedlearning import *
 elif configdata['setting'] == 'general':
     from cords.selectionstrategies.general import *
-
 """
 Loss Evaluation
 """
