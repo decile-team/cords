@@ -1,9 +1,5 @@
-
-
 #Learning setting
-config = dict(
-
-setting= "supervisedlearning",
+config = dict(setting= "supervisedlearning",
 
 dataset = dict(name="cifar10",
                datadir= "../../data",

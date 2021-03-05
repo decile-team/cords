@@ -1,4 +1,3 @@
-import yaml
 import argparse
 import time
 import datetime
@@ -13,29 +12,27 @@ from cords.utils.models import *
 from cords.utils.custom_dataset import load_dataset_custom
 from torch.utils.data import Subset
 from math import floor
-import subprocess
+from cords.utils.config_utils import load_config_data
+
+
 """
 Argument Parsing
 """
 parser = argparse.ArgumentParser(description='Training arguments')
-parser.add_argument('--config_dir', type=str, default="configs/default_config.yaml",
+parser.add_argument('--config_file', type=str, default="configs/default_config.yaml",
                     help='Config File Location')
 args = parser.parse_args()
 
-"""
-Parsing Config file
-"""
-with open(args.config_dir, 'r') as config_file:
-    configdata = yaml.load(config_file, Loader = yaml.FullLoader)
+configdata = load_config_data(args.config_file)
 
 if configdata['setting'] == 'supervisedlearning':
     from cords.selectionstrategies.supervisedlearning import *
 elif configdata['setting'] == 'general':
     from cords.selectionstrategies.general import *
+
 """
 Loss Evaluation
 """
-
 def model_eval_loss(data_loader, model, criterion):
     total_loss = 0
     with torch.no_grad():
@@ -49,7 +46,6 @@ def model_eval_loss(data_loader, model, criterion):
 """
 #Model Creation
 """
-
 def create_model():
     if configdata['model']['architecture'] == 'ResNet18':
         model = ResNet18(configdata['model']['numclasses'])
@@ -63,17 +59,17 @@ def create_model():
 
 """#Loss Type, Optimizer and Learning Rate Scheduler"""
 def loss_function():
-    if configdata['loss']['name'] == "CrossEntropyLoss":
+    if configdata['loss']['type'] == "CrossEntropyLoss":
         criterion = nn.CrossEntropyLoss()
         criterion_nored = nn.CrossEntropyLoss(reduction='none')
     return criterion, criterion_nored
 
 def optimizer_with_scheduler(model):
-    if configdata['optimizer']['algorithm'] == 'sgd':
+    if configdata['optimizer']['type'] == 'sgd':
         optimizer = optim.SGD(model.parameters(), lr=configdata['optimizer']['lr'],
                               momentum=configdata['optimizer']['momentum'], weight_decay=configdata['optimizer']['weight_decay'])
 
-    if configdata['scheduler']['algorithm'] == 'cosine_annealing':
+    if configdata['scheduler']['type'] == 'cosine_annealing':
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=configdata['scheduler']['T_max'])
     return optimizer, scheduler
 
@@ -126,8 +122,10 @@ print("Budget, fraction and N:", bud, configdata['dss_strategy']['fraction'], N)
 start_idxs = np.random.choice(N, size=bud, replace=False)
 idxs = start_idxs
 data_sub = Subset(trainset, idxs)
-subset_trnloader = torch.utils.data.DataLoader(data_sub, batch_size=trn_batch_size,
-                                               shuffle=False, pin_memory=True)
+subset_trnloader = torch.utils.data.DataLoader(data_sub,
+                                               batch_size=configdata['dataloader']['batch_size'],
+                                               shuffle=configdata['dataloader']['shuffle'],
+                                               pin_memory=configdata['dataloader']['pin_memory'])
 
 # Variables to store accuracies
 gammas = torch.ones(len(idxs)).to(configdata['training_args']['device'])
@@ -139,12 +137,11 @@ tst_acc = np.zeros(configdata['training_args']['num_epochs'])
 subtrn_acc = np.zeros(configdata['training_args']['num_epochs'])
 
 # Results logging file
-print_every = 3
-all_logs_dir = os.path.join(configdata['training_args']['results_dir'],configdata['dss_strategy']['algorithm'], configdata['dataset']['name'], str(
-   configdata['dss_strategy']['fraction']) , str(configdata['dss_strategy']['select_every']))
-print(all_logs_dir)
+print_every = configdata['train_args']['print_every']
+all_logs_dir = os.path.join(configdata['training_args']['results_dir'],configdata['dss_strategy']['type'], configdata['dataset']['name'], str(
+   configdata['dss_strategy']['fraction']), str(configdata['dss_strategy']['select_every']))
+
 os.makedirs(all_logs_dir, exist_ok=True)
-#subprocess.run(["mkdir", "-p", all_logs_dir])
 path_logfile = os.path.join(all_logs_dir, configdata['dataset']['name'] + '.txt')
 logfile = open(path_logfile, 'w')
 
@@ -157,60 +154,60 @@ criterion, criterion_nored = loss_function()
 # Getting the optimizer and scheduler
 optimizer, scheduler = optimizer_with_scheduler(model)
 
-if configdata['dss_strategy']['algorithm'] == 'GradMatch':
+if configdata['dss_strategy']['type'] == 'GradMatch':
     # OMPGradMatch Selection strategy
     setf_model = OMPGradMatchStrategy(trainloader, valloader, model1, criterion,
                                       configdata['optimizer']['lr'], configdata['training_args']['device'], num_cls, True, 'PerClassPerGradient',
                                       False, lam=0.5, eps=1e-100)
-elif configdata['dss_strategy']['algorithm'] == 'GradMatchPB':
+elif configdata['dss_strategy']['type'] == 'GradMatchPB':
     setf_model = OMPGradMatchStrategy(trainloader, valloader, model1, criterion,
                                       configdata['optimizer']['lr'], configdata['training_args']['device'], num_cls, True, 'PerBatch',
                                       False, lam=0, eps=1e-100)
-elif configdata['dss_strategy']['algorithm'] == 'GLISTER':
+elif configdata['dss_strategy']['type'] == 'GLISTER':
     # GLISTER Selection strategy
     setf_model = GLISTERStrategy(trainloader, valloader, model1, criterion_nored,
                                  configdata['optimizer']['lr'], configdata['training_args']['device'], num_cls, False, 'Stochastic', r=int(bud))
 
-elif configdata['dss_strategy']['algorithm'] == 'CRAIG':
+elif configdata['dss_strategy']['type'] == 'CRAIG':
     # CRAIG Selection strategy
     setf_model = CRAIGStrategy(trainloader, valloader, model1, criterion,
                                configdata['training_args']['device'], num_cls, False, False, 'PerClass')
 
-elif configdata['dss_strategy']['algorithm'] == 'CRAIGPB':
+elif configdata['dss_strategy']['type'] == 'CRAIGPB':
     # CRAIG Selection strategy
     setf_model = CRAIGStrategy(trainloader, valloader, model1, criterion,
                                configdata['training_args']['device'], num_cls, False, False, 'PerBatch')
 
-elif configdata['dss_strategy']['algorithm'] == 'CRAIG-Warm':
+elif configdata['dss_strategy']['type'] == 'CRAIG-Warm':
     # CRAIG Selection strategy
     setf_model = CRAIGStrategy(trainloader, valloader, model1, criterion,
                                configdata['training_args']['device'], num_cls, False, False, 'PerClass')
     # Random-Online Selection strategy
     rand_setf_model = RandomStrategy(trainloader, online=True)
 
-elif configdata['dss_strategy']['algorithm'] == 'CRAIGPB-Warm':
+elif configdata['dss_strategy']['type'] == 'CRAIGPB-Warm':
     # CRAIG Selection strategy
     setf_model = CRAIGStrategy(trainloader, valloader, model1, criterion,
                                configdata['training_args']['device'], num_cls, False, False, 'PerBatch')
     # Random-Online Selection strategy
     rand_setf_model = RandomStrategy(trainloader, online=True)
 
-elif configdata['dss_strategy']['algorithm'] == 'Random':
+elif configdata['dss_strategy']['type'] == 'Random':
     # Random Selection strategy
     setf_model = RandomStrategy(trainloader, online=False)
 
-elif configdata['dss_strategy']['algorithm'] == 'Random-Online':
+elif configdata['dss_strategy']['type'] == 'Random-Online':
     # Random-Online Selection strategy
     setf_model = RandomStrategy(trainloader, online=True)
 
-elif configdata['dss_strategy']['algorithm'] == 'GLISTER-Warm':
+elif configdata['dss_strategy']['type'] == 'GLISTER-Warm':
     # GLISTER Selection strategy
     setf_model = GLISTERStrategy(trainloader, valloader, model1, criterion,
                                  configdata['optimizer']['lr'], configdata['training_args']['device'], num_cls, False, 'Stochastic', r=int(bud))
     # Random-Online Selection strategy
     rand_setf_model = RandomStrategy(trainloader, online=True)
 
-elif configdata['dss_strategy']['algorithm'] == 'GradMatch-Warm':
+elif configdata['dss_strategy']['type'] == 'GradMatch-Warm':
     # OMPGradMatch Selection strategy
     setf_model = OMPGradMatchStrategy(trainloader, valloader, model1, criterion,
                                       configdata['optimizer']['lr'], configdata['training_args']['device'], num_cls, True, 'PerClassPerGradient',
@@ -218,7 +215,7 @@ elif configdata['dss_strategy']['algorithm'] == 'GradMatch-Warm':
     # Random-Online Selection strategy
     rand_setf_model = RandomStrategy(trainloader, online=True)
 
-elif configdata['dss_strategy']['algorithm'] == 'GradMatchPB-Warm':
+elif configdata['dss_strategy']['type'] == 'GradMatchPB-Warm':
     # OMPGradMatch Selection strategy
     setf_model = OMPGradMatchStrategy(trainloader, valloader, model1, criterion,
                                       configdata['optimizer']['lr'], configdata['training_args']['device'], num_cls, True, 'PerBatch',
@@ -236,32 +233,32 @@ for i in range(configdata['training_args']['num_epochs']):
     subtrn_total = 0
     subset_selection_time = 0
 
-    if configdata['dss_strategy']['algorithm'] in ['Random-Online']:
+    if configdata['dss_strategy']['type'] in ['Random-Online']:
         start_time = time.time()
         subset_idxs, gammas = setf_model.select(int(bud))
         idxs = subset_idxs
         subset_selection_time += (time.time() - start_time)
         gammas = gammas.to(configdata['training_args']['device'])
 
-    elif configdata['dss_strategy']['algorithm'] in ['Random']:
+    elif configdata['dss_strategy']['type'] in ['Random']:
         pass
 
-    elif (configdata['dss_strategy']['algorithm'] in ['GLISTER', 'GradMatch', 'GradMatchPB', 'CRAIG', 'CRAIGPB']) and (
+    elif (configdata['dss_strategy']['type'] in ['GLISTER', 'GradMatch', 'GradMatchPB', 'CRAIG', 'CRAIGPB']) and (
             ((i + 1) % configdata['dss_strategy']['select_every']) == 0):
         start_time = time.time()
         cached_state_dict = copy.deepcopy(model.state_dict())
         clone_dict = copy.deepcopy(model.state_dict())
-        if configdata['dss_strategy']['algorithm'] in ['CRAIG', 'CRAIGPB']:
+        if configdata['dss_strategy']['type'] in ['CRAIG', 'CRAIGPB']:
             subset_idxs, gammas = setf_model.select(int(bud), clone_dict, 'lazy')
         else:
             subset_idxs, gammas = setf_model.select(int(bud), clone_dict)
         model.load_state_dict(cached_state_dict)
         idxs = subset_idxs
-        if configdata['dss_strategy']['algorithm'] in ['GradMatch', 'GradMatchPB', 'CRAIG', 'CRAIGPB']:
+        if configdata['dss_strategy']['type'] in ['GradMatch', 'GradMatchPB', 'CRAIG', 'CRAIGPB']:
             gammas = torch.from_numpy(np.array(gammas)).to(configdata['training_args']['device']).to(torch.float32)
         subset_selection_time += (time.time() - start_time)
 
-    elif (configdata['dss_strategy']['algorithm'] in ['GLISTER-Warm', 'GradMatch-Warm', 'GradMatchPB-Warm', 'CRAIG-Warm',
+    elif (configdata['dss_strategy']['type'] in ['GLISTER-Warm', 'GradMatch-Warm', 'GradMatchPB-Warm', 'CRAIG-Warm',
                        'CRAIGPB-Warm']):
         start_time = time.time()
         if i < full_epochs:
@@ -271,13 +268,13 @@ for i in range(configdata['training_args']['num_epochs']):
         elif ((i % configdata['dss_strategy']['select_every'] == 0) and (i >= kappa_epochs)):
             cached_state_dict = copy.deepcopy(model.state_dict())
             clone_dict = copy.deepcopy(model.state_dict())
-            if configdata['dss_strategy']['algorithm'] in ['CRAIG-Warm', 'CRAIGPB-Warm']:
+            if configdata['dss_strategy']['type'] in ['CRAIG-Warm', 'CRAIGPB-Warm']:
                 subset_idxs, gammas = setf_model.select(int(bud), clone_dict, 'lazy')
             else:
                 subset_idxs, gammas = setf_model.select(int(bud), clone_dict)
             model.load_state_dict(cached_state_dict)
             idxs = subset_idxs
-            if configdata['dss_strategy']['algorithm'] in ['GradMatch-Warm', 'GradMatchPB-Warm', 'CRAIG-Warm', 'CRAIGPB-Warm']:
+            if configdata['dss_strategy']['type'] in ['GradMatch-Warm', 'GradMatchPB-Warm', 'CRAIG-Warm', 'CRAIGPB-Warm']:
                 gammas = torch.from_numpy(np.array(gammas)).to(configdata['training_args']['device']).to(torch.float32)
         subset_selection_time += (time.time() - start_time)
 
@@ -288,7 +285,7 @@ for i in range(configdata['training_args']['num_epochs']):
 
     model.train()
     batch_wise_indices = list(subset_trnloader.batch_sampler)
-    if configdata['dss_strategy']['algorithm'] in ['CRAIG', 'CRAIGPB', 'GradMatch', 'GradMatchPB']:
+    if configdata['dss_strategy']['type'] in ['CRAIG', 'CRAIGPB', 'GradMatch', 'GradMatchPB']:
         start_time = time.time()
         for batch_idx, (inputs, targets) in enumerate(subset_trnloader):
             inputs, targets = inputs.to(configdata['training_args']['device']), targets.to(configdata['training_args']['device'],
@@ -305,7 +302,7 @@ for i in range(configdata['training_args']['num_epochs']):
             subtrn_correct += predicted.eq(targets).sum().item()
         train_time = time.time() - start_time
 
-    elif configdata['dss_strategy']['algorithm'] in ['CRAIGPB-Warm', 'CRAIG-Warm', 'GradMatch-Warm', 'GradMatchPB-Warm']:
+    elif configdata['dss_strategy']['type'] in ['CRAIGPB-Warm', 'CRAIG-Warm', 'GradMatch-Warm', 'GradMatchPB-Warm']:
         start_time = time.time()
         if i < full_epochs:
             for batch_idx, (inputs, targets) in enumerate(trainloader):
@@ -338,7 +335,7 @@ for i in range(configdata['training_args']['num_epochs']):
                 subtrn_correct += predicted.eq(targets).sum().item()
         train_time = time.time() - start_time
 
-    elif configdata['dss_strategy']['algorithm'] in ['GLISTER', 'Random', 'Random-Online']:
+    elif configdata['dss_strategy']['type'] in ['GLISTER', 'Random', 'Random-Online']:
         start_time = time.time()
         for batch_idx, (inputs, targets) in enumerate(subset_trnloader):
             inputs, targets = inputs.to(configdata['training_args']['device']), targets.to(configdata['training_args']['device'],
@@ -354,7 +351,7 @@ for i in range(configdata['training_args']['num_epochs']):
             subtrn_correct += predicted.eq(targets).sum().item()
         train_time = time.time() - start_time
 
-    elif configdata['dss_strategy']['algorithm'] in ['GLISTER-Warm']:
+    elif configdata['dss_strategy']['type'] in ['GLISTER-Warm']:
         start_time = time.time()
         if i < full_epochs:
             for batch_idx, (inputs, targets) in enumerate(trainloader):
@@ -384,7 +381,7 @@ for i in range(configdata['training_args']['num_epochs']):
                 subtrn_correct += predicted.eq(targets).sum().item()
         train_time = time.time() - start_time
 
-    elif configdata['dss_strategy']['algorithm'] in ['Full']:
+    elif configdata['dss_strategy']['type'] in ['Full']:
         start_time = time.time()
         for batch_idx, (inputs, targets) in enumerate(trainloader):
             inputs, targets = inputs.to(configdata['training_args']['device']), targets.to(configdata['training_args']['device'],
@@ -438,14 +435,14 @@ for i in range(configdata['training_args']['num_epochs']):
     substrn_losses[i] = subtrn_loss
     val_losses[i] = val_loss
     print('Epoch:', i + 1, 'Validation Accuracy: ', val_acc[i], 'Test Accuracy: ', tst_acc[i], 'Time: ', timing[i])
-print(configdata['dss_strategy']['algorithm'] + " Selection Run---------------------------------")
+print(configdata['dss_strategy']['type'] + " Selection Run---------------------------------")
 print("Final SubsetTrn:", subtrn_loss)
 print("Validation Loss and Accuracy:", val_loss, val_acc.max())
 print("Test Data Loss and Accuracy:", tst_loss, tst_acc.max())
 print('-----------------------------------')
 
 # Results logging into the file
-print(configdata['dss_strategy']['algorithm'], file=logfile)
+print(configdata['dss_strategy']['type'], file=logfile)
 print('---------------------------------------------------------------------', file=logfile)
 val = "Validation Accuracy, "
 tst = "Test Accuracy, "
@@ -463,7 +460,7 @@ print(tst, file=logfile)
 omp_timing = np.array(timing)
 omp_cum_timing = list(generate_cumulative_timing(omp_timing))
 omp_tst_acc = list(filter(tst_acc))
-print("Total time taken by " + configdata['dss_strategy']['algorithm'] + " = " + str(omp_cum_timing[-1]))
+print("Total time taken by " + configdata['dss_strategy']['type'] + " = " + str(omp_cum_timing[-1]))
 logfile.close()
 
 
