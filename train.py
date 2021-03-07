@@ -506,42 +506,42 @@ class TrainClassifier:
 
                 print(print_str)
 
-            print(self.configdata['dss_strategy']['type'] + " Selection Run---------------------------------")
-            print("Final SubsetTrn:", subtrn_loss)
-            if "val_loss" in print_args:
-                if "val_acc" in print_args:
-                    print("Validation Loss and Accuracy: ", val_loss, val_acc.max())
-                else:
-                    print("Validation Loss: ", val_loss)
-
-            if "tst_loss" in print_args:
-                if "tst_acc" in print_args:
-                    print("Test Data Loss and Accuracy: ", tst_loss, tst_acc.max())
-                else:
-                    print("Test Data Loss: ", tst_loss)
-            print('-----------------------------------')
-            print(self.configdata['dss_strategy']['type'], file=logfile)
-            print('---------------------------------------------------------------------', file=logfile)
-
+        print(self.configdata['dss_strategy']['type'] + " Selection Run---------------------------------")
+        print("Final SubsetTrn:", subtrn_loss)
+        if "val_loss" in print_args:
             if "val_acc" in print_args:
-                val_str = "Validation Accuracy, "
-                for val in val_acc:
-                    val_str = val_str + " , " + str(val)
-                print(val_str, file=logfile)
+                print("Validation Loss and Accuracy: ", val_loss, val_acc.max())
+            else:
+                print("Validation Loss: ", val_loss)
 
+        if "tst_loss" in print_args:
             if "tst_acc" in print_args:
-                tst_str = "Test Accuracy, "
-                for tst in tst_acc:
-                    tst_str = tst_str + " , " + str(tst)
-                print(tst_str, file=logfile)
+                print("Test Data Loss and Accuracy: ", tst_loss, tst_acc.max())
+            else:
+                print("Test Data Loss: ", tst_loss)
+        print('-----------------------------------')
+        print(self.configdata['dss_strategy']['type'], file=logfile)
+        print('---------------------------------------------------------------------', file=logfile)
 
-            if "time" in print_args:
-                time_str = "Time, "
-                for t in timing:
-                    time_str = time_str + " , " + str(t)
-                print(timing, file=logfile)
+        if "val_acc" in print_args:
+            val_str = "Validation Accuracy, "
+            for val in val_acc:
+                val_str = val_str + " , " + str(val)
+            print(val_str, file=logfile)
 
-            omp_timing = np.array(timing)
-            omp_cum_timing = list(self.generate_cumulative_timing(omp_timing))
-            print("Total time taken by " + self.configdata['dss_strategy']['type'] + " = " + str(omp_cum_timing[-1]))
-            logfile.close()
+        if "tst_acc" in print_args:
+            tst_str = "Test Accuracy, "
+            for tst in tst_acc:
+                tst_str = tst_str + " , " + str(tst)
+            print(tst_str, file=logfile)
+
+        if "time" in print_args:
+            time_str = "Time, "
+            for t in timing:
+                time_str = time_str + " , " + str(t)
+            print(timing, file=logfile)
+
+        omp_timing = np.array(timing)
+        omp_cum_timing = list(self.generate_cumulative_timing(omp_timing))
+        print("Total time taken by " + self.configdata['dss_strategy']['type'] + " = " + str(omp_cum_timing[-1]))
+        logfile.close()
