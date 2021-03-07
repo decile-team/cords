@@ -289,7 +289,7 @@ class TrainClassifier:
                         gammas = torch.from_numpy(np.array(gammas)).to(self.configdata['train_args']['device']).to(torch.float32)
                 subset_selection_time += (time.time() - start_time)
 
-            print("selEpoch: %d, Selection Ended at:" % (i), str(datetime.datetime.now()))
+            #print("selEpoch: %d, Selection Ended at:" % (i), str(datetime.datetime.now()))
             data_sub = Subset(trainset, idxs)
             subset_trnloader = torch.utils.data.DataLoader(data_sub, batch_size=trn_batch_size, shuffle=False,
                                                            pin_memory=True)
