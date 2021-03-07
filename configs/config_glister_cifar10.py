@@ -2,7 +2,7 @@
 config = dict(setting= "supervisedlearning",
 
 dataset = dict(name="cifar10",
-               datadir= "../../data",
+               datadir= "../data",
                feature= "dss",
                type= "pre-defined"),
 
