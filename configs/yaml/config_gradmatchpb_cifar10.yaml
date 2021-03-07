@@ -44,11 +44,11 @@ dss_strategy:
   select_every: 20
 
 #Training Arguments
-training_args:
+train_args:
   num_epochs: 300
   device: "cuda"
   print_every: 10
   results_dir: 'C:\Users\krish\OneDrive - The University of Texas at Dallas\Documents\PyCharmProjects\cords\results'
-  log_args: ["val_loss", "val_acc", "tst_loss", "tst_acc"]
+  print_args: ["val_loss", "val_acc", "tst_loss", "tst_acc"]
   return_args: []
 

@@ -13,6 +13,7 @@ from cords.utils.custom_dataset import load_dataset_custom
 from torch.utils.data import Subset
 from math import floor
 from cords.utils.config_utils import load_config_data
+import os.path as osp
 
 
 """
@@ -37,7 +38,7 @@ def model_eval_loss(data_loader, model, criterion):
     total_loss = 0
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(data_loader):
-            inputs, targets = inputs.to(configdata['training_args']['device']), targets.to(configdata['training_args']['device'], non_blocking=True)
+            inputs, targets = inputs.to(configdata['train_args']['device']), targets.to(configdata['train_args']['device'], non_blocking=True)
             outputs = model(inputs)
             loss = criterion(outputs, targets)
             total_loss += loss.item()
@@ -53,7 +54,7 @@ def create_model():
         model = MnistNet()
     elif configdata['model']['architecture'] == 'ResNet164':
         model = ResNet164(configdata['model']['numclasses'])
-    model = model.to(configdata['training_args']['device'])
+    model = model.to(configdata['train_args']['device'])
     return model
 
 
@@ -128,17 +129,23 @@ subset_trnloader = torch.utils.data.DataLoader(data_sub,
                                                pin_memory=configdata['dataloader']['pin_memory'])
 
 # Variables to store accuracies
-gammas = torch.ones(len(idxs)).to(configdata['training_args']['device'])
-substrn_losses = np.zeros(configdata['training_args']['num_epochs'])
-val_losses = np.zeros(configdata['training_args']['num_epochs'])
-timing = np.zeros(configdata['training_args']['num_epochs'])
-val_acc = np.zeros(configdata['training_args']['num_epochs'])
-tst_acc = np.zeros(configdata['training_args']['num_epochs'])
-subtrn_acc = np.zeros(configdata['training_args']['num_epochs'])
+gammas = torch.ones(len(idxs)).to(configdata['train_args']['device'])
+substrn_losses = list() #np.zeros(configdata['train_args']['num_epochs'])
+trn_losses = list()
+val_losses = list() #np.zeros(configdata['train_args']['num_epochs'])
+tst_losses = list()
+subtrn_losses = list()
+timing = np.zeros(configdata['train_args']['num_epochs'])
+trn_acc = list()
+val_acc = list() #np.zeros(configdata['train_args']['num_epochs'])
+tst_acc = list() #np.zeros(configdata['train_args']['num_epochs'])
+subtrn_acc = list() #np.zeros(configdata['train_args']['num_epochs'])
+
 
 # Results logging file
 print_every = configdata['train_args']['print_every']
-all_logs_dir = os.path.join(configdata['training_args']['results_dir'],configdata['dss_strategy']['type'], configdata['dataset']['name'], str(
+results_dir = osp.abspath(osp.expanduser(configdata['train_args']['results_dir']))
+all_logs_dir = os.path.join(results_dir,configdata['dss_strategy']['type'], configdata['dataset']['name'], str(
    configdata['dss_strategy']['fraction']), str(configdata['dss_strategy']['select_every']))
 
 os.makedirs(all_logs_dir, exist_ok=True)
@@ -148,6 +155,7 @@ logfile = open(path_logfile, 'w')
 # Model Creation
 model = create_model()
 model1 = create_model()
+
 # Loss Functions
 criterion, criterion_nored = loss_function()
 
@@ -157,40 +165,50 @@ optimizer, scheduler = optimizer_with_scheduler(model)
 if configdata['dss_strategy']['type'] == 'GradMatch':
     # OMPGradMatch Selection strategy
     setf_model = OMPGradMatchStrategy(trainloader, valloader, model1, criterion,
-                                      configdata['optimizer']['lr'], configdata['training_args']['device'], num_cls, True, 'PerClassPerGradient',
+                                      configdata['optimizer']['lr'], configdata['train_args']['device'], num_cls, True, 'PerClassPerGradient',
                                       False, lam=0.5, eps=1e-100)
 elif configdata['dss_strategy']['type'] == 'GradMatchPB':
     setf_model = OMPGradMatchStrategy(trainloader, valloader, model1, criterion,
-                                      configdata['optimizer']['lr'], configdata['training_args']['device'], num_cls, True, 'PerBatch',
+                                      configdata['optimizer']['lr'], configdata['train_args']['device'], num_cls, True, 'PerBatch',
                                       False, lam=0, eps=1e-100)
 elif configdata['dss_strategy']['type'] == 'GLISTER':
     # GLISTER Selection strategy
     setf_model = GLISTERStrategy(trainloader, valloader, model1, criterion_nored,
-                                 configdata['optimizer']['lr'], configdata['training_args']['device'], num_cls, False, 'Stochastic', r=int(bud))
+                                 configdata['optimizer']['lr'], configdata['train_args']['device'], num_cls, False, 'Stochastic', r=int(bud))
 
 elif configdata['dss_strategy']['type'] == 'CRAIG':
     # CRAIG Selection strategy
     setf_model = CRAIGStrategy(trainloader, valloader, model1, criterion,
-                               configdata['training_args']['device'], num_cls, False, False, 'PerClass')
+                               configdata['train_args']['device'], num_cls, False, False, 'PerClass')
 
 elif configdata['dss_strategy']['type'] == 'CRAIGPB':
     # CRAIG Selection strategy
     setf_model = CRAIGStrategy(trainloader, valloader, model1, criterion,
-                               configdata['training_args']['device'], num_cls, False, False, 'PerBatch')
+                               configdata['train_args']['device'], num_cls, False, False, 'PerBatch')
 
 elif configdata['dss_strategy']['type'] == 'CRAIG-Warm':
     # CRAIG Selection strategy
     setf_model = CRAIGStrategy(trainloader, valloader, model1, criterion,
-                               configdata['training_args']['device'], num_cls, False, False, 'PerClass')
+                               configdata['train_args']['device'], num_cls, False, False, 'PerClass')
     # Random-Online Selection strategy
-    rand_setf_model = RandomStrategy(trainloader, online=True)
+    #rand_setf_model = RandomStrategy(trainloader, online=True)
+    if configdata['dss_strategy'].has_key('kappa'):
+        kappa_epochs = int(configdata['dss_strategy']['kappa'] * configdata['train_args']['num_epochs'])
+        full_epochs = floor(kappa_epochs / int(configdata['dss_strategy']['fraction'] * 100))
+    else:
+        raise KeyError("Specify a kappa value in the config file")
 
 elif configdata['dss_strategy']['type'] == 'CRAIGPB-Warm':
     # CRAIG Selection strategy
     setf_model = CRAIGStrategy(trainloader, valloader, model1, criterion,
-                               configdata['training_args']['device'], num_cls, False, False, 'PerBatch')
+                               configdata['train_args']['device'], num_cls, False, False, 'PerBatch')
     # Random-Online Selection strategy
-    rand_setf_model = RandomStrategy(trainloader, online=True)
+    #rand_setf_model = RandomStrategy(trainloader, online=True)
+    if configdata['dss_strategy'].has_key('kappa'):
+        kappa_epochs = int(configdata['dss_strategy']['kappa'] * configdata['train_args']['num_epochs'])
+        full_epochs = floor(kappa_epochs / int(configdata['dss_strategy']['fraction'] * 100))
+    else:
+        raise KeyError("Specify a kappa value in the config file")
 
 elif configdata['dss_strategy']['type'] == 'Random':
     # Random Selection strategy
@@ -203,31 +221,44 @@ elif configdata['dss_strategy']['type'] == 'Random-Online':
 elif configdata['dss_strategy']['type'] == 'GLISTER-Warm':
     # GLISTER Selection strategy
     setf_model = GLISTERStrategy(trainloader, valloader, model1, criterion,
-                                 configdata['optimizer']['lr'], configdata['training_args']['device'], num_cls, False, 'Stochastic', r=int(bud))
+                                 configdata['optimizer']['lr'], configdata['train_args']['device'], num_cls, False, 'Stochastic', r=int(bud))
     # Random-Online Selection strategy
-    rand_setf_model = RandomStrategy(trainloader, online=True)
+    #rand_setf_model = RandomStrategy(trainloader, online=True)
+    if configdata['dss_strategy'].has_key('kappa'):
+        kappa_epochs = int(configdata['dss_strategy']['kappa'] * configdata['train_args']['num_epochs'])
+        full_epochs = floor(kappa_epochs / int(configdata['dss_strategy']['fraction'] * 100))
+    else:
+        raise KeyError("Specify a kappa value in the config file")
 
 elif configdata['dss_strategy']['type'] == 'GradMatch-Warm':
     # OMPGradMatch Selection strategy
     setf_model = OMPGradMatchStrategy(trainloader, valloader, model1, criterion,
-                                      configdata['optimizer']['lr'], configdata['training_args']['device'], num_cls, True, 'PerClassPerGradient',
+                                      configdata['optimizer']['lr'], configdata['train_args']['device'], num_cls, True, 'PerClassPerGradient',
                                       False, lam=0.5, eps=1e-100)
     # Random-Online Selection strategy
-    rand_setf_model = RandomStrategy(trainloader, online=True)
+    #rand_setf_model = RandomStrategy(trainloader, online=True)
+    if configdata['dss_strategy'].has_key('kappa'):
+        kappa_epochs = int(configdata['dss_strategy']['kappa'] * configdata['train_args']['num_epochs'])
+        full_epochs = floor(kappa_epochs / int(configdata['dss_strategy']['fraction'] * 100))
+    else:
+        raise KeyError("Specify a kappa value in the config file")
 
 elif configdata['dss_strategy']['type'] == 'GradMatchPB-Warm':
     # OMPGradMatch Selection strategy
     setf_model = OMPGradMatchStrategy(trainloader, valloader, model1, criterion,
-                                      configdata['optimizer']['lr'], configdata['training_args']['device'], num_cls, True, 'PerBatch',
+                                      configdata['optimizer']['lr'], configdata['train_args']['device'], num_cls, True, 'PerBatch',
                                       False, lam=0, eps=1e-100)
     # Random-Online Selection strategy
-    rand_setf_model = RandomStrategy(trainloader, online=True)
+    #rand_setf_model = RandomStrategy(trainloader, online=True)
+    if configdata['dss_strategy'].has_key('kappa'):
+        kappa_epochs = int(configdata['dss_strategy']['kappa'] * configdata['train_args']['num_epochs'])
+        full_epochs = floor(kappa_epochs / int(configdata['dss_strategy']['fraction'] * 100))
+    else:
+        raise KeyError("Specify a kappa value in the config file")
 
 print("=======================================", file=logfile)
-kappa_epochs = int(0.5 * configdata['training_args']['num_epochs'])
-full_epochs = floor(kappa_epochs / int(configdata['dss_strategy']['fraction'] * 100))
 
-for i in range(configdata['training_args']['num_epochs']):
+for i in range(configdata['train_args']['num_epochs']):
     subtrn_loss = 0
     subtrn_correct = 0
     subtrn_total = 0
@@ -238,7 +269,7 @@ for i in range(configdata['training_args']['num_epochs']):
         subset_idxs, gammas = setf_model.select(int(bud))
         idxs = subset_idxs
         subset_selection_time += (time.time() - start_time)
-        gammas = gammas.to(configdata['training_args']['device'])
+        gammas = gammas.to(configdata['train_args']['device'])
 
     elif configdata['dss_strategy']['type'] in ['Random']:
         pass
@@ -255,17 +286,14 @@ for i in range(configdata['training_args']['num_epochs']):
         model.load_state_dict(cached_state_dict)
         idxs = subset_idxs
         if configdata['dss_strategy']['type'] in ['GradMatch', 'GradMatchPB', 'CRAIG', 'CRAIGPB']:
-            gammas = torch.from_numpy(np.array(gammas)).to(configdata['training_args']['device']).to(torch.float32)
+            gammas = torch.from_numpy(np.array(gammas)).to(configdata['train_args']['device']).to(torch.float32)
         subset_selection_time += (time.time() - start_time)
 
     elif (configdata['dss_strategy']['type'] in ['GLISTER-Warm', 'GradMatch-Warm', 'GradMatchPB-Warm', 'CRAIG-Warm',
                        'CRAIGPB-Warm']):
         start_time = time.time()
-        if i < full_epochs:
-            subset_idxs, gammas = rand_setf_model.select(int(bud))
-            idxs = subset_idxs
-            gammas = gammas.to(configdata['training_args']['device'])
-        elif ((i % configdata['dss_strategy']['select_every'] == 0) and (i >= kappa_epochs)):
+
+        if ((i % configdata['dss_strategy']['select_every'] == 0) and (i >= kappa_epochs)):
             cached_state_dict = copy.deepcopy(model.state_dict())
             clone_dict = copy.deepcopy(model.state_dict())
             if configdata['dss_strategy']['type'] in ['CRAIG-Warm', 'CRAIGPB-Warm']:
@@ -275,7 +303,7 @@ for i in range(configdata['training_args']['num_epochs']):
             model.load_state_dict(cached_state_dict)
             idxs = subset_idxs
             if configdata['dss_strategy']['type'] in ['GradMatch-Warm', 'GradMatchPB-Warm', 'CRAIG-Warm', 'CRAIGPB-Warm']:
-                gammas = torch.from_numpy(np.array(gammas)).to(configdata['training_args']['device']).to(torch.float32)
+                gammas = torch.from_numpy(np.array(gammas)).to(configdata['train_args']['device']).to(torch.float32)
         subset_selection_time += (time.time() - start_time)
 
     print("selEpoch: %d, Selection Ended at:" % (i), str(datetime.datetime.now()))
@@ -288,7 +316,7 @@ for i in range(configdata['training_args']['num_epochs']):
     if configdata['dss_strategy']['type'] in ['CRAIG', 'CRAIGPB', 'GradMatch', 'GradMatchPB']:
         start_time = time.time()
         for batch_idx, (inputs, targets) in enumerate(subset_trnloader):
-            inputs, targets = inputs.to(configdata['training_args']['device']), targets.to(configdata['training_args']['device'],
+            inputs, targets = inputs.to(configdata['train_args']['device']), targets.to(configdata['train_args']['device'],
                                                                                            non_blocking=True)  # targets can have non_blocking=True.
             optimizer.zero_grad()
             outputs = model(inputs)
@@ -306,7 +334,7 @@ for i in range(configdata['training_args']['num_epochs']):
         start_time = time.time()
         if i < full_epochs:
             for batch_idx, (inputs, targets) in enumerate(trainloader):
-                inputs, targets = inputs.to(configdata['training_args']['device']), targets.to(configdata['training_args']['device'],
+                inputs, targets = inputs.to(configdata['train_args']['device']), targets.to(configdata['train_args']['device'],
                                                                                                non_blocking=True)  # targets can have non_blocking=True.
                 optimizer.zero_grad()
                 outputs = model(inputs)
@@ -320,7 +348,7 @@ for i in range(configdata['training_args']['num_epochs']):
 
         elif i >= kappa_epochs:
             for batch_idx, (inputs, targets) in enumerate(subset_trnloader):
-                inputs, targets = inputs.to(configdata['training_args']['device']), targets.to(configdata['training_args']['device'],
+                inputs, targets = inputs.to(configdata['train_args']['device']), targets.to(configdata['train_args']['device'],
                                                                                                non_blocking=True)  # targets can have non_blocking=True.
                 optimizer.zero_grad()
                 outputs = model(inputs)
@@ -338,7 +366,7 @@ for i in range(configdata['training_args']['num_epochs']):
     elif configdata['dss_strategy']['type'] in ['GLISTER', 'Random', 'Random-Online']:
         start_time = time.time()
         for batch_idx, (inputs, targets) in enumerate(subset_trnloader):
-            inputs, targets = inputs.to(configdata['training_args']['device']), targets.to(configdata['training_args']['device'],
+            inputs, targets = inputs.to(configdata['train_args']['device']), targets.to(configdata['train_args']['device'],
                                                                                            non_blocking=True)  # targets can have non_blocking=True.
             optimizer.zero_grad()
             outputs = model(inputs)
@@ -355,7 +383,7 @@ for i in range(configdata['training_args']['num_epochs']):
         start_time = time.time()
         if i < full_epochs:
             for batch_idx, (inputs, targets) in enumerate(trainloader):
-                inputs, targets = inputs.to(configdata['training_args']['device']), targets.to(configdata['training_args']['device'],
+                inputs, targets = inputs.to(configdata['train_args']['device']), targets.to(configdata['train_args']['device'],
                                                                                                non_blocking=True)  # targets can have non_blocking=True.
                 optimizer.zero_grad()
                 outputs = model(inputs)
@@ -368,7 +396,7 @@ for i in range(configdata['training_args']['num_epochs']):
                 subtrn_correct += predicted.eq(targets).sum().item()
         elif i >= kappa_epochs:
             for batch_idx, (inputs, targets) in enumerate(subset_trnloader):
-                inputs, targets = inputs.to(configdata['training_args']['device']), targets.to(configdata['training_args']['device'],
+                inputs, targets = inputs.to(configdata['train_args']['device']), targets.to(configdata['train_args']['device'],
                                                                                                non_blocking=True)  # targets can have non_blocking=True.
                 optimizer.zero_grad()
                 outputs = model(inputs)
@@ -384,7 +412,7 @@ for i in range(configdata['training_args']['num_epochs']):
     elif configdata['dss_strategy']['type'] in ['Full']:
         start_time = time.time()
         for batch_idx, (inputs, targets) in enumerate(trainloader):
-            inputs, targets = inputs.to(configdata['training_args']['device']), targets.to(configdata['training_args']['device'],
+            inputs, targets = inputs.to(configdata['train_args']['device']), targets.to(configdata['train_args']['device'],
                                                                                            non_blocking=True)  # targets can have non_blocking=True.
             optimizer.zero_grad()
             outputs = model(inputs)
@@ -398,69 +426,133 @@ for i in range(configdata['training_args']['num_epochs']):
         train_time = time.time() - start_time
     scheduler.step()
     timing[i] = train_time + subset_selection_time
+    print_args = configdata['train_args']['print_args']
     # print("Epoch timing is: " + str(timing[i]))
+    if (i % configdata['train_args']['print_every'] == 0):
+        trn_loss = 0
+        trn_correct = 0
+        trn_total = 0
+        val_loss = 0
+        val_correct = 0
+        val_total = 0
+        tst_correct = 0
+        tst_total = 0
+        tst_loss = 0
+        model.eval()
 
-    val_loss = 0
-    val_correct = 0
-    val_total = 0
-    tst_correct = 0
-    tst_total = 0
-    tst_loss = 0
-    model.eval()
+        if "trn_loss" in print_args:
+            with torch.no_grad():
+                for batch_idx, (inputs, targets) in enumerate(trainloader):
+                    # print(batch_idx)
+                    inputs, targets = inputs.to(configdata['train_args']['device']), targets.to(configdata['train_args']['device'], non_blocking=True)
+                    outputs = model(inputs)
+                    loss = criterion(outputs, targets)
+                    trn_loss += loss.item()
+                    trn_losses.append(trn_loss)
+                    if "trn_acc" in print_args:
+                        _, predicted = outputs.max(1)
+                        trn_total += targets.size(0)
+                        trn_correct += predicted.eq(targets).sum().item()
+                        trn_acc.append(trn_correct / trn_total)
 
-    with torch.no_grad():
-        for batch_idx, (inputs, targets) in enumerate(valloader):
-            # print(batch_idx)
-            inputs, targets = inputs.to(configdata['training_args']['device']), targets.to(configdata['training_args']['device'], non_blocking=True)
-            outputs = model(inputs)
-            loss = criterion(outputs, targets)
-            val_loss += loss.item()
-            _, predicted = outputs.max(1)
-            val_total += targets.size(0)
-            val_correct += predicted.eq(targets).sum().item()
+        if "val_loss" in print_args:
+            with torch.no_grad():
+                for batch_idx, (inputs, targets) in enumerate(valloader):
+                    # print(batch_idx)
+                    inputs, targets = inputs.to(configdata['train_args']['device']), targets.to(configdata['train_args']['device'], non_blocking=True)
+                    outputs = model(inputs)
+                    loss = criterion(outputs, targets)
+                    val_loss += loss.item()
+                    val_losses.append(val_loss)
+                    if "val_acc" in print_args:
+                        _, predicted = outputs.max(1)
+                        val_total += targets.size(0)
+                        val_correct += predicted.eq(targets).sum().item()
+                        val_acc.append(val_correct / val_total)
 
-        for batch_idx, (inputs, targets) in enumerate(testloader):
-            # print(batch_idx)
-            inputs, targets = inputs.to(configdata['training_args']['device']), targets.to(configdata['training_args']['device'], non_blocking=True)
-            outputs = model(inputs)
-            loss = criterion(outputs, targets)
-            tst_loss += loss.item()
-            _, predicted = outputs.max(1)
-            tst_total += targets.size(0)
-            tst_correct += predicted.eq(targets).sum().item()
+        if "tst_loss" in print_args:
+            for batch_idx, (inputs, targets) in enumerate(testloader):
+                # print(batch_idx)
+                inputs, targets = inputs.to(configdata['train_args']['device']), targets.to(configdata['train_args']['device'], non_blocking=True)
+                outputs = model(inputs)
+                loss = criterion(outputs, targets)
+                tst_loss += loss.item()
+                tst_losses.append(tst_loss)
+                if "tst_acc" in print_args:
+                    _, predicted = outputs.max(1)
+                    tst_total += targets.size(0)
+                    tst_correct += predicted.eq(targets).sum().item()
+                    tst_acc.append(tst_correct/tst_total)
 
-    val_acc[i] = val_correct / val_total
-    tst_acc[i] = tst_correct / tst_total
-    subtrn_acc[i] = subtrn_correct / subtrn_total
-    substrn_losses[i] = subtrn_loss
-    val_losses[i] = val_loss
-    print('Epoch:', i + 1, 'Validation Accuracy: ', val_acc[i], 'Test Accuracy: ', tst_acc[i], 'Time: ', timing[i])
-print(configdata['dss_strategy']['type'] + " Selection Run---------------------------------")
-print("Final SubsetTrn:", subtrn_loss)
-print("Validation Loss and Accuracy:", val_loss, val_acc.max())
-print("Test Data Loss and Accuracy:", tst_loss, tst_acc.max())
-print('-----------------------------------')
+        if "subtrn_acc" in print_args:
+            subtrn_acc.append(subtrn_correct / subtrn_total)
 
-# Results logging into the file
-print(configdata['dss_strategy']['type'], file=logfile)
-print('---------------------------------------------------------------------', file=logfile)
-val = "Validation Accuracy, "
-tst = "Test Accuracy, "
-time_str = "Time, "
+        if "subtrn_losses" in print_args:
+            subtrn_losses.append(subtrn_loss)
 
-for i in range(configdata['dss_strategy']['num_epochs']):
-    time_str = time_str + "," + str(timing[i])
-    val = val + "," + str(val_acc[i])
-    tst = tst + "," + str(tst_acc[i])
+        print_str = "Epoch: " + str(i+1)
 
-print(timing, file=logfile)
-print(val, file=logfile)
-print(tst, file=logfile)
+        for arg in print_args:
 
-omp_timing = np.array(timing)
-omp_cum_timing = list(generate_cumulative_timing(omp_timing))
-omp_tst_acc = list(filter(tst_acc))
-print("Total time taken by " + configdata['dss_strategy']['type'] + " = " + str(omp_cum_timing[-1]))
-logfile.close()
+            if arg == "val_loss":
+                print_str += " , " + "Validation Loss: " + val_losses[-1]
+
+            if arg == "val_acc":
+                print_str += " , " + "Validation Accuracy: " + val_acc[-1]
+
+            if arg == "tst_loss":
+                print_str += " , " + "Test Loss: " + tst_losses[-1]
+
+            if arg == "tst_acc":
+                print_str += " , " + "Test Accuracy: " + tst_acc[-1]
+
+            if arg == "trn_loss":
+                print_str += " , " + "Training Loss: " + trn_losses[-1]
+
+            if arg == "trn_acc":
+                print_str += " , " + "Training Accuracy: " + trn_acc[-1]
+
+            if arg == "subtrn_loss":
+                print_str += " , " + "Subset Loss: " + subtrn_losses[-1]
+
+            if arg == "subtrn_acc":
+                print_str += " , " + "Subset Accuracy: " + subtrn_acc[-1]
+
+            if arg == "time":
+                print_str += " , " + "Timing: " + timing[i]
+
+        print(print_str)
+
+    print(configdata['dss_strategy']['type'] + " Selection Run---------------------------------")
+    print("Final SubsetTrn:", subtrn_loss)
+    print("Validation Loss and Accuracy:", val_loss, val_acc.max())
+    print("Test Data Loss and Accuracy:", tst_loss, tst_acc.max())
+    print('-----------------------------------')
+
+    # Results logging into the file
+    print(configdata['dss_strategy']['type'], file=logfile)
+    print('---------------------------------------------------------------------', file=logfile)
+    val_str = "Validation Accuracy, "
+    tst_str = "Test Accuracy, "
+    time_str = "Time, "
+
+    for time in timing:
+        time_str = time_str + " , " + str(time)
+
+    for val in val_acc:
+        val_str = val_str + " , " + str(val)
+
+    for tst in tst_acc:
+        tst_str = tst_str + " , " + str(tst)
+
+    print(timing, file=logfile)
+    print(val_str, file=logfile)
+    print(tst_str, file=logfile)
+
+    omp_timing = np.array(timing)
+    omp_cum_timing = list(generate_cumulative_timing(omp_timing))
+    #omp_tst_acc = list(filter(tst_acc))
+    print("Total time taken by " + configdata['dss_strategy']['type'] + " = " + str(omp_cum_timing[-1]))
+    logfile.close()
 
 

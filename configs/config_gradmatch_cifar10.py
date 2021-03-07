@@ -25,7 +25,7 @@ optimizer = dict(type="sgd",
 scheduler = dict(type = "cosine_annealing",
                  T_max = 300),
 
-dss_strategy = dict(type = "GradMatchPB",
+dss_strategy = dict(type = "GradMatch",
                     fraction = 0.1,
                     select_every = 20),
 
