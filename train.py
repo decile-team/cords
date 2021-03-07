@@ -177,7 +177,7 @@ class TrainClassifier:
             #rand_setf_model = RandomStrategy(trainloader, online=True)
             if 'kappa' in self.configdata['dss_strategy']:
                 kappa_epochs = int(self.configdata['dss_strategy']['kappa'] * self.configdata['train_args']['num_epochs'])
-                full_epochs = round(kappa_epochs * int(self.configdata['dss_strategy']['fraction']))
+                full_epochs = round(kappa_epochs * self.configdata['dss_strategy']['fraction'])
             else:
                 raise KeyError("Specify a kappa value in the config file")
 
@@ -189,7 +189,7 @@ class TrainClassifier:
             #rand_setf_model = RandomStrategy(trainloader, online=True)
             if 'kappa' in self.configdata['dss_strategy']:
                 kappa_epochs = int(self.configdata['dss_strategy']['kappa'] * self.configdata['train_args']['num_epochs'])
-                full_epochs = round(kappa_epochs * int(self.configdata['dss_strategy']['fraction']))
+                full_epochs = round(kappa_epochs * self.configdata['dss_strategy']['fraction'])
             else:
                 raise KeyError("Specify a kappa value in the config file")
 
@@ -209,7 +209,7 @@ class TrainClassifier:
             #rand_setf_model = RandomStrategy(trainloader, online=True)
             if 'kappa' in self.configdata['dss_strategy']:
                 kappa_epochs = int(self.configdata['dss_strategy']['kappa'] * self.configdata['train_args']['num_epochs'])
-                full_epochs = round(kappa_epochs * int(self.configdata['dss_strategy']['fraction']))
+                full_epochs = round(kappa_epochs * self.configdata['dss_strategy']['fraction'])
             else:
                 raise KeyError("Specify a kappa value in the config file")
 
@@ -222,7 +222,7 @@ class TrainClassifier:
             #rand_setf_model = RandomStrategy(trainloader, online=True)
             if 'kappa' in self.configdata['dss_strategy']:
                 kappa_epochs = int(self.configdata['dss_strategy']['kappa'] * self.configdata['train_args']['num_epochs'])
-                full_epochs = round(kappa_epochs * int(self.configdata['dss_strategy']['fraction']))
+                full_epochs = round(kappa_epochs * self.configdata['dss_strategy']['fraction'])
             else:
                 raise KeyError("Specify a kappa value in the config file")
 
@@ -235,7 +235,7 @@ class TrainClassifier:
             #rand_setf_model = RandomStrategy(trainloader, online=True)
             if 'kappa' in self.configdata['dss_strategy']:
                 kappa_epochs = int(self.configdata['dss_strategy']['kappa'] * self.configdata['train_args']['num_epochs'])
-                full_epochs = round(kappa_epochs * int(self.configdata['dss_strategy']['fraction']))
+                full_epochs = round(kappa_epochs * self.configdata['dss_strategy']['fraction'])
             else:
                 raise KeyError("Specify a kappa value in the config file")
 
