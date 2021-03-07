@@ -510,13 +510,13 @@ class TrainClassifier:
         print("Final SubsetTrn:", subtrn_loss)
         if "val_loss" in print_args:
             if "val_acc" in print_args:
-                print("Validation Loss and Accuracy: ", val_loss, val_acc.max())
+                print("Validation Loss and Accuracy: ", val_loss, np.array(val_acc).max())
             else:
                 print("Validation Loss: ", val_loss)
 
         if "tst_loss" in print_args:
             if "tst_acc" in print_args:
-                print("Test Data Loss and Accuracy: ", tst_loss, tst_acc.max())
+                print("Test Data Loss and Accuracy: ", tst_loss, np.array(tst_acc).max())
             else:
                 print("Test Data Loss: ", tst_loss)
         print('-----------------------------------')
