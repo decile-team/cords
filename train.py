@@ -175,7 +175,7 @@ class TrainClassifier:
                                        self.configdata['train_args']['device'], num_cls, False, False, 'PerClass')
             # Random-Online Selection strategy
             #rand_setf_model = RandomStrategy(trainloader, online=True)
-            if self.configdata['dss_strategy'].has_key('kappa'):
+            if 'kappa' in self.configdata['dss_strategy']:
                 kappa_epochs = int(self.configdata['dss_strategy']['kappa'] * self.configdata['train_args']['num_epochs'])
                 full_epochs = floor(kappa_epochs / int(self.configdata['dss_strategy']['fraction'] * 100))
             else:
@@ -187,7 +187,7 @@ class TrainClassifier:
                                        self.configdata['train_args']['device'], num_cls, False, False, 'PerBatch')
             # Random-Online Selection strategy
             #rand_setf_model = RandomStrategy(trainloader, online=True)
-            if self.configdata['dss_strategy'].has_key('kappa'):
+            if 'kappa' in self.configdata['dss_strategy']:
                 kappa_epochs = int(self.configdata['dss_strategy']['kappa'] * self.configdata['train_args']['num_epochs'])
                 full_epochs = floor(kappa_epochs / int(self.configdata['dss_strategy']['fraction'] * 100))
             else:
@@ -207,7 +207,7 @@ class TrainClassifier:
                                          self.configdata['optimizer']['lr'], self.configdata['train_args']['device'], num_cls, False, 'Stochastic', r=int(bud))
             # Random-Online Selection strategy
             #rand_setf_model = RandomStrategy(trainloader, online=True)
-            if self.configdata['dss_strategy'].has_key('kappa'):
+            if 'kappa' in self.configdata['dss_strategy']:
                 kappa_epochs = int(self.configdata['dss_strategy']['kappa'] * self.configdata['train_args']['num_epochs'])
                 full_epochs = floor(kappa_epochs / int(self.configdata['dss_strategy']['fraction'] * 100))
             else:
@@ -220,7 +220,7 @@ class TrainClassifier:
                                               False, lam=0.5, eps=1e-100)
             # Random-Online Selection strategy
             #rand_setf_model = RandomStrategy(trainloader, online=True)
-            if self.configdata['dss_strategy'].has_key('kappa'):
+            if 'kappa' in self.configdata['dss_strategy']:
                 kappa_epochs = int(self.configdata['dss_strategy']['kappa'] * self.configdata['train_args']['num_epochs'])
                 full_epochs = floor(kappa_epochs / int(self.configdata['dss_strategy']['fraction'] * 100))
             else:
@@ -233,7 +233,7 @@ class TrainClassifier:
                                               False, lam=0, eps=1e-100)
             # Random-Online Selection strategy
             #rand_setf_model = RandomStrategy(trainloader, online=True)
-            if self.configdata['dss_strategy'].has_key('kappa'):
+            if 'kappa' in self.configdata['dss_strategy']:
                 kappa_epochs = int(self.configdata['dss_strategy']['kappa'] * self.configdata['train_args']['num_epochs'])
                 full_epochs = floor(kappa_epochs / int(self.configdata['dss_strategy']['fraction'] * 100))
             else:
