@@ -411,7 +411,7 @@ class TrainClassifier:
             timing[i] = train_time + subset_selection_time
             print_args = self.configdata['train_args']['print_args']
             # print("Epoch timing is: " + str(timing[i]))
-            if (i % self.configdata['train_args']['print_every'] == 0):
+            if ((i+1) % self.configdata['train_args']['print_every'] == 0):
                 trn_loss = 0
                 trn_correct = 0
                 trn_total = 0
@@ -478,41 +478,48 @@ class TrainClassifier:
                 for arg in print_args:
 
                     if arg == "val_loss":
-                        print_str += " , " + "Validation Loss: " + val_losses[-1]
+                        print_str += " , " + "Validation Loss: " + str(val_losses[-1])
 
                     if arg == "val_acc":
-                        print_str += " , " + "Validation Accuracy: " + val_acc[-1]
+                        print_str += " , " + "Validation Accuracy: " + str(val_acc[-1])
 
                     if arg == "tst_loss":
-                        print_str += " , " + "Test Loss: " + tst_losses[-1]
+                        print_str += " , " + "Test Loss: " + str(tst_losses[-1])
 
                     if arg == "tst_acc":
-                        print_str += " , " + "Test Accuracy: " + tst_acc[-1]
+                        print_str += " , " + "Test Accuracy: " + str(tst_acc[-1])
 
                     if arg == "trn_loss":
-                        print_str += " , " + "Training Loss: " + trn_losses[-1]
+                        print_str += " , " + "Training Loss: " + str(trn_losses[-1])
 
                     if arg == "trn_acc":
-                        print_str += " , " + "Training Accuracy: " + trn_acc[-1]
+                        print_str += " , " + "Training Accuracy: " + str(trn_acc[-1])
 
                     if arg == "subtrn_loss":
-                        print_str += " , " + "Subset Loss: " + subtrn_losses[-1]
+                        print_str += " , " + "Subset Loss: " + str(subtrn_losses[-1])
 
                     if arg == "subtrn_acc":
-                        print_str += " , " + "Subset Accuracy: " + subtrn_acc[-1]
+                        print_str += " , " + "Subset Accuracy: " + str(subtrn_acc[-1])
 
                     if arg == "time":
-                        print_str += " , " + "Timing: " + timing[i]
+                        print_str += " , " + "Timing: " + str(timing[i])
 
                 print(print_str)
 
             print(self.configdata['dss_strategy']['type'] + " Selection Run---------------------------------")
             print("Final SubsetTrn:", subtrn_loss)
-            print("Validation Loss and Accuracy:", val_loss, val_acc.max())
-            print("Test Data Loss and Accuracy:", tst_loss, tst_acc.max())
-            print('-----------------------------------')
+            if "val_loss" in print_args:
+                if "val_acc" in print_args:
+                    print("Validation Loss and Accuracy: ", val_loss, val_acc.max())
+                else:
+                    print("Validation Loss: ", val_loss)
 
-            # Results logging into the file
+            if "tst_loss" in print_args:
+                if "tst_acc" in print_args:
+                    print("Test Data Loss and Accuracy: ", tst_loss, tst_acc.max())
+                else:
+                    print("Test Data Loss: ", tst_loss)
+            print('-----------------------------------')
             print(self.configdata['dss_strategy']['type'], file=logfile)
             print('---------------------------------------------------------------------', file=logfile)
 
@@ -538,5 +545,3 @@ class TrainClassifier:
             omp_cum_timing = list(self.generate_cumulative_timing(omp_timing))
             print("Total time taken by " + self.configdata['dss_strategy']['type'] + " = " + str(omp_cum_timing[-1]))
             logfile.close()
-
-
