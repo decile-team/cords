@@ -97,9 +97,6 @@ The below link contains the jupyter notebook link for cifar10 timing analysis ex
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg) CIFAR10 Notebook](https://colab.research.google.com/drive/1xT6sGmDGMz8XBDmOKs5cl1cipX0Ss1sh?usp=sharing)
 
-Results for running the benchmark on the different datasets for each strategy with different budgets for 300 epochs. The accuracy and cumulative time are calculated after 300 epochs.
-The following results in the table show that training data is reduced significantly compared to training with full dataset with very less reduction in accuracy.
-
 ## Publications
 
 [1] Krishnateja Killamsetty, Durga Sivasubramanian, Ganesh Ramakrishnan, and Rishabh Iyer, [GLISTER: Generalization based Data Subset Selection for Efficient and Robust Learning](https://arxiv.org/abs/2012.10630), 35th AAAI Conference on Artificial Intelligence, AAAI 2021
