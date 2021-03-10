@@ -27,7 +27,7 @@
 </p>
 
 <h3 align="center">
-<p>Reduce end to end training time from days to hours and hours to minutes using coresets and data selection.
+<p>Reduce end to end training time from days to hours (or hours to minutes), and energy requirements/costs by an order of magnitude using coresets and data selection.
 </h3>
 
 
