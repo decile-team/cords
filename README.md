@@ -1,7 +1,7 @@
 <p align="center">
     <br>
         &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
-        <img src="https://github.com/decile-team/cords/blob/main/docs/source/imgs/cords_logo.jpg" width="500"/>
+        <img src="https://github.com/decile-team/cords/blob/main/docs/source/imgs/cords_logo.png" width="500"/>
     </br>
     <br>
         <strong> COResets and Data Subset selection </strong>
