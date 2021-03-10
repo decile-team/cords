@@ -39,7 +39,7 @@
     - [Installing from source](#installing-from-source)
 - [Documentation](#documentation)
 - [Tutorials](#tutorials)
-- [Benchmarking Results](#benchmarking-results)
+- [Results](#results)
 - [Publications](#publications)
 
 
@@ -100,11 +100,33 @@ Here are some [tutorials](https://github.com/decile-team/cords/tree/main/noteboo
 - [Random Selection](https://github.com/decile-team/cords/blob/main/notebooks/tutorial_random.ipynb)
 
 
-## Benchmarking results
+## Results
 
 The below link contains the jupyter notebook link for cifar10 timing analysis experiments
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg) CIFAR10 Notebook](https://colab.research.google.com/drive/1xT6sGmDGMz8XBDmOKs5cl1cipX0Ss1sh?usp=sharing)
+
+Results are obtained by running each strategy with different datasets for 300 epochs. The following experimental plots shows the relative test error vs speed up for different strategies.
+
+### CIFAR10
+
+![CIFAR10 Plot](./docs/source/imgs/cifar10_test_accuracy.png?raw=true)
+
+### CIFAR100
+
+![CIFAR100 Plot](./docs/source/imgs/cifar100_test_accuracy.png?raw=true)
+
+### MNIST
+
+![MNIST Plot](./docs/source/imgs/mnist_test_accuracy.png?raw=true)
+
+### SVHN
+
+![SVHN Plot](./docs/source/imgs/svhn_test_accuracy.png?raw=true)
+
+### ImageNet
+
+![ImageNet Plot](./docs/source/imgs/imagenet_test_accuracy.png?raw=true)
 
 
 ## Publications
