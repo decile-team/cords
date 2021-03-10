@@ -97,6 +97,22 @@ The below link contains the jupyter notebook link for cifar10 timing analysis ex
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg) CIFAR10 Notebook](https://colab.research.google.com/drive/1xT6sGmDGMz8XBDmOKs5cl1cipX0Ss1sh?usp=sharing)
 
+<p align="center">
+    <br>
+        &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+        <img src="https://github.com/decile-team/cords/blob/4904b32de4c6dd0ff4817ad675162908e12160e0/docs/source/imgs/cifar10_dss_300.png" width="500"/>
+    </br>
+</p>
+
+
+<p align="center">
+    <br>
+        &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+        <img src="https://github.com/decile-team/cords/blob/4904b32de4c6dd0ff4817ad675162908e12160e0/docs/source/imgs/CIFAR10_timing_with_full.png" width="500"/>
+    </br>
+</p>
+
+
 ## Publications
 
 [1] Krishnateja Killamsetty, Durga Sivasubramanian, Ganesh Ramakrishnan, and Rishabh Iyer, [GLISTER: Generalization based Data Subset Selection for Efficient and Robust Learning](https://arxiv.org/abs/2012.10630), 35th AAAI Conference on Artificial Intelligence, AAAI 2021
