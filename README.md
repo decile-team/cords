@@ -45,29 +45,29 @@
 
 ## What is CORDS?
 
-[CORDS](https://cords.readthedocs.io/en/latest/) is an efficient and scalable library for 
-data efficient machine learning built on top of pytorch. 
+[CORDS](https://cords.readthedocs.io/en/latest/) is COReset and Data Selection library for making machine learning time, energy, cost, and compute efficient. CORDS is built on top of pytorch. Deep Learning systems are extremely compute intensive today with large turn around times, energy inefficiencies, higher costs and resourse requirements (see https://arxiv.org/pdf/1907.10597.pdf and https://arxiv.org/abs/1906.02243 for more details on quantifications of these impacts). CORDS is an effort to make deep learning more energy, cost, resource and time efficient while not sacrificing accuracy. The following are the goals CORDS tries to achieve:
 
-<p align="center"><i><b>Data Efficient</b></i></p>
-<p align="center"><i><b>Reduced Train Time</b></i></p>
-<p align="center"><i><b>Scalable</b></i></p>
+<p align="center"><i><b>Data Efficiency</b></i></p>
+<p align="center"><i><b>Reducing End to End Training Time</b></i></p>
+<p align="center"><i><b>Reducing Energy Requirement</b></i></p>
+<p align="center"><i><b>Reducing Resource (GPU) Requirement and Costs</b></i></p>
 
-The primary purpose of CORDS is to select the right representative data subset from massive datasets. 
-We use submodularity based data selection strategies to select such subsets.
-
-CORDS implements a number of state of the art data subset selection algorithms 
+The primary purpose of CORDS is to select the right representative data subsets from massive datasets, and it does so iteratively. CORDS uses some recent advances in data subset selection and particularly, ideas of coresets and submodularity select such subsets. CORDS implements a number of state of the art data subset selection algorithms 
 and coreset algorithms. Some of the algorithms currently implemented with CORDS include:
 
 - [GLISTER [1]](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.supervisedlearning.html#module-cords.selectionstrategies.supervisedlearning.glisterstrategy)
 - [GradMatch [2]](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.supervisedlearning.html#module-cords.selectionstrategies.supervisedlearning.ompgradmatchstrategy)
 - [CRAIG [2,3]](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.supervisedlearning.html#module-cords.selectionstrategies.supervisedlearning.craigstrategy)
-- [SubmodularSelection [4,5,6]](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.supervisedlearning.html#module-cords.selectionstrategies.supervisedlearning.submodularselectionstrategy)
-  - Facility Location
-  - Feature Based Functions
-  - Coverage
-  - Diversity
+- [SubmodularSelection [4,5,6]](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.supervisedlearning.html#module-cords.selectionstrategies.supervisedlearning.submodularselectionstrategy) (Facility Location, Feature Based Functions, Coverage, Diversity)
 - [RandomSelection](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.supervisedlearning.html#module-cords.selectionstrategies.supervisedlearning.randomstrategy)
 
+We are continuously incorporating newer and better algorithms into CORDS. Some of the features of CORDS includes:
+
+- Reproducability of SOTA in Data Selection and Coresets: Enable easy reproducability of SOTA described above. We are trying to also add more algorithms so if you have an algorithm you would like us to include, please let us know,.
+- Benchmarking: We have benchmarked CORDS (and the algorithms present right now) on several datasets including CIFAR-10, CIFAR-100, MNIST, SVHN and ImageNet. 
+- Ease of Use: One of the main goals of CORDS is that it is easy to use and add to CORDS. Feel free to contribute to CORDS!
+- Modular design: The data selection algorithms are separate from the training loop, thereby enabling modular design and also varied scenarios of utility.
+- Broad number of usecases: CORDS is currently implemented for simple image classification tasks, but we are working on integrating a number of additional use cases like object detection, speech recognition, semi-supervised learning, Auto-ML, etc.
 
 ## Installation
 
