@@ -106,27 +106,47 @@ The below link contains the jupyter notebook link for cifar10 timing analysis ex
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg) CIFAR10 Notebook](https://colab.research.google.com/drive/1xT6sGmDGMz8XBDmOKs5cl1cipX0Ss1sh?usp=sharing)
 
-Results are obtained by running each strategy with different datasets for 300 epochs. The following experimental plots shows the relative test error vs speed up for different strategies.
+Results are obtained by running each dataset with different strategies for 300 epochs. The following experimental plots shows the relative test error vs speed up for different strategies.
 
 ### CIFAR10
 
-![CIFAR10 Plot](./docs/source/imgs/cifar10_test_accuracy.png?raw=true)
+<p align="center">
+    <br>
+        <img src="https://github.com/decile-team/cords/blob/5c705778a5444c07e4bd4b123d217300fc8bcf54/docs/source/imgs/cifar10_test_accuracy.png" width="700"/>
+    </br>
+</p>
 
 ### CIFAR100
 
-![CIFAR100 Plot](./docs/source/imgs/cifar100_test_accuracy.png?raw=true)
+<p align="center">
+    <br>
+        <img src="https://github.com/decile-team/cords/blob/5c705778a5444c07e4bd4b123d217300fc8bcf54/docs/source/imgs/cifar100_test_accuracy.png" width="700"/>
+    </br>
+</p>
 
 ### MNIST
 
-![MNIST Plot](./docs/source/imgs/mnist_test_accuracy.png?raw=true)
+<p align="center">
+    <br>
+        <img src="https://github.com/decile-team/cords/blob/5c705778a5444c07e4bd4b123d217300fc8bcf54/docs/source/imgs/mnist_test_accuracy.png" width="700"/>
+    </br>
+</p>
 
 ### SVHN
 
-![SVHN Plot](./docs/source/imgs/svhn_test_accuracy.png?raw=true)
+<p align="center">
+    <br>
+        <img src="https://github.com/decile-team/cords/blob/5c705778a5444c07e4bd4b123d217300fc8bcf54/docs/source/imgs/svhn_test_accuracy.png" width="700"/>
+    </br>
+</p>
 
 ### ImageNet
 
-![ImageNet Plot](./docs/source/imgs/imagenet_test_accuracy.png?raw=true)
+<p align="center">
+    <br>
+        <img src="https://github.com/decile-team/cords/blob/5c705778a5444c07e4bd4b123d217300fc8bcf54/docs/source/imgs/imagenet_test_accuracy.png" width="700"/>
+    </br>
+</p>
 
 
 ## Publications
