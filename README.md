@@ -37,7 +37,8 @@
 - [Installation](#installation)
     - [Installing via pip](#installing-via-pip)
     - [Installing from source](#installing-from-source)
-- [Getting Started](#getting-started)
+- [Documentation](#documentation)
+- [Tutorials](#tutorials)
 - [Benchmarking Results](#benchmarking-results)
 - [Publications](#publications)
 
@@ -57,15 +58,15 @@ We use submodularity based data selection strategies to select such subsets.
 CORDS implements a number of state of the art data subset selection algorithms 
 and coreset algorithms. Some of the algorithms currently implemented with CORDS include:
 
-- GLISTER [1]
-- GradMatch [2]
-- CRAIG [2,3]
-- SubmodularSelection [4,5,6]
+- [GLISTER [1]](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.supervisedlearning.html#module-cords.selectionstrategies.supervisedlearning.glisterstrategy)
+- [GradMatch [2]](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.supervisedlearning.html#module-cords.selectionstrategies.supervisedlearning.ompgradmatchstrategy)
+- [CRAIG [2,3]](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.supervisedlearning.html#module-cords.selectionstrategies.supervisedlearning.craigstrategy)
+- [SubmodularSelection [4,5,6]](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.supervisedlearning.html#module-cords.selectionstrategies.supervisedlearning.submodularselectionstrategy)
   - Facility Location
   - Feature Based Functions
   - Coverage
   - Diversity
-- RandomSelection
+- [RandomSelection](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.supervisedlearning.html#module-cords.selectionstrategies.supervisedlearning.randomstrategy)
 
 
 ## Installation
@@ -85,10 +86,18 @@ and coreset algorithms. Some of the algorithms currently implemented with CORDS 
     ```
 
 
+## Documentation
 
-## Getting Started
+Learn more about CORDS at our [documentation](https://cords.readthedocs.io/en/latest/).
+
+
+## Tutorials
 
 Here are some [tutorials](https://github.com/decile-team/cords/tree/main/notebooks) to get you started with CORDS. 
+
+- [General Data Selection](https://github.com/decile-team/cords/blob/main/notebooks/general_dataselection.py)
+- [GLISTER](https://github.com/decile-team/cords/blob/main/notebooks/glister_example.py)
+- [Random Selection](https://github.com/decile-team/cords/blob/main/notebooks/tutorial_random.ipynb)
 
 
 ## Benchmarking results
@@ -96,21 +105,6 @@ Here are some [tutorials](https://github.com/decile-team/cords/tree/main/noteboo
 The below link contains the jupyter notebook link for cifar10 timing analysis experiments
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg) CIFAR10 Notebook](https://colab.research.google.com/drive/1xT6sGmDGMz8XBDmOKs5cl1cipX0Ss1sh?usp=sharing)
-
-<p align="center">
-    <br>
-        &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
-        <img src="https://github.com/decile-team/cords/blob/4904b32de4c6dd0ff4817ad675162908e12160e0/docs/source/imgs/cifar10_dss_300.png" width="500"/>
-    </br>
-</p>
-
-
-<p align="center">
-    <br>
-        &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
-        <img src="https://github.com/decile-team/cords/blob/4904b32de4c6dd0ff4817ad675162908e12160e0/docs/source/imgs/CIFAR10_timing_with_full.png" width="500"/>
-    </br>
-</p>
 
 
 ## Publications
