@@ -12,12 +12,11 @@ from torch.utils.data import Subset
 from cords.utils.config_utils import load_config_data
 import os.path as osp
 from cords.selectionstrategies.supervisedlearning import OMPGradMatchStrategy, GLISTERStrategy, RandomStrategy, CRAIGStrategy
-
+import argparse
 
 class TrainClassifier:
-    def __init__(self, config_file):
-        self.config_file = config_file
-        self.configdata = load_config_data(self.config_file)
+    def __init__(self, config):
+        self.configdata = config
         # if self.configdata['setting'] == 'supervisedlearning':
         #     from cords.selectionstrategies.supervisedlearning import OMPGradMatchStrategy, GLISTERStrategy, \
         #         RandomStrategy, CRAIGStrategy
@@ -536,3 +535,17 @@ class TrainClassifier:
         omp_cum_timing = list(self.generate_cumulative_timing(omp_timing))
         print("Total time taken by " + self.configdata['dss_strategy']['type'] + " = " + str(omp_cum_timing[-1]))
         logfile.close()
+
+
+if __name__ == "__main__":
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument('--config_file', default="configs/config_gradmatchpb-warm_cifar10.py", help="path to config file")
+    args = argparser.parse_args()
+
+    configdata = load_config_data(args.config_file)
+
+    # initialize train class
+    train_func = TrainClassifier(configdata)
+
+    train_func.train()
+
