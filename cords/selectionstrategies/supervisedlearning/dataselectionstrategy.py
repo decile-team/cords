@@ -128,7 +128,6 @@ class DataSelectionStrategy(object):
                     if self.linear_layer:
                         l1_grads = torch.cat((l1_grads, batch_l1_grads), dim=0)
             torch.cuda.empty_cache()
-            print("Per Element Training Gradient Computation is Completed")
             if self.linear_layer:
                 self.grads_per_elem = torch.cat((l0_grads, l1_grads), dim=1)
             else:
@@ -163,7 +162,6 @@ class DataSelectionStrategy(object):
                         if self.linear_layer:
                             l1_grads = torch.cat((l1_grads, batch_l1_grads), dim=0)
                 torch.cuda.empty_cache()
-                print("Per Element Validation Gradient Computation is Completed")
                 if self.linear_layer:
                     self.val_grads_per_elem = torch.cat((l0_grads, l1_grads), dim=1)
                 else:
@@ -200,7 +198,7 @@ class DataSelectionStrategy(object):
                         l1_grads = torch.cat((l1_grads, batch_l1_grads), dim=0)
 
             torch.cuda.empty_cache()
-            print("Per Element Training Gradient Computation is Completed")
+
             if self.linear_layer:
                 self.grads_per_elem = torch.cat((l0_grads, l1_grads), dim=1)
             else:
@@ -235,7 +233,6 @@ class DataSelectionStrategy(object):
                         if self.linear_layer:
                             l1_grads = torch.cat((l1_grads, batch_l1_grads), dim=0)
                 torch.cuda.empty_cache()
-                print("Per Element Validation Gradient Computation is Completed")
                 if self.linear_layer:
                     self.val_grads_per_elem = torch.cat((l0_grads, l1_grads), dim=1)
                 else:
