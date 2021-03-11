@@ -201,26 +201,19 @@ class GLISTERStrategy(DataSelectionStrategy):
             Tensor containing gradients of datapoints present in greedySet
         """
         self.update_model(model_params)
-        start_time = time.time()
         self.compute_gradients()
-        end_time = time.time()
-        print("Per Element gradient computation time is: ", end_time - start_time)
-        start_time = time.time()
+        t_ng_start = time.time()  # naive greedy start time
         self._update_grads_val(first_init=True)
-        end_time = time.time()
-        print("Updated validation set gradient computation time is: ", end_time - start_time)
         # Dont need the trainloader here!! Same as full batch version!
         self.numSelected = 0
         greedySet = list()
         remainSet = list(range(self.N_trn))
         # RModular Greedy Selection Algorithm
         if self.selection_type == 'RGreedy':
-            t_ng_start = time.time()  # naive greedy start time
             # subset_size = int((len(self.grads_per_elem) / r))
             selection_size = int(budget / self.r)
             while (self.numSelected < budget):
                 # Try Using a List comprehension here!
-                t_one_elem = time.time()
                 rem_grads = self.grads_per_elem[remainSet]
                 gains = self.eval_taylor_modular(rem_grads)
                 # Update the greedy set and remaining set
@@ -234,19 +227,14 @@ class GLISTERStrategy(DataSelectionStrategy):
                     self._update_gradients_subset(grads_currX, selected_indices)
                 # Update the grads_val_current using current greedySet grads
                 self._update_grads_val(grads_currX)
-                if self.numSelected % 1000 == 0:
-                    # Printing bestGain and Selection time for 1 element.
-                    print("numSelected:", self.numSelected, "Time for 1:", time.time() - t_one_elem)
                 self.numSelected += selection_size
-            print("R greedy total time:", time.time() - t_ng_start)
+            print("R greedy GLISTER total time:", time.time() - t_ng_start)
 
         # Stochastic Greedy Selection Algorithm
         elif self.selection_type == 'Stochastic':
-            t_ng_start = time.time()  # naive greedy start time
             subset_size = int((len(self.grads_per_elem) / budget) * math.log(100))
             while (self.numSelected < budget):
                 # Try Using a List comprehension here!
-                t_one_elem = time.time()
                 subset_selected = random.sample(remainSet, k=subset_size)
                 rem_grads = self.grads_per_elem[subset_selected]
                 gains = self.eval_taylor_modular(rem_grads)
@@ -263,16 +251,11 @@ class GLISTERStrategy(DataSelectionStrategy):
                     grads_currX = self.grads_per_elem[bestId].view(1, -1)  # Making it a list so that is mutable!
                 # Update the grads_val_current using current greedySet grads
                 self._update_grads_val(grads_currX)
-                if (self.numSelected - 1) % 1000 == 0:
-                    # Printing bestGain and Selection time for 1 element.
-                    print("numSelected:", self.numSelected, "Time for 1:", time.time() - t_one_elem)
-            print("Stochastic Greedy total time:", time.time() - t_ng_start)
+            print("Stochastic Greedy GLISTER total time:", time.time() - t_ng_start)
 
         elif self.selection_type == 'Naive':
-            t_ng_start = time.time()  # naive greedy start time
             while (self.numSelected < budget):
                 # Try Using a List comprehension here!
-                t_one_elem = time.time()
                 rem_grads = self.grads_per_elem[remainSet]
                 gains = self.eval_taylor_modular(rem_grads)
                 # Update the greedy set and remaining set
@@ -289,9 +272,6 @@ class GLISTERStrategy(DataSelectionStrategy):
                     self._update_gradients_subset(grads_currX, bestId)
                 # Update the grads_val_current using current greedySet grads
                 self._update_grads_val(grads_currX)
-                if (self.numSelected - 1) % 1000 == 0:
-                    # Printing bestGain and Selection time for 1 element.
-                    print("numSelected:", self.numSelected, "Time for 1:", time.time() - t_one_elem)
-            print("Naive Greedy total time:", time.time() - t_ng_start)
+            print("Naive Greedy GLISTER total time:", time.time() - t_ng_start)
 
         return list(greedySet), torch.ones(budget)
