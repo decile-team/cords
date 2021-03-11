@@ -6,7 +6,7 @@ class RandomStrategy(object):
     """
     This is the Random Selection Strategy class where we select a set of random points as a datasubset
     and often acts as baselines to compare other selection strategies.
-    
+
     Parameters
     ----------
     trainloader: class
@@ -27,12 +27,12 @@ class RandomStrategy(object):
     def select(self, budget):
         """
         Perform random sampling of indices of size budget.
-        
+
         Parameters
         ----------
         budget: int
             The number of data points to be selected
-        
+
         Returns
         ----------
         indices: ndarray
@@ -40,7 +40,7 @@ class RandomStrategy(object):
         gammas: Tensor
             Gradient weight values of selected indices
         """
-        if self.online or (self.indices is None) :
+        if self.online or (self.indices is None):
             self.indices = np.random.choice(self.N_trn, size=budget, replace=False)
             self.gammas = torch.ones(budget)
         return self.indices, self.gammas

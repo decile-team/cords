@@ -60,7 +60,8 @@ class GLISTERStrategy(DataSelectionStrategy):
     num_classes: int
         The number of target classes in the dataset
     linear_layer: bool
-        Apply linear transformation to the data
+        If True, we use the last fc layer weights and biases gradients
+        If False, we use the last fc layer biases gradients
     selection_type: str
         Type of selection -
         - 'RGreedy' : RGreedy Selection method is a variant of naive greedy where we just perform r rounds of greedy selection by choosing k/r points in each round.
@@ -75,21 +76,18 @@ class GLISTERStrategy(DataSelectionStrategy):
         """
         Constructor method
         """
-        
-        super().__init__(trainloader, valloader, model, num_classes, linear_layer)
-        self.loss_type = loss_type
+
+        super().__init__(trainloader, valloader, model, num_classes, linear_layer, loss_type, device)
         self.eta = eta  # step size for the one step gradient update
-        self.device = device
         self.init_out = list()
         self.init_l1 = list()
         self.selection_type = selection_type
         self.r = r
 
-
     def _update_grads_val(self, grads_currX=None, first_init=False):
         """
         Update the gradient values
-        
+
         Parameters
         ----------
         grad_currX: OrderedDict, optional
@@ -105,13 +103,9 @@ class GLISTERStrategy(DataSelectionStrategy):
             for batch_idx, (inputs, targets) in enumerate(self.valloader):
                 inputs, targets = inputs.to(self.device), targets.to(self.device, non_blocking=True)
                 if batch_idx == 0:
-                    with torch.no_grad():
-                        out, l1 = self.model(inputs, last=True)
-                        data = F.softmax(out, dim=1)
-                    #Gradient Calculation Part
-                    outputs = torch.zeros(len(inputs), self.num_classes).to(self.device)
-                    outputs.scatter_(1, targets.view(-1, 1), 1)
-                    l0_grads = data - outputs
+                    out, l1 = self.model(inputs, last=True, freeze=True)
+                    loss = self.loss(out, targets).sum()
+                    l0_grads = torch.autograd.grad(loss, out)[0]
                     if self.linear_layer:
                         l0_expand = torch.repeat_interleave(l0_grads, embDim, dim=1)
                         l1_grads = l0_expand * l1.repeat(1, self.num_classes)
@@ -119,36 +113,34 @@ class GLISTERStrategy(DataSelectionStrategy):
                     self.init_l1 = l1
                     self.y_val = targets.view(-1, 1)
                 else:
-                    with torch.no_grad():
-                        out, l1 = self.model(inputs, last=True)
-                        data = F.softmax(out, dim=1)
-                    outputs = torch.zeros(len(inputs), self.num_classes).to(self.device)
-                    outputs.scatter_(1, targets.view(-1, 1), 1)
-                    batch_l0_grads = data - outputs
-                    l0_grads = torch.cat((l0_grads, batch_l0_grads), dim=0)
+                    out, l1 = self.model(inputs, last=True, freeze=True)
+                    loss = self.loss(out, targets).sum()
+                    batch_l0_grads = torch.autograd.grad(loss, out)[0]
                     if self.linear_layer:
                         batch_l0_expand = torch.repeat_interleave(batch_l0_grads, embDim, dim=1)
                         batch_l1_grads = batch_l0_expand * l1.repeat(1, self.num_classes)
+
+                    l0_grads = torch.cat((l0_grads, batch_l0_grads), dim=0)
+                    if self.linear_layer:
                         l1_grads = torch.cat((l1_grads, batch_l1_grads), dim=0)
+
                     self.init_out = torch.cat((self.init_out, out), dim=0)
                     self.init_l1 = torch.cat((self.init_l1, l1), dim=0)
                     self.y_val = torch.cat((self.y_val, targets.view(-1, 1)), dim=0)
 
         elif grads_currX is not None:
-            with torch.no_grad():
-                out_vec = self.init_out - (self.eta * grads_currX[0][0:self.num_classes].view(1, -1).expand(self.init_out.shape[0], -1))
+            out_vec = self.init_out - (
+                        self.eta * grads_currX[0][0:self.num_classes].view(1, -1).expand(self.init_out.shape[0],-1))
 
-                if self.linear_layer:
-                    out_vec = out_vec - (self.eta * torch.matmul(self.init_l1, grads_currX[0][self.num_classes:].view(self.num_classes, -1).transpose(0, 1)))
+            if self.linear_layer:
+                out_vec = out_vec - (self.eta * torch.matmul(self.init_l1, grads_currX[0][self.num_classes:].view(
+                    self.num_classes, -1).transpose(0, 1)))
 
-                scores = F.softmax(out_vec, dim=1)
-                one_hot_label = torch.zeros(len(self.y_val), self.num_classes).to(self.device)
-                one_hot_label.scatter_(1, self.y_val.view(-1, 1), 1)
-                l0_grads = scores - one_hot_label
-                if self.linear_layer:
-                    l0_expand = torch.repeat_interleave(l0_grads, embDim, dim=1)
-                    l1_grads = l0_expand * self.init_l1.repeat(1, self.num_classes)
-
+            loss = self.loss(out_vec, self.y_val.view(-1)).sum()
+            l0_grads = torch.autograd.grad(loss, out_vec)[0]
+            if self.linear_layer:
+                l0_expand = torch.repeat_interleave(l0_grads, embDim, dim=1)
+                l1_grads = l0_expand * self.init_l1.repeat(1, self.num_classes)
         torch.cuda.empty_cache()
         if self.linear_layer:
             self.grads_val_curr = torch.mean(torch.cat((l0_grads, l1_grads), dim=1), dim=0).view(-1, 1)
@@ -158,12 +150,12 @@ class GLISTERStrategy(DataSelectionStrategy):
     def eval_taylor_modular(self, grads):
         """
         Evaluate gradients
-        
+
         Parameters
         ----------
         grads: Tensor
             Gradients
-        
+
         Returns
         ----------
         gains: Tensor
@@ -174,7 +166,6 @@ class GLISTERStrategy(DataSelectionStrategy):
         with torch.no_grad():
             gains = torch.matmul(grads, grads_val)
         return gains
-
 
     def _update_gradients_subset(self, grads_X, element):
         """
@@ -188,13 +179,9 @@ class GLISTERStrategy(DataSelectionStrategy):
         element: int
             Element that need to be added to the gradients
         """
-        
-        #if isinstance(element, list):
+        # if isinstance(element, list):
         grads_X += self.grads_per_elem[element].sum(dim=0)
-        #else:
-        #    grads_X += self.grads_per_elem[element]
 
-    
     def select(self, budget, model_params):
         """
         Apply naive greedy method for data selection
@@ -205,15 +192,14 @@ class GLISTERStrategy(DataSelectionStrategy):
             The number of data points to be selected
         model_params: OrderedDict
             Python dictionary object containing models parameters
-        
+
         Returns
         ----------
         greedySet: list
-            List containing indices of the best datapoints, 
+            List containing indices of the best datapoints,
         budget: Tensor
             Tensor containing gradients of datapoints present in greedySet
         """
-        
         self.update_model(model_params)
         start_time = time.time()
         self.compute_gradients()
@@ -227,10 +213,10 @@ class GLISTERStrategy(DataSelectionStrategy):
         self.numSelected = 0
         greedySet = list()
         remainSet = list(range(self.N_trn))
-        #RModular Greedy Selection Algorithm
+        # RModular Greedy Selection Algorithm
         if self.selection_type == 'RGreedy':
             t_ng_start = time.time()  # naive greedy start time
-            #subset_size = int((len(self.grads_per_elem) / r))
+            # subset_size = int((len(self.grads_per_elem) / r))
             selection_size = int(budget / self.r)
             while (self.numSelected < budget):
                 # Try Using a List comprehension here!
@@ -254,7 +240,7 @@ class GLISTERStrategy(DataSelectionStrategy):
                 self.numSelected += selection_size
             print("R greedy total time:", time.time() - t_ng_start)
 
-        #Stochastic Greedy Selection Algorithm
+        # Stochastic Greedy Selection Algorithm
         elif self.selection_type == 'Stochastic':
             t_ng_start = time.time()  # naive greedy start time
             subset_size = int((len(self.grads_per_elem) / budget) * math.log(100))
@@ -290,7 +276,7 @@ class GLISTERStrategy(DataSelectionStrategy):
                 rem_grads = self.grads_per_elem[remainSet]
                 gains = self.eval_taylor_modular(rem_grads)
                 # Update the greedy set and remaining set
-                #_, maxid = torch.max(gains, dim=0)
+                # _, maxid = torch.max(gains, dim=0)
                 _, indices = torch.sort(gains.view(-1), descending=True)
                 bestId = [remainSet[indices[0].item()]]
                 greedySet.append(bestId[0])
