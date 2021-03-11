@@ -53,13 +53,12 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
         Epsilon parameter to which the above optimization problem is solved using OMP algorithm
     """
 
-    def __init__(self, trainloader, valloader, model, loss_type,
+    def __init__(self, trainloader, valloader, model, loss,
                  eta, device, num_classes, linear_layer, selection_type, valid=True, lam=0, eps=1e-4, r=1):
         """
         Constructor method
         """
-        super().__init__(trainloader, valloader, model, num_classes, linear_layer)
-        self.loss_type = loss_type
+        super().__init__(trainloader, valloader, model, num_classes, linear_layer, loss, device)
         self.eta = eta  # step size for the one step gradient update
         self.device = device
         self.init_out = list()

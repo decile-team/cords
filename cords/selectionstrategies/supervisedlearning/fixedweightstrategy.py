@@ -7,7 +7,7 @@ from ..helpers import OrthogonalMP_REG_Parallel, OrthogonalMP_REG, OptimalWeight
 from torch.utils.data import Subset, DataLoader
 
 
-class optimalWeightStrategy(DataSelectionStrategy):
+class FixedWeightStrategy(DataSelectionStrategy):
     """
     Parameters
 	----------
@@ -40,15 +40,13 @@ class optimalWeightStrategy(DataSelectionStrategy):
         Epsilon parameter to which the above optimization problem is solved using OMP algorithm
     """
 
-    def __init__(self, trainloader, valloader, model, loss_type,
+    def __init__(self, trainloader, valloader, model, loss,
                  eta, device, num_classes, linear_layer, selection_type, valid=True, lam=0, eps=1e-4, r=1):
         """
         Constructor method
         """
-        super().__init__(trainloader, valloader, model, num_classes, linear_layer)
-        self.loss_type = loss_type
+        super().__init__(trainloader, valloader, model, num_classes, linear_layer, loss, device)
         self.eta = eta  # step size for the one step gradient update
-        self.device = device
         self.init_out = list()
         self.init_l1 = list()
         self.selection_type = selection_type
@@ -59,11 +57,11 @@ class optimalWeightStrategy(DataSelectionStrategy):
     def optimalWeightsWrapper(self, X, Y, bud):
 
         if self.device == "cpu":
-            ind,weights = OptimalWeights(X.cpu().numpy(), Y.cpu().numpy(), nnz=bud)
+            ind, weights = OptimalWeights(X.cpu().numpy(), Y.cpu().numpy(), nnz=bud)
 
         else:
-            ind,weights = OptimalWeights(X, Y, nnz=bud,device=self.device)
-            
+            ind, weights = OptimalWeights(X, Y, nnz=bud, device=self.device)
+
         return ind, weights
 
     def select(self, budget, model_params):
@@ -95,12 +93,12 @@ class optimalWeightStrategy(DataSelectionStrategy):
                 trn_subset_idx = torch.where(self.trn_lbls == i)[0].tolist()
                 trn_data_sub = Subset(self.trainloader.dataset, trn_subset_idx)
                 self.pctrainloader = DataLoader(trn_data_sub, batch_size=self.trainloader.batch_size,
-                                          shuffle=False, pin_memory=True)
+                                                shuffle=False, pin_memory=True)
                 if self.valid:
                     val_subset_idx = torch.where(self.val_lbls == i)[0].tolist()
                     val_data_sub = Subset(self.valloader.dataset, val_subset_idx)
                     self.pcvalloader = DataLoader(val_data_sub, batch_size=self.trainloader.batch_size,
-                                                    shuffle=False, pin_memory=True)
+                                                  shuffle=False, pin_memory=True)
 
                 self.compute_gradients(self.valid, batch=False, perClass=True)
                 trn_gradients = self.grads_per_elem
@@ -109,7 +107,8 @@ class optimalWeightStrategy(DataSelectionStrategy):
                 else:
                     sum_val_grad = torch.sum(trn_gradients, dim=0)
                 idxs_temp, gammas_temp = self.ompwrapper(torch.transpose(trn_gradients, 0, 1),
-                                          sum_val_grad, math.ceil(budget * len(trn_subset_idx) / self.N_trn))
+                                                         sum_val_grad,
+                                                         math.ceil(budget * len(trn_subset_idx) / self.N_trn))
                 idxs.extend(list(np.array(trn_subset_idx)[idxs_temp]))
                 gammas.extend(gammas_temp)
 
@@ -123,7 +122,7 @@ class optimalWeightStrategy(DataSelectionStrategy):
             else:
                 sum_val_grad = torch.sum(trn_gradients, dim=0)
             idxs_temp, gammas_temp = self.ompwrapper(torch.transpose(trn_gradients, 0, 1),
-                                                     sum_val_grad, math.ceil(budget/self.trainloader.batch_size))
+                                                     sum_val_grad, math.ceil(budget / self.trainloader.batch_size))
             batch_wise_indices = list(self.trainloader.batch_sampler)
             for i in range(len(idxs_temp)):
                 tmp = batch_wise_indices[idxs_temp[i]]
@@ -139,12 +138,12 @@ class optimalWeightStrategy(DataSelectionStrategy):
                 trn_subset_idx = torch.where(self.trn_lbls == i)[0].tolist()
                 trn_data_sub = Subset(self.trainloader.dataset, trn_subset_idx)
                 self.pctrainloader = DataLoader(trn_data_sub, batch_size=self.trainloader.batch_size,
-                                          shuffle=False, pin_memory=True)
+                                                shuffle=False, pin_memory=True)
                 if self.valid:
                     val_subset_idx = torch.where(self.val_lbls == i)[0].tolist()
                     val_data_sub = Subset(self.valloader.dataset, val_subset_idx)
                     self.pcvalloader = DataLoader(val_data_sub, batch_size=self.trainloader.batch_size,
-                                                    shuffle=False, pin_memory=True)
+                                                  shuffle=False, pin_memory=True)
                 self.compute_gradients(self.valid, batch=False, perClass=True)
                 trn_gradients = self.grads_per_elem
                 tmp_gradients = trn_gradients[:, i].view(-1, 1)
@@ -163,7 +162,8 @@ class optimalWeightStrategy(DataSelectionStrategy):
                     sum_val_grad = torch.sum(trn_gradients, dim=0)
 
                 idxs_temp, gammas_temp = self.ompwrapper(torch.transpose(trn_gradients, 0, 1),
-                                          sum_val_grad, math.ceil(budget * len(trn_subset_idx) / self.N_trn))
+                                                         sum_val_grad,
+                                                         math.ceil(budget * len(trn_subset_idx) / self.N_trn))
                 idxs.extend(list(np.array(trn_subset_idx)[idxs_temp]))
                 gammas.extend(gammas_temp)
 

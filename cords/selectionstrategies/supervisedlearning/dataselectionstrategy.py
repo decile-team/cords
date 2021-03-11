@@ -4,16 +4,30 @@ import torch.nn.functional as F
 
 
 class DataSelectionStrategy(object):
-    """ 
-    Implementation of Data Selection Strategy class which serves as base class for other 
-    dataselectionstrategies for supervised learning frameworks.
+    """
+    Implementation of Data Selection Strategy class which serves as base class for other
+    dataselectionstrategies for general learning frameworks.
+    Parameters
+        ----------
+        trainloader: class
+            Loading the training data using pytorch dataloader
+        valloader: class
+            Loading the validation data using pytorch dataloader
+        model: class
+            Model architecture used for training
+        num_classes: int
+            Number of target classes in the dataset
+        linear_layer: bool
+            If True, we use the last fc layer weights and biases gradients
+            If False, we use the last fc layer biases gradients
+        loss: class
+            PyTorch Loss function
     """
 
-    def __init__(self, trainloader, valloader, model, num_classes, linear_layer):
+    def __init__(self, trainloader, valloader, model, num_classes, linear_layer, loss, device):
         """
         Constructer method
         """
-        
         self.trainloader = trainloader  # assume its a sequential loader.
         self.valloader = valloader
         self.model = model
@@ -26,6 +40,8 @@ class DataSelectionStrategy(object):
         self.num_classes = num_classes
         self.trn_lbls = None
         self.val_lbls = None
+        self.loss = loss
+        self.device = device
 
     def select(self, budget, model_params):
         pass
@@ -87,12 +103,9 @@ class DataSelectionStrategy(object):
             for batch_idx, (inputs, targets) in enumerate(self.pctrainloader):
                 inputs, targets = inputs.to(self.device), targets.to(self.device, non_blocking=True)
                 if batch_idx == 0:
-                    with torch.no_grad():
-                        out, l1 = self.model(inputs, last=True)
-                        data = F.softmax(out, dim=1)
-                    outputs = torch.zeros(len(inputs), self.num_classes).to(self.device)
-                    outputs.scatter_(1, targets.view(-1, 1), 1)
-                    l0_grads = data - outputs
+                    out, l1 = self.model(inputs, last=True, freeze=True)
+                    loss = self.loss(out, targets).sum()
+                    l0_grads = torch.autograd.grad(loss, out)[0]
                     if self.linear_layer:
                         l0_expand = torch.repeat_interleave(l0_grads, embDim, dim=1)
                         l1_grads = l0_expand * l1.repeat(1, self.num_classes)
@@ -101,12 +114,9 @@ class DataSelectionStrategy(object):
                         if self.linear_layer:
                             l1_grads = l1_grads.mean(dim=0).view(1, -1)
                 else:
-                    with torch.no_grad():
-                        out, l1 = self.model(inputs, last=True)
-                        data = F.softmax(out, dim=1)
-                    outputs = torch.zeros(len(inputs), self.num_classes).to(self.device)
-                    outputs.scatter_(1, targets.view(-1, 1), 1)
-                    batch_l0_grads = data - outputs
+                    out, l1 = self.model(inputs, last=True, freeze=True)
+                    loss = self.loss(out, targets).sum()
+                    batch_l0_grads = torch.autograd.grad(loss, out)[0]
                     if self.linear_layer:
                         batch_l0_expand = torch.repeat_interleave(batch_l0_grads, embDim, dim=1)
                         batch_l1_grads = batch_l0_expand * l1.repeat(1, self.num_classes)
@@ -117,9 +127,8 @@ class DataSelectionStrategy(object):
                     l0_grads = torch.cat((l0_grads, batch_l0_grads), dim=0)
                     if self.linear_layer:
                         l1_grads = torch.cat((l1_grads, batch_l1_grads), dim=0)
-
             torch.cuda.empty_cache()
-            #print("Per Element Training Gradient Computation is Completed")
+            print("Per Element Training Gradient Computation is Completed")
             if self.linear_layer:
                 self.grads_per_elem = torch.cat((l0_grads, l1_grads), dim=1)
             else:
@@ -129,12 +138,9 @@ class DataSelectionStrategy(object):
                 for batch_idx, (inputs, targets) in enumerate(self.pcvalloader):
                     inputs, targets = inputs.to(self.device), targets.to(self.device, non_blocking=True)
                     if batch_idx == 0:
-                        with torch.no_grad():
-                            out, l1 = self.model(inputs, last=True)
-                            data = F.softmax(out, dim=1)
-                        outputs = torch.zeros(len(inputs), self.num_classes).to(self.device)
-                        outputs.scatter_(1, targets.view(-1, 1), 1)
-                        l0_grads = data - outputs
+                        out, l1 = self.model(inputs, last=True, freeze=True)
+                        loss = self.loss(out, targets).sum()
+                        l0_grads = torch.autograd.grad(loss, out)[0]
                         if self.linear_layer:
                             l0_expand = torch.repeat_interleave(l0_grads, embDim, dim=1)
                             l1_grads = l0_expand * l1.repeat(1, self.num_classes)
@@ -143,12 +149,9 @@ class DataSelectionStrategy(object):
                             if self.linear_layer:
                                 l1_grads = l1_grads.mean(dim=0).view(1, -1)
                     else:
-                        with torch.no_grad():
-                            out, l1 = self.model(inputs, last=True)
-                            data = F.softmax(out, dim=1)
-                        outputs = torch.zeros(len(inputs), self.num_classes).to(self.device)
-                        outputs.scatter_(1, targets.view(-1, 1), 1)
-                        batch_l0_grads = data - outputs
+                        out, l1 = self.model(inputs, last=True, freeze=True)
+                        loss = self.loss(out, targets).sum()
+                        batch_l0_grads = torch.autograd.grad(loss, out)[0]
                         if self.linear_layer:
                             batch_l0_expand = torch.repeat_interleave(batch_l0_grads, embDim, dim=1)
                             batch_l1_grads = batch_l0_expand * l1.repeat(1, self.num_classes)
@@ -160,7 +163,7 @@ class DataSelectionStrategy(object):
                         if self.linear_layer:
                             l1_grads = torch.cat((l1_grads, batch_l1_grads), dim=0)
                 torch.cuda.empty_cache()
-                #print("Per Element Validation Gradient Computation is Completed")
+                print("Per Element Validation Gradient Computation is Completed")
                 if self.linear_layer:
                     self.val_grads_per_elem = torch.cat((l0_grads, l1_grads), dim=1)
                 else:
@@ -170,12 +173,9 @@ class DataSelectionStrategy(object):
             for batch_idx, (inputs, targets) in enumerate(self.trainloader):
                 inputs, targets = inputs.to(self.device), targets.to(self.device, non_blocking=True)
                 if batch_idx == 0:
-                    with torch.no_grad():
-                        out, l1 = self.model(inputs, last=True)
-                        data = F.softmax(out, dim=1)
-                    outputs = torch.zeros(len(inputs), self.num_classes).to(self.device)
-                    outputs.scatter_(1, targets.view(-1, 1), 1)
-                    l0_grads = data - outputs
+                    out, l1 = self.model(inputs, last=True, freeze=True)
+                    loss = self.loss(out, targets).sum()
+                    l0_grads = torch.autograd.grad(loss, out)[0]
                     if self.linear_layer:
                         l0_expand = torch.repeat_interleave(l0_grads, embDim, dim=1)
                         l1_grads = l0_expand * l1.repeat(1, self.num_classes)
@@ -184,15 +184,13 @@ class DataSelectionStrategy(object):
                         if self.linear_layer:
                             l1_grads = l1_grads.mean(dim=0).view(1, -1)
                 else:
-                    with torch.no_grad():
-                        out, l1 = self.model(inputs, last=True)
-                        data = F.softmax(out, dim=1)
-                    outputs = torch.zeros(len(inputs), self.num_classes).to(self.device)
-                    outputs.scatter_(1, targets.view(-1, 1), 1)
-                    batch_l0_grads = data - outputs
+                    out, l1 = self.model(inputs, last=True, freeze=True)
+                    loss = self.loss(out, targets).sum()
+                    batch_l0_grads = torch.autograd.grad(loss, out)[0]
                     if self.linear_layer:
                         batch_l0_expand = torch.repeat_interleave(batch_l0_grads, embDim, dim=1)
                         batch_l1_grads = batch_l0_expand * l1.repeat(1, self.num_classes)
+
                     if batch:
                         batch_l0_grads = batch_l0_grads.mean(dim=0).view(1, -1)
                         if self.linear_layer:
@@ -202,7 +200,7 @@ class DataSelectionStrategy(object):
                         l1_grads = torch.cat((l1_grads, batch_l1_grads), dim=0)
 
             torch.cuda.empty_cache()
-            #print("Per Element Training Gradient Computation is Completed")
+            print("Per Element Training Gradient Computation is Completed")
             if self.linear_layer:
                 self.grads_per_elem = torch.cat((l0_grads, l1_grads), dim=1)
             else:
@@ -211,12 +209,9 @@ class DataSelectionStrategy(object):
                 for batch_idx, (inputs, targets) in enumerate(self.valloader):
                     inputs, targets = inputs.to(self.device), targets.to(self.device, non_blocking=True)
                     if batch_idx == 0:
-                        with torch.no_grad():
-                            out, l1 = self.model(inputs, last=True)
-                            data = F.softmax(out, dim=1)
-                        outputs = torch.zeros(len(inputs), self.num_classes).to(self.device)
-                        outputs.scatter_(1, targets.view(-1, 1), 1)
-                        l0_grads = data - outputs
+                        out, l1 = self.model(inputs, last=True, freeze=True)
+                        loss = self.loss(out, targets).sum()
+                        l0_grads = torch.autograd.grad(loss, out)[0]
                         if self.linear_layer:
                             l0_expand = torch.repeat_interleave(l0_grads, embDim, dim=1)
                             l1_grads = l0_expand * l1.repeat(1, self.num_classes)
@@ -225,15 +220,13 @@ class DataSelectionStrategy(object):
                             if self.linear_layer:
                                 l1_grads = l1_grads.mean(dim=0).view(1, -1)
                     else:
-                        with torch.no_grad():
-                            out, l1 = self.model(inputs, last=True)
-                            data = F.softmax(out, dim=1)
-                        outputs = torch.zeros(len(inputs), self.num_classes).to(self.device)
-                        outputs.scatter_(1, targets.view(-1, 1), 1)
-                        batch_l0_grads = data - outputs
+                        out, l1 = self.model(inputs, last=True, freeze=True)
+                        loss = self.loss(out, targets).sum()
+                        batch_l0_grads = torch.autograd.grad(loss, out)[0]
                         if self.linear_layer:
                             batch_l0_expand = torch.repeat_interleave(batch_l0_grads, embDim, dim=1)
                             batch_l1_grads = batch_l0_expand * l1.repeat(1, self.num_classes)
+
                         if batch:
                             batch_l0_grads = batch_l0_grads.mean(dim=0).view(1, -1)
                             if self.linear_layer:
@@ -242,7 +235,7 @@ class DataSelectionStrategy(object):
                         if self.linear_layer:
                             l1_grads = torch.cat((l1_grads, batch_l1_grads), dim=0)
                 torch.cuda.empty_cache()
-                #print("Per Element Validation Gradient Computation is Completed")
+                print("Per Element Validation Gradient Computation is Completed")
                 if self.linear_layer:
                     self.val_grads_per_elem = torch.cat((l0_grads, l1_grads), dim=1)
                 else:
@@ -257,5 +250,4 @@ class DataSelectionStrategy(object):
         model_params: OrderedDict
             Python dictionary object containing models parameters
         """
-
         self.model.load_state_dict(model_params)

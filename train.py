@@ -15,6 +15,8 @@ from math import floor
 from cords.utils.config_utils import load_config_data
 import os.path as osp
 from cords.selectionstrategies.supervisedlearning import OMPGradMatchStrategy, GLISTERStrategy, RandomStrategy, CRAIGStrategy
+from cords.selectionstrategies.supervisedlearning import DataSelectionStrategy as dss
+
 
 class TrainClassifier:
     def __init__(self, config_file):
@@ -161,17 +163,17 @@ class TrainClassifier:
 
         elif self.configdata['dss_strategy']['type'] == 'CRAIG':
             # CRAIG Selection strategy
-            setf_model = CRAIGStrategy(trainloader, valloader, model1, criterion,
+            setf_model = CRAIGStrategy(trainloader, valloader, model1, criterion_nored,
                                        self.configdata['train_args']['device'], num_cls, False, False, 'PerClass')
 
         elif self.configdata['dss_strategy']['type'] == 'CRAIGPB':
             # CRAIG Selection strategy
-            setf_model = CRAIGStrategy(trainloader, valloader, model1, criterion,
+            setf_model = CRAIGStrategy(trainloader, valloader, model1, criterion_nored,
                                        self.configdata['train_args']['device'], num_cls, False, False, 'PerBatch')
 
         elif self.configdata['dss_strategy']['type'] == 'CRAIG-Warm':
             # CRAIG Selection strategy
-            setf_model = CRAIGStrategy(trainloader, valloader, model1, criterion,
+            setf_model = CRAIGStrategy(trainloader, valloader, model1, criterion_nored,
                                        self.configdata['train_args']['device'], num_cls, False, False, 'PerClass')
             # Random-Online Selection strategy
             #rand_setf_model = RandomStrategy(trainloader, online=True)
@@ -183,7 +185,7 @@ class TrainClassifier:
 
         elif self.configdata['dss_strategy']['type'] == 'CRAIGPB-Warm':
             # CRAIG Selection strategy
-            setf_model = CRAIGStrategy(trainloader, valloader, model1, criterion,
+            setf_model = CRAIGStrategy(trainloader, valloader, model1, criterion_nored,
                                        self.configdata['train_args']['device'], num_cls, False, False, 'PerBatch')
             # Random-Online Selection strategy
             #rand_setf_model = RandomStrategy(trainloader, online=True)
@@ -203,7 +205,7 @@ class TrainClassifier:
 
         elif self.configdata['dss_strategy']['type'] == 'GLISTER-Warm':
             # GLISTER Selection strategy
-            setf_model = GLISTERStrategy(trainloader, valloader, model1, criterion,
+            setf_model = GLISTERStrategy(trainloader, valloader, model1, criterion_nored,
                                          self.configdata['optimizer']['lr'], self.configdata['train_args']['device'], num_cls, False, 'Stochastic', r=int(bud))
             # Random-Online Selection strategy
             #rand_setf_model = RandomStrategy(trainloader, online=True)
@@ -215,7 +217,7 @@ class TrainClassifier:
 
         elif self.configdata['dss_strategy']['type'] == 'GradMatch-Warm':
             # OMPGradMatch Selection strategy
-            setf_model = OMPGradMatchStrategy(trainloader, valloader, model1, criterion,
+            setf_model = OMPGradMatchStrategy(trainloader, valloader, model1, criterion_nored,
                                               self.configdata['optimizer']['lr'], self.configdata['train_args']['device'], num_cls, True, 'PerClassPerGradient',
                                               False, lam=0.5, eps=1e-100)
             # Random-Online Selection strategy
@@ -228,7 +230,7 @@ class TrainClassifier:
 
         elif self.configdata['dss_strategy']['type'] == 'GradMatchPB-Warm':
             # OMPGradMatch Selection strategy
-            setf_model = OMPGradMatchStrategy(trainloader, valloader, model1, criterion,
+            setf_model = OMPGradMatchStrategy(trainloader, valloader, model1, criterion_nored,
                                               self.configdata['optimizer']['lr'], self.configdata['train_args']['device'], num_cls, True, 'PerBatch',
                                               False, lam=0, eps=1e-100)
             # Random-Online Selection strategy
