@@ -264,10 +264,7 @@ class TrainClassifier:
                 start_time = time.time()
                 cached_state_dict = copy.deepcopy(model.state_dict())
                 clone_dict = copy.deepcopy(model.state_dict())
-                if self.configdata['dss_strategy']['type'] in ['CRAIG', 'CRAIGPB']:
-                    subset_idxs, gammas = setf_model.select(int(bud), clone_dict, 'lazy')
-                else:
-                    subset_idxs, gammas = setf_model.select(int(bud), clone_dict)
+                subset_idxs, gammas = setf_model.select(int(bud), clone_dict)
                 model.load_state_dict(cached_state_dict)
                 idxs = subset_idxs
                 if self.configdata['dss_strategy']['type'] in ['GradMatch', 'GradMatchPB', 'CRAIG', 'CRAIGPB']:
@@ -277,14 +274,10 @@ class TrainClassifier:
             elif (self.configdata['dss_strategy']['type'] in ['GLISTER-Warm', 'GradMatch-Warm', 'GradMatchPB-Warm', 'CRAIG-Warm',
                                'CRAIGPB-Warm']):
                 start_time = time.time()
-
                 if ((i % self.configdata['dss_strategy']['select_every'] == 0) and (i >= kappa_epochs)):
                     cached_state_dict = copy.deepcopy(model.state_dict())
                     clone_dict = copy.deepcopy(model.state_dict())
-                    if self.configdata['dss_strategy']['type'] in ['CRAIG-Warm', 'CRAIGPB-Warm']:
-                        subset_idxs, gammas = setf_model.select(int(bud), clone_dict, 'lazy')
-                    else:
-                        subset_idxs, gammas = setf_model.select(int(bud), clone_dict)
+                    subset_idxs, gammas = setf_model.select(int(bud), clone_dict)
                     model.load_state_dict(cached_state_dict)
                     idxs = subset_idxs
                     if self.configdata['dss_strategy']['type'] in ['GradMatch-Warm', 'GradMatchPB-Warm', 'CRAIG-Warm', 'CRAIGPB-Warm']:

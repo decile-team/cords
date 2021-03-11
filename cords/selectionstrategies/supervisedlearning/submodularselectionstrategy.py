@@ -38,7 +38,7 @@ class SubmodularSelectionStrategy(DataSelectionStrategy):
     """
 
     def __init__(self, trainloader, valloader, model, loss,
-                 device, num_classes, linear_layer, if_convex, selection_type, submod_func_type):
+                 device, num_classes, linear_layer, if_convex, selection_type, submod_func_type, optimizer):
         """
         Constructer method
         """
@@ -46,6 +46,7 @@ class SubmodularSelectionStrategy(DataSelectionStrategy):
         self.if_convex = if_convex
         self.selection_type = selection_type
         self.submod_func_type = submod_func_type
+        self.optimizer = optimizer
 
     def distance(self, x, y, exp=2):
         """
@@ -198,7 +199,7 @@ class SubmodularSelectionStrategy(DataSelectionStrategy):
                 kernel[i, x] = 1
         return kernel
 
-    def select(self, budget, model_params, optimizer):
+    def select(self, budget, model_params):
         """
         Data selection method using different submodular optimization
         functions.
@@ -239,19 +240,19 @@ class SubmodularSelectionStrategy(DataSelectionStrategy):
                     fl = apricot.functions.facilityLocation.FacilityLocationSelection(random_state=0,
                                                                                       metric='precomputed',
                                                                                       n_samples=per_class_bud,
-                                                                                      optimizer=optimizer)
+                                                                                      optimizer=self.optimizer)
                 elif self.submod_func_type == 'graph-cut':
                     fl = apricot.functions.graphCut.GraphCutSelection(random_state=0, metric='precomputed',
-                                                                      n_samples=per_class_bud, optimizer=optimizer)
+                                                                      n_samples=per_class_bud, optimizer=self.optimizer)
                 elif self.submod_func_type == 'sum-redundancy':
                     fl = apricot.functions.sumRedundancy.SumRedundancySelection(random_state=0, metric='precomputed',
                                                                                 n_samples=per_class_bud,
-                                                                                optimizer=optimizer)
+                                                                                optimizer=self.optimizer)
                 elif self.submod_func_type == 'saturated-coverage':
                     fl = apricot.functions.saturatedCoverage.SaturatedCoverageSelection(random_state=0,
                                                                                         metric='precomputed',
                                                                                         n_samples=per_class_bud,
-                                                                                        optimizer=optimizer)
+                                                                                        optimizer=self.optimizer)
 
                 sim_sub = fl.fit_transform(self.dist_mat)
                 greedyList = list(np.argmax(sim_sub, axis=1))
@@ -280,19 +281,19 @@ class SubmodularSelectionStrategy(DataSelectionStrategy):
             if self.submod_func_type == 'facility-location':
                 fl = apricot.functions.facilityLocation.FacilityLocationSelection(random_state=0, metric='precomputed',
                                                                                   n_samples=per_class_bud,
-                                                                                  optimizer=optimizer)
+                                                                                  optimizer=self.optimizer)
             elif self.submod_func_type == 'graph-cut':
                 fl = apricot.functions.graphCut.GraphCutSelection(random_state=0, metric='precomputed',
-                                                                  n_samples=per_class_bud, optimizer=optimizer)
+                                                                  n_samples=per_class_bud, optimizer=self.optimizer)
             elif self.submod_func_type == 'sum-redundancy':
                 fl = apricot.functions.sumRedundancy.SumRedundancySelection(random_state=0, metric='precomputed',
                                                                             n_samples=per_class_bud,
-                                                                            optimizer=optimizer)
+                                                                            optimizer=self.optimizer)
             elif self.submod_func_type == 'saturated-coverage':
                 fl = apricot.functions.saturatedCoverage.SaturatedCoverageSelection(random_state=0,
                                                                                     metric='precomputed',
                                                                                     n_samples=per_class_bud,
-                                                                                    optimizer=optimizer)
+                                                                                    optimizer=self.optimizer)
 
             sim_sub = fl.fit_transform(sparse_simmat)
             total_greedy_list = list(np.array(np.argmax(sim_sub, axis=1)).reshape(-1))
