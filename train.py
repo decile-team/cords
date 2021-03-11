@@ -1,6 +1,4 @@
-import argparse
 import time
-import datetime
 import copy
 import numpy as np
 import os
@@ -11,11 +9,9 @@ from torch.utils.data.sampler import SubsetRandomSampler
 from cords.utils.models import *
 from cords.utils.custom_dataset import load_dataset_custom
 from torch.utils.data import Subset
-from math import floor
 from cords.utils.config_utils import load_config_data
 import os.path as osp
 from cords.selectionstrategies.supervisedlearning import OMPGradMatchStrategy, GLISTERStrategy, RandomStrategy, CRAIGStrategy
-from cords.selectionstrategies.supervisedlearning import DataSelectionStrategy as dss
 
 
 class TrainClassifier:
