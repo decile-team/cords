@@ -12,11 +12,13 @@ from torch.utils.data import Subset
 from cords.utils.config_utils import load_config_data
 import os.path as osp
 from cords.selectionstrategies.supervisedlearning import OMPGradMatchStrategy, GLISTERStrategy, RandomStrategy, CRAIGStrategy
-import argparse
+from ray import tune
+
 
 class TrainClassifier:
-    def __init__(self, config):
-        self.configdata = config
+    def __init__(self, config_file):
+        self.config_file = config_file
+        self.configdata = load_config_data(self.config_file)
         # if self.configdata['setting'] == 'supervisedlearning':
         #     from cords.selectionstrategies.supervisedlearning import OMPGradMatchStrategy, GLISTERStrategy, \
         #         RandomStrategy, CRAIGStrategy
@@ -61,7 +63,11 @@ class TrainClassifier:
         if self.configdata['optimizer']['type'] == 'sgd':
             optimizer = optim.SGD(model.parameters(), lr=self.configdata['optimizer']['lr'],
                                   momentum=self.configdata['optimizer']['momentum'], weight_decay=self.configdata['optimizer']['weight_decay'])
-
+        elif self.configdata['optimizer']['type'] == "adam":
+            optimizer = optim.Adam(model.parameters(), lr=self.configdata['optimizer']['lr'])
+        elif self.configdata['optimizer']['type'] == "rmsprop":
+            optimizer = optim.RMSprop(model.parameters(), lr=self.configdata['optimizer']['lr'])
+    
         if self.configdata['scheduler']['type'] == 'cosine_annealing':
             scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.configdata['scheduler']['T_max'])
         return optimizer, scheduler
@@ -493,7 +499,7 @@ class TrainClassifier:
 
                     if arg == "time":
                         print_str += " , " + "Timing: " + str(timing[i])
-
+                tune.report(mean_accuracy=val_acc[i])
                 print(print_str)
 
         print(self.configdata['dss_strategy']['type'] + " Selection Run---------------------------------")
@@ -535,17 +541,3 @@ class TrainClassifier:
         omp_cum_timing = list(self.generate_cumulative_timing(omp_timing))
         print("Total time taken by " + self.configdata['dss_strategy']['type'] + " = " + str(omp_cum_timing[-1]))
         logfile.close()
-
-
-if __name__ == "__main__":
-    argparser = argparse.ArgumentParser()
-    argparser.add_argument('--config_file', default="configs/config_gradmatchpb-warm_cifar10.py", help="path to config file")
-    args = argparser.parse_args()
-
-    configdata = load_config_data(args.config_file)
-
-    # initialize train class
-    train_func = TrainClassifier(configdata)
-
-    train_func.train()
-
