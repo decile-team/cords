@@ -499,7 +499,11 @@ class TrainClassifier:
 
                     if arg == "time":
                         print_str += " , " + "Timing: " + str(timing[i])
-                tune.report(mean_accuracy=val_acc[i])
+                    
+                # report metric to ray for hyperparameter optimization
+                if 'report_tune' in self.configdata and self.configdata['report_tune']:
+                    tune.report(mean_accuracy=val_acc[-1])
+
                 print(print_str)
 
         print(self.configdata['dss_strategy']['type'] + " Selection Run---------------------------------")
