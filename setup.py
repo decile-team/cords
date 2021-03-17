@@ -3,7 +3,7 @@ import setuptools
 
 setup(
     name='cords',
-    version='0.2.5',
+    version='0.2.6',
     author='Krishnateja Killamsetty, Dheeraj Bhat, Rishabh Iyer',
     author_email='krishnatejakillamsetty@gmail.com',
     #packages=['cords', 'cords/selectionstrategies', 'cords/utils'],
