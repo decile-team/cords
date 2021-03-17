@@ -104,8 +104,10 @@ class DataSelectionStrategy(object):
                 inputs, targets = inputs.to(self.device), targets.to(self.device, non_blocking=True)
                 if batch_idx == 0:
                     out, l1 = self.model(inputs, last=True, freeze=True)
-                    loss = self.loss(out, targets).sum()
+                    losses = self.loss(out, targets)
+                    loss = losses.sum()
                     l0_grads = torch.autograd.grad(loss, out)[0]
+
                     if self.linear_layer:
                         l0_expand = torch.repeat_interleave(l0_grads, embDim, dim=1)
                         l1_grads = l0_expand * l1.repeat(1, self.num_classes)

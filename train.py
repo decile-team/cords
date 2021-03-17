@@ -145,11 +145,11 @@ class TrainClassifier:
 
         if self.configdata['dss_strategy']['type'] == 'GradMatch':
             # OMPGradMatch Selection strategy
-            setf_model = OMPGradMatchStrategy(trainloader, valloader, model1, criterion,
+            setf_model = OMPGradMatchStrategy(trainloader, valloader, model1, criterion_nored,
                                               self.configdata['optimizer']['lr'], self.configdata['train_args']['device'], num_cls, True, 'PerClassPerGradient',
-                                              False, lam=0, eps=1e-100)
+                                              False, lam=0.5, eps=1e-100)
         elif self.configdata['dss_strategy']['type'] == 'GradMatchPB':
-            setf_model = OMPGradMatchStrategy(trainloader, valloader, model1, criterion,
+            setf_model = OMPGradMatchStrategy(trainloader, valloader, model1, criterion_nored,
                                               self.configdata['optimizer']['lr'], self.configdata['train_args']['device'], num_cls, True, 'PerBatch',
                                               False, lam=0, eps=1e-100)
         elif self.configdata['dss_strategy']['type'] == 'GLISTER':
@@ -215,7 +215,7 @@ class TrainClassifier:
             # OMPGradMatch Selection strategy
             setf_model = OMPGradMatchStrategy(trainloader, valloader, model1, criterion_nored,
                                               self.configdata['optimizer']['lr'], self.configdata['train_args']['device'], num_cls, True, 'PerClassPerGradient',
-                                              False, lam=0, eps=1e-100)
+                                              False, lam=0.5, eps=1e-100)
             # Random-Online Selection strategy
             #rand_setf_model = RandomStrategy(trainloader, online=True)
             if 'kappa' in self.configdata['dss_strategy']:
