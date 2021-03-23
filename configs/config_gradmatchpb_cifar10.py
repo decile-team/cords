@@ -27,7 +27,8 @@ config = dict(setting="supervisedlearning",
 
               dss_strategy=dict(type="GradMatchPB",
                                 fraction=0.1,
-                                select_every=20),
+                                select_every=20,
+                                lam=0),
 
               train_args=dict(num_epochs=300,
                               device="cuda",
