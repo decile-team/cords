@@ -237,6 +237,13 @@ class TrainClassifier:
             else:
                 raise KeyError("Specify a kappa value in the config file")
 
+        elif self.configdata['dss_strategy']['type'] == 'Random-Warm':
+            if 'kappa' in self.configdata['dss_strategy']:
+                kappa_epochs = int(self.configdata['dss_strategy']['kappa'] * self.configdata['train_args']['num_epochs'])
+                full_epochs = round(kappa_epochs * self.configdata['dss_strategy']['fraction'])
+            else:
+                raise KeyError("Specify a kappa value in the config file")
+
         print("=======================================", file=logfile)
 
         for i in range(self.configdata['train_args']['num_epochs']):
