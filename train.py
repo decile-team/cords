@@ -304,7 +304,7 @@ class TrainClassifier:
                     subtrn_correct += predicted.eq(targets).sum().item()
                 train_time = time.time() - start_time
 
-            elif self.configdata['dss_strategy']['type'] in ['CRAIGPB-Warm', 'CRAIG-Warm', 'GradMatch-Warm', 'GradMatchPB-Warm', 'Random-Warm']:
+            elif self.configdata['dss_strategy']['type'] in ['CRAIGPB-Warm', 'CRAIG-Warm', 'GradMatch-Warm', 'GradMatchPB-Warm']:
                 start_time = time.time()
                 if i < full_epochs:
                     for batch_idx, (inputs, targets) in enumerate(trainloader):
@@ -353,7 +353,7 @@ class TrainClassifier:
                     subtrn_correct += predicted.eq(targets).sum().item()
                 train_time = time.time() - start_time
 
-            elif self.configdata['dss_strategy']['type'] in ['GLISTER-Warm']:
+            elif self.configdata['dss_strategy']['type'] in ['GLISTER-Warm', 'Random-Warm']:
                 start_time = time.time()
                 if i < full_epochs:
                     for batch_idx, (inputs, targets) in enumerate(trainloader):
