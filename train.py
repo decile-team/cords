@@ -12,6 +12,7 @@ from torch.utils.data import Subset
 from cords.utils.config_utils import load_config_data
 import os.path as osp
 from cords.selectionstrategies.supervisedlearning import OMPGradMatchStrategy, GLISTERStrategy, RandomStrategy, CRAIGStrategy
+from ray import tune
 
 
 class TrainClassifier:
@@ -62,7 +63,11 @@ class TrainClassifier:
         if self.configdata['optimizer']['type'] == 'sgd':
             optimizer = optim.SGD(model.parameters(), lr=self.configdata['optimizer']['lr'],
                                   momentum=self.configdata['optimizer']['momentum'], weight_decay=self.configdata['optimizer']['weight_decay'])
-
+        elif self.configdata['optimizer']['type'] == "adam":
+            optimizer = optim.Adam(model.parameters(), lr=self.configdata['optimizer']['lr'])
+        elif self.configdata['optimizer']['type'] == "rmsprop":
+            optimizer = optim.RMSprop(model.parameters(), lr=self.configdata['optimizer']['lr'])
+    
         if self.configdata['scheduler']['type'] == 'cosine_annealing':
             scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.configdata['scheduler']['T_max'])
         return optimizer, scheduler
@@ -504,6 +509,10 @@ class TrainClassifier:
 
                     if arg == "time":
                         print_str += " , " + "Timing: " + str(timing[i])
+                    
+                # report metric to ray for hyperparameter optimization
+                if 'report_tune' in self.configdata and self.configdata['report_tune']:
+                    tune.report(mean_accuracy=val_acc[-1])
 
                 print(print_str)
 
