@@ -1,8 +1,10 @@
-'''
-resnet for cifar in pytorch
+'''ResNet for cifar in pytorch
+
 Reference:
-[1] K. He, X. Zhang, S. Ren, and J. Sun. Deep residual learning for image recognition. In CVPR, 2016.
-[2] K. He, X. Zhang, S. Ren, and J. Sun. Identity mappings in deep residual networks. In ECCV, 2016.
+    Deep residual learning for image recognition
+        https://arxiv.org/abs/1512.03385
+    Identity mappings in deep residual networks
+        https://arxiv.org/abs/1603.05027
 '''
 
 import torch
@@ -196,17 +198,30 @@ class ResNet_Cifar(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def forward(self, x, last=False):
-        x = self.conv1(x)
-        x = self.bn1(x)
-        x = self.relu(x)
+    def forward(self, x, last=False, freeze=False):
+        if freeze:
+            with torch.no_grad():
+                x = self.conv1(x)
+                x = self.bn1(x)
+                x = self.relu(x)
 
-        x = self.layer1(x)
-        x = self.layer2(x)
-        x = self.layer3(x)
+                x = self.layer1(x)
+                x = self.layer2(x)
+                x = self.layer3(x)
 
-        x = self.avgpool(x)
-        x = x.view(x.size(0), -1)
+                x = self.avgpool(x)
+                x = x.view(x.size(0), -1)
+        else:
+            x = self.conv1(x)
+            x = self.bn1(x)
+            x = self.relu(x)
+
+            x = self.layer1(x)
+            x = self.layer2(x)
+            x = self.layer3(x)
+
+            x = self.avgpool(x)
+            x = x.view(x.size(0), -1)
         out = self.fc(x)
         if last:
             return out, x

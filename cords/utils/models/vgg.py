@@ -1,4 +1,6 @@
 '''VGG11/13/16/19 in Pytorch.'''
+
+
 import torch
 import torch.nn as nn
 
@@ -34,9 +36,14 @@ class VGG(nn.Module):
         return nn.Sequential(*layers)
 
 
-    def forward(self, x, last=False):
-        out = self.features(x)
-        e = out.view(out.size(0), -1)
+    def forward(self, x, last=False, freeze=False):
+        if freeze:
+            with torch.no_grad():
+                out = self.features(x)
+                e = out.view(out.size(0), -1)
+        else:
+            out = self.features(x)
+            e = out.view(out.size(0), -1)
         out = self.classifier(e)
         if last:
             return out, e

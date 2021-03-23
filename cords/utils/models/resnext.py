@@ -1,7 +1,11 @@
 '''ResNeXt in PyTorch.
 
-See the paper "Aggregated Residual Transformations for Deep Neural Networks" for more details.
+Reference
+    Aggregated Residual Transformations for Deep Neural Networks
+    https://arxiv.org/abs/1611.05431
 '''
+
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -65,14 +69,24 @@ class ResNeXt(nn.Module):
         return nn.Sequential(*layers)
 
 
-    def forward(self, x, last=False):
-        out = F.relu(self.bn1(self.conv1(x)))
-        out = self.layer1(out)
-        out = self.layer2(out)
-        out = self.layer3(out)
-        # out = self.layer4(out)
-        out = F.avg_pool2d(out, 8)
-        e = out.view(out.size(0), -1)
+    def forward(self, x, last=False, freeze=False):
+        if freeze:
+            with torch.no_grad():
+                out = F.relu(self.bn1(self.conv1(x)))
+                out = self.layer1(out)
+                out = self.layer2(out)
+                out = self.layer3(out)
+                # out = self.layer4(out)
+                out = F.avg_pool2d(out, 8)
+                e = out.view(out.size(0), -1)
+        else:
+            out = F.relu(self.bn1(self.conv1(x)))
+            out = self.layer1(out)
+            out = self.layer2(out)
+            out = self.layer3(out)
+            # out = self.layer4(out)
+            out = F.avg_pool2d(out, 8)
+            e = out.view(out.size(0), -1) 
         out = self.linear(e)
         if last:
             return out, e

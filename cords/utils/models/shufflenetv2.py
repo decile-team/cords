@@ -1,7 +1,11 @@
 '''ShuffleNetV2 in PyTorch.
 
-See the paper "ShuffleNet V2: Practical Guidelines for Efficient CNN Architecture Design" for more details.
+Reference
+    ShuffleNet V2: Practical Guidelines for Efficient CNN Architecture Design
+    https://arxiv.org/abs/1807.11164
 '''
+
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -125,15 +129,26 @@ class ShuffleNetV2(nn.Module):
         return nn.Sequential(*layers)
 
 
-    def forward(self, x, last=False):
-        out = F.relu(self.bn1(self.conv1(x)))
-        # out = F.max_pool2d(out, 3, stride=2, padding=1)
-        out = self.layer1(out)
-        out = self.layer2(out)
-        out = self.layer3(out)
-        out = F.relu(self.bn2(self.conv2(out)))
-        out = F.avg_pool2d(out, 4)
-        e = out.view(out.size(0), -1)
+    def forward(self, x, last=False, freeze=False):
+        if freeze:
+            with torch.no_grad():
+                out = F.relu(self.bn1(self.conv1(x)))
+                # out = F.max_pool2d(out, 3, stride=2, padding=1)
+                out = self.layer1(out)
+                out = self.layer2(out)
+                out = self.layer3(out)
+                out = F.relu(self.bn2(self.conv2(out)))
+                out = F.avg_pool2d(out, 4)
+                e = out.view(out.size(0), -1)
+        else:
+            out = F.relu(self.bn1(self.conv1(x)))
+            # out = F.max_pool2d(out, 3, stride=2, padding=1)
+            out = self.layer1(out)
+            out = self.layer2(out)
+            out = self.layer3(out)
+            out = F.relu(self.bn2(self.conv2(out)))
+            out = F.avg_pool2d(out, 4)
+            e = out.view(out.size(0), -1)
         out = self.linear(e)
         if last:
             return out, e

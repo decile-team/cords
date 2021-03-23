@@ -1,4 +1,10 @@
-""" Densely Connected Convolutional Networks https://arxiv.org/pdf/1608.06993.pdf """
+''' DenseNet in PyTorch'
+
+Reference
+    Densely Connected Convolutional Networks 
+    https://arxiv.org/pdf/1608.06993.pdf
+'''
+
 
 import re
 import torch
@@ -112,10 +118,16 @@ class DenseNet(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
 
-    def forward(self, x, last=False):
-        features = self.features(x)
-        out = F.relu(features, inplace=True)
-        e = F.adaptive_avg_pool2d(out, (1, 1)).view(features.size(0), -1)
+    def forward(self, x, last=False, freeze=False):
+        if freeze:
+            with torch.no_grad():
+                features = self.features(x)
+                out = F.relu(features, inplace=True)
+                e = F.adaptive_avg_pool2d(out, (1, 1)).view(features.size(0), -1)
+        else:
+            features = self.features(x)
+            out = F.relu(features, inplace=True)
+            e = F.adaptive_avg_pool2d(out, (1, 1)).view(features.size(0), -1)
         out = self.classifier(e)
         if last:
           return out, e

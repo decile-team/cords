@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch.nn.functional as F
-
+import torch
 
 class CifarNet(nn.Module):
     def __init__(self):
@@ -16,13 +16,22 @@ class CifarNet(nn.Module):
         self.fc3 = nn.Linear(256, 10)
 
 
-    def forward(self, x, last=False):
-        out = self.pool(F.relu(self.conv1(x)))
-        out = self.pool(F.relu(self.conv2(out)))
-        out = self.pool(F.relu(self.conv3(out)))
-        out = out.view(-1, 64 * 4 * 4)
-        out = F.relu(self.fc1(out))
-        e = F.relu(self.fc2(out))
+    def forward(self, x, last=False, freeze=False):
+        if freeze:
+            with torch.no_grad():
+                out = self.pool(F.relu(self.conv1(x)))
+                out = self.pool(F.relu(self.conv2(out)))
+                out = self.pool(F.relu(self.conv3(out)))
+                out = out.view(-1, 64 * 4 * 4)
+                out = F.relu(self.fc1(out))
+                e = F.relu(self.fc2(out))
+        else:
+            out = self.pool(F.relu(self.conv1(x)))
+            out = self.pool(F.relu(self.conv2(out)))
+            out = self.pool(F.relu(self.conv3(out)))
+            out = out.view(-1, 64 * 4 * 4)
+            out = F.relu(self.fc1(out))
+            e = F.relu(self.fc2(out))
         out = self.fc3(e)
         if last:
             return out, e

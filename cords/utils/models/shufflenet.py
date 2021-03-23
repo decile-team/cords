@@ -1,7 +1,11 @@
 '''ShuffleNet in PyTorch.
 
-See the paper "ShuffleNet: An Extremely Efficient Convolutional Neural Network for Mobile Devices" for more details.
+Reference
+    ShuffleNet: An Extremely Efficient Convolutional Neural Network for Mobile Devices
+    https://arxiv.org/abs/1707.01083
 '''
+
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -77,13 +81,22 @@ class ShuffleNet(nn.Module):
         return nn.Sequential(*layers)
 
 
-    def forward(self, x, last=False):
-        out = F.relu(self.bn1(self.conv1(x)))
-        out = self.layer1(out)
-        out = self.layer2(out)
-        out = self.layer3(out)
-        out = F.avg_pool2d(out, 4)
-        e = out.view(out.size(0), -1)
+    def forward(self, x, last=False, freeze=False):
+        if freeze:
+            with torch.no_grad():
+                out = F.relu(self.bn1(self.conv1(x)))
+                out = self.layer1(out)
+                out = self.layer2(out)
+                out = self.layer3(out)
+                out = F.avg_pool2d(out, 4)
+                e = out.view(out.size(0), -1)
+        else:
+            out = F.relu(self.bn1(self.conv1(x)))
+            out = self.layer1(out)
+            out = self.layer2(out)
+            out = self.layer3(out)
+            out = F.avg_pool2d(out, 4)
+            e = out.view(out.size(0), -1)            
         out = self.linear(e)
         if last:
             return out, e

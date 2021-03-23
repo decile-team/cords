@@ -1,8 +1,11 @@
 '''MobileNet in PyTorch.
 
-See the paper "MobileNets: Efficient Convolutional Neural Networks for Mobile Vision Applications"
-for more details.
+Reference
+    MobileNets: Efficient Convolutional Neural Networks for Mobile Vision Applications 
+    https://arxiv.org/abs/1704.04861
 '''
+
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -49,11 +52,18 @@ class MobileNet(nn.Module):
         return nn.Sequential(*layers)
 
 
-    def forward(self, x, last=False):
-        out = F.relu(self.bn1(self.conv1(x)))
-        out = self.layers(out)
-        out = F.avg_pool2d(out, 2)
-        e = out.view(out.size(0), -1)
+    def forward(self, x, last=False, freeze=False):
+        if freeze:
+            with torch.no_grad():
+                out = F.relu(self.bn1(self.conv1(x)))
+                out = self.layers(out)
+                out = F.avg_pool2d(out, 2)
+                e = out.view(out.size(0), -1)
+        else:
+            out = F.relu(self.bn1(self.conv1(x)))
+            out = self.layers(out)
+            out = F.avg_pool2d(out, 2)
+            e = out.view(out.size(0), -1)
         out = self.linear(e)
         if last:
             return out, e

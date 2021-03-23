@@ -1,9 +1,11 @@
 '''RegNet in PyTorch.
 
-Paper: "Designing Network Design Spaces".
-
-Reference: https://github.com/keras-team/keras-applications/blob/master/keras_applications/efficientnet.py
+Reference
+    Designing Network Design Spaces
+    https://arxiv.org/abs/2003.13678
 '''
+
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -101,14 +103,24 @@ class RegNet(nn.Module):
         return nn.Sequential(*layers)
 
 
-    def forward(self, x, last=False):
-        out = F.relu(self.bn1(self.conv1(x)))
-        out = self.layer1(out)
-        out = self.layer2(out)
-        out = self.layer3(out)
-        out = self.layer4(out)
-        out = F.adaptive_avg_pool2d(out, (1, 1))
-        e = out.view(out.size(0), -1)
+    def forward(self, x, last=False, freeze=False):
+        if freeze:
+            with torch.no_grad():
+                out = F.relu(self.bn1(self.conv1(x)))
+                out = self.layer1(out)
+                out = self.layer2(out)
+                out = self.layer3(out)
+                out = self.layer4(out)
+                out = F.adaptive_avg_pool2d(out, (1, 1))
+                e = out.view(out.size(0), -1)
+        else:
+            out = F.relu(self.bn1(self.conv1(x)))
+            out = self.layer1(out)
+            out = self.layer2(out)
+            out = self.layer3(out)
+            out = self.layer4(out)
+            out = F.adaptive_avg_pool2d(out, (1, 1))
+            e = out.view(out.size(0), -1)
         out = self.linear(e)
         if last:
             return out, e

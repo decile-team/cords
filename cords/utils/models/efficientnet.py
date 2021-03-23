@@ -1,8 +1,8 @@
 '''EfficientNet in PyTorch.
 
-Paper: "EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks".
-
-Reference: https://github.com/keras-team/keras-applications/blob/master/keras_applications/efficientnet.py
+Reference
+    EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks
+    https://github.com/keras-team/keras-applications/blob/master/keras_applications/efficientnet.py
 '''
 import torch
 import torch.nn as nn
@@ -144,14 +144,24 @@ class EfficientNet(nn.Module):
         return nn.Sequential(*layers)
 
 
-    def forward(self, x, last=False):
-        out = swish(self.bn1(self.conv1(x)))
-        out = self.layers(out)
-        out = F.adaptive_avg_pool2d(out, 1)
-        e = out.view(out.size(0), -1)
-        dropout_rate = self.cfg['dropout_rate']
-        if self.training and dropout_rate > 0:
-            e = F.dropout(e, p=dropout_rate)
+    def forward(self, x, last=False, freeze=False):
+        if freeze:
+            with torch.no_grad():
+                out = swish(self.bn1(self.conv1(x)))
+                out = self.layers(out)
+                out = F.adaptive_avg_pool2d(out, 1)
+                e = out.view(out.size(0), -1)
+                dropout_rate = self.cfg['dropout_rate']
+                if self.training and dropout_rate > 0:
+                    e = F.dropout(e, p=dropout_rate)
+        else:
+            out = swish(self.bn1(self.conv1(x)))
+            out = self.layers(out)
+            out = F.adaptive_avg_pool2d(out, 1)
+            e = out.view(out.size(0), -1)
+            dropout_rate = self.cfg['dropout_rate']
+            if self.training and dropout_rate > 0:
+                e = F.dropout(e, p=dropout_rate)
         out = self.linear(e)
         if last:
             return out, e

@@ -1,4 +1,11 @@
-'''Dual Path Networks in PyTorch.'''
+'''DPN in PyTorch.
+
+Reference
+    Dual Path Networks
+    https://arxiv.org/abs/1707.01629
+'''
+
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -62,14 +69,24 @@ class DPN(nn.Module):
         return nn.Sequential(*layers)
 
 
-    def forward(self, x, last=False):
-        out = F.relu(self.bn1(self.conv1(x)))
-        out = self.layer1(out)
-        out = self.layer2(out)
-        out = self.layer3(out)
-        out = self.layer4(out)
-        out = F.avg_pool2d(out, 4)
-        e = out.view(out.size(0), -1)
+    def forward(self, x, last=False, freeze=False):
+        if freeze:
+            with torch.no_grad():
+                out = F.relu(self.bn1(self.conv1(x)))
+                out = self.layer1(out)
+                out = self.layer2(out)
+                out = self.layer3(out)
+                out = self.layer4(out)
+                out = F.avg_pool2d(out, 4)
+                e = out.view(out.size(0), -1)
+        else:
+            out = F.relu(self.bn1(self.conv1(x)))
+            out = self.layer1(out)
+            out = self.layer2(out)
+            out = self.layer3(out)
+            out = self.layer4(out)
+            out = F.avg_pool2d(out, 4)
+            e = out.view(out.size(0), -1)
         out = self.linear(e)
         if last:
             return out, e

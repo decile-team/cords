@@ -1,4 +1,11 @@
-'''GoogLeNet with PyTorch.'''
+'''GoogLeNet in PyTorch.
+
+Reference:
+    GoogLeNet
+    https://arxiv.org/abs/1409.4842
+'''
+
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -83,21 +90,38 @@ class GoogLeNet(nn.Module):
         self.linear = nn.Linear(1024, 10)
 
 
-    def forward(self, x, last=False):
-        out = self.pre_layers(x)
-        out = self.a3(out)
-        out = self.b3(out)
-        out = self.maxpool(out)
-        out = self.a4(out)
-        out = self.b4(out)
-        out = self.c4(out)
-        out = self.d4(out)
-        out = self.e4(out)
-        out = self.maxpool(out)
-        out = self.a5(out)
-        out = self.b5(out)
-        out = self.avgpool(out)
-        e = out.view(out.size(0), -1)
+    def forward(self, x, last=False, freeze=False):
+        if freeze:
+            with torch.no_grad():
+                out = self.pre_layers(x)
+                out = self.a3(out)
+                out = self.b3(out)
+                out = self.maxpool(out)
+                out = self.a4(out)
+                out = self.b4(out)
+                out = self.c4(out)
+                out = self.d4(out)
+                out = self.e4(out)
+                out = self.maxpool(out)
+                out = self.a5(out)
+                out = self.b5(out)
+                out = self.avgpool(out)
+                e = out.view(out.size(0), -1)
+        else:
+            out = self.pre_layers(x)
+            out = self.a3(out)
+            out = self.b3(out)
+            out = self.maxpool(out)
+            out = self.a4(out)
+            out = self.b4(out)
+            out = self.c4(out)
+            out = self.d4(out)
+            out = self.e4(out)
+            out = self.maxpool(out)
+            out = self.a5(out)
+            out = self.b5(out)
+            out = self.avgpool(out)
+            e = out.view(out.size(0), -1)
         out = self.linear(e)
         if last:
             return out, e
