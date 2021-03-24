@@ -207,7 +207,7 @@ def census_load(path, dim, save_data=False):
     return (X_data, Y_label)
 
 
-def create_imbalance(x_trn, y_trn, x_val, y_val, x_tst, y_tst, num_cls):
+def create_imbalance(x_trn, y_trn, x_val, y_val, x_tst, y_tst, num_cls, ratio):
     samples_per_class = np.zeros(num_cls)
     val_samples_per_class = np.zeros(num_cls)
     tst_samples_per_class = np.zeros(num_cls)
@@ -216,7 +216,7 @@ def create_imbalance(x_trn, y_trn, x_val, y_val, x_tst, y_tst, num_cls):
         val_samples_per_class[i] = len(np.where(y_val == i)[0])
         tst_samples_per_class[i] = len(np.where(y_tst == i)[0])
     min_samples = int(np.min(samples_per_class) * 0.1)
-    selected_classes = np.random.choice(np.arange(num_cls), size=int(0.3 * num_cls), replace=False)
+    selected_classes = np.random.choice(np.arange(num_cls), size=int(ratio * num_cls), replace=False)
     for i in range(num_cls):
         if i == 0:
             if i in selected_classes:
@@ -265,7 +265,13 @@ def create_noisy(y_trn, num_cls, noise_ratio=0.8):
     return y_trn
 
 
-def load_dataset_custom(datadir, dset_name, feature, isnumpy=False):
+def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
+    if feature == 'classimb':
+        if 'classimb_ratio' in kwargs:
+            pass
+        else:
+            raise KeyError("Specify a classimbratio value in the config file")
+
     if dset_name == "dna":
         np.random.seed(42)
         trn_file = os.path.join(datadir, 'dna.scale.trn')
@@ -287,7 +293,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False):
 
         if feature == 'classimb':
             x_trn, y_trn, x_val, y_val, x_tst, y_tst = create_imbalance(x_trn, y_trn, x_val, y_val,
-                                                                        x_tst, y_tst, num_cls)
+                                                                        x_tst, y_tst, num_cls, kwargs['classimb_ratio'])
         elif feature == 'noise':
             y_trn = create_noisy(y_trn, num_cls)
 
@@ -342,7 +348,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False):
 
         if feature == 'classimb':
             x_trn, y_trn, x_val, y_val, x_tst, y_tst = create_imbalance(x_trn, y_trn, x_val, y_val,
-                                                                        x_tst, y_tst, num_cls)
+                                                                        x_tst, y_tst, num_cls, kwargs['classimb_ratio'])
         elif feature == 'noise':
             y_trn = create_noisy(y_trn, num_cls)
 
@@ -378,7 +384,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False):
 
         if feature == 'classimb':
             x_trn, y_trn, x_val, y_val, x_tst, y_tst = create_imbalance(x_trn, y_trn, x_val, y_val,
-                                                                        x_tst, y_tst, num_cls)
+                                                                        x_tst, y_tst, num_cls, kwargs['classimb_ratio'])
         elif feature == 'noise':
             y_trn = create_noisy(y_trn, num_cls)
 
@@ -414,7 +420,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False):
 
         if feature == 'classimb':
             x_trn, y_trn, x_val, y_val, x_tst, y_tst = create_imbalance(x_trn, y_trn, x_val, y_val, x_tst, y_tst,
-                                                                        num_cls)
+                                                                        num_cls, kwargs['classimb_ratio'])
 
         elif feature == 'noise':
             y_trn = create_noisy(y_trn, num_cls)
@@ -454,7 +460,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False):
 
         if feature == 'classimb':
             x_trn, y_trn, x_val, y_val, x_tst, y_tst = create_imbalance(x_trn, y_trn, x_val, y_val, x_tst, y_tst,
-                                                                        num_cls)
+                                                                        num_cls, kwargs['classimb_ratio'])
 
         elif feature == 'noise':
             y_trn = create_noisy(y_trn, num_cls)
@@ -489,7 +495,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False):
 
         if feature == 'classimb':
             x_trn, y_trn, x_val, y_val, x_tst, y_tst = create_imbalance(x_trn, y_trn, x_val, y_val, x_tst, y_tst,
-                                                                        num_cls)
+                                                                        num_cls, kwargs['classimb_ratio'])
 
         elif feature == 'noise':
             y_trn = create_noisy(y_trn, num_cls)
@@ -524,7 +530,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False):
 
         if feature == 'classimb':
             x_trn, y_trn, x_val, y_val, x_tst, y_tst = create_imbalance(x_trn, y_trn, x_val, y_val, x_tst, y_tst,
-                                                                        num_cls)
+                                                                        num_cls, kwargs['classimb_ratio'])
 
         elif feature == 'noise':
             y_trn = create_noisy(y_trn, num_cls)
@@ -563,7 +569,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False):
 
         if feature == 'classimb':
             x_trn, y_trn, x_val, y_val, x_tst, y_tst = create_imbalance(x_trn, y_trn, x_val, y_val, x_tst, y_tst,
-                                                                        num_cls)
+                                                                        num_cls, kwargs['classimb_ratio'])
 
         elif feature == 'noise':
             y_trn = create_noisy(y_trn, num_cls)
@@ -596,7 +602,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False):
 
         if feature == 'classimb':
             x_trn, y_trn, x_val, y_val, x_tst, y_tst = create_imbalance(x_trn, y_trn, x_val, y_val, x_tst, y_tst,
-                                                                        num_cls)
+                                                                        num_cls, kwargs['classimb_ratio'])
 
         elif feature == 'noise':
             y_trn = create_noisy(y_trn, num_cls)
@@ -628,7 +634,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False):
 
         if feature == 'classimb':
             x_trn, y_trn, x_val, y_val, x_tst, y_tst = create_imbalance(x_trn, y_trn, x_val, y_val, x_tst, y_tst,
-                                                                        num_cls)
+                                                                        num_cls, kwargs['classimb_ratio'])
 
         elif feature == 'noise':
             y_trn = create_noisy(y_trn, num_cls)
@@ -664,7 +670,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False):
 
         if feature == 'classimb':
             x_trn, y_trn, x_val, y_val, x_tst, y_tst = create_imbalance(x_trn, y_trn, x_val, y_val, x_tst, y_tst,
-                                                                        num_cls)
+                                                                        num_cls, kwargs['classimb_ratio'])
 
         elif feature == 'noise':
             y_trn = create_noisy(y_trn, num_cls)
@@ -699,7 +705,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False):
 
         if feature == 'classimb':
             x_trn, y_trn, x_val, y_val, x_tst, y_tst = create_imbalance(x_trn, y_trn, x_val, y_val, x_tst, y_tst,
-                                                                        num_cls)
+                                                                        num_cls, kwargs['classimb_ratio'])
 
         elif feature == 'noise':
             y_trn = create_noisy(y_trn, num_cls)
@@ -733,7 +739,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False):
 
         if feature == 'classimb':
             x_trn, y_trn, x_val, y_val, x_tst, y_tst = create_imbalance(x_trn, y_trn, x_val, y_val, x_tst, y_tst,
-                                                                        num_cls)
+                                                                        num_cls, kwargs['classimb_ratio'])
 
         elif feature == 'noise':
             y_trn = create_noisy(y_trn, num_cls)
@@ -771,7 +777,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False):
             for i in range(num_cls):
                 samples_per_class[i] = len(torch.where(fullset.targets == i)[0])
             min_samples = int(torch.min(samples_per_class) * 0.1)
-            selected_classes = np.random.choice(np.arange(num_cls), size=int(0.3 * num_cls), replace=False)
+            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
             for i in range(num_cls):
                 if i == 0:
                     if i in selected_classes:
@@ -823,7 +829,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False):
             for i in range(num_cls):
                 samples_per_class[i] = len(torch.where(fullset.targets == i)[0])
             min_samples = int(torch.min(samples_per_class) * 0.1)
-            selected_classes = np.random.choice(np.arange(num_cls), size=int(0.3 * num_cls), replace=False)
+            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
             for i in range(num_cls):
                 if i == 0:
                     if i in selected_classes:
@@ -875,7 +881,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False):
             for i in range(num_cls):
                 samples_per_class[i] = len(torch.where(torch.Tensor(fullset.targets) == i)[0])
             min_samples = int(torch.min(samples_per_class) * 0.1)
-            selected_classes = np.random.choice(np.arange(num_cls), size=int(0.3 * num_cls), replace=False)
+            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
             for i in range(num_cls):
                 if i == 0:
                     if i in selected_classes:
@@ -930,7 +936,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False):
             for i in range(num_cls):
                 samples_per_class[i] = len(torch.where(torch.Tensor(fullset.targets) == i)[0])
             min_samples = int(torch.min(samples_per_class) * 0.1)
-            selected_classes = np.random.choice(np.arange(num_cls), size=int(0.3 * num_cls), replace=False)
+            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
             for i in range(num_cls):
                 if i == 0:
                     if i in selected_classes:
@@ -984,7 +990,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False):
             for i in range(num_cls):
                 samples_per_class[i] = len(torch.where(torch.Tensor(fullset.targets) == i)[0])
             min_samples = int(torch.min(samples_per_class) * 0.1)
-            selected_classes = np.random.choice(np.arange(num_cls), size=int(0.3 * num_cls), replace=False)
+            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
             for i in range(num_cls):
                 if i == 0:
                     if i in selected_classes:
@@ -1039,7 +1045,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False):
             for i in range(num_cls):
                 samples_per_class[i] = len(torch.where(torch.Tensor(fullset.targets) == i)[0])
             min_samples = int(torch.min(samples_per_class) * 0.1)
-            selected_classes = np.random.choice(np.arange(num_cls), size=int(0.3 * num_cls), replace=False)
+            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
             for i in range(num_cls):
                 if i == 0:
                     if i in selected_classes:
@@ -1095,7 +1101,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False):
             for i in range(num_cls):
                 samples_per_class[i] = len(torch.where(torch.Tensor(fullset.targets) == i)[0])
             min_samples = int(torch.min(samples_per_class) * 0.1)
-            selected_classes = np.random.choice(np.arange(num_cls), size=int(0.3 * num_cls), replace=False)
+            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
             for i in range(num_cls):
                 if i == 0:
                     if i in selected_classes:
@@ -1149,7 +1155,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False):
             for i in range(num_cls):
                 samples_per_class[i] = len(torch.where(fullset.targets == i)[0])
             min_samples = int(torch.min(samples_per_class) * 0.1)
-            selected_classes = np.random.choice(np.arange(num_cls), size=int(0.3 * num_cls), replace=False)
+            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
             for i in range(num_cls):
                 if i == 0:
                     if i in selected_classes:
@@ -1211,7 +1217,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False):
             for i in range(num_cls):
                 samples_per_class[i] = len(torch.where(trainset.identity == i)[0])
             min_samples = int(torch.min(samples_per_class) * 0.1)
-            selected_classes = np.random.choice(np.arange(num_cls), size=int(0.3 * num_cls), replace=False)
+            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
             for i in range(num_cls):
                 if i == 0:
                     if i in selected_classes:
