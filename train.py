@@ -85,7 +85,7 @@ class TrainClassifier:
         #General Training Loop with Data Selection Strategies
         """
         # Loading the Dataset
-        trainset, validset, testset, num_cls = load_dataset_custom(self.configdata['dataset']['datadir'], self.configdata['dataset']['name'], self.configdata['dataset']['feature'])
+        trainset, validset, testset, num_cls = load_dataset_custom(self.configdata['dataset']['datadir'], self.configdata['dataset']['name'], self.configdata['dataset']['feature'], classimb_ratio=self.configdata['dataset']['classimb_ratio'])
         N = len(trainset)
         trn_batch_size = 20
         val_batch_size = 1000
