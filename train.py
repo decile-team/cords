@@ -42,12 +42,18 @@ class TrainClassifier:
     #Model Creation
     """
     def create_model(self):
+
         if self.configdata['model']['architecture'] == 'ResNet18':
             model = ResNet18(self.configdata['model']['numclasses'])
         elif self.configdata['model']['architecture'] == 'MnistNet':
             model = MnistNet()
         elif self.configdata['model']['architecture'] == 'ResNet164':
             model = ResNet164(self.configdata['model']['numclasses'])
+        elif self.configdata['model']['architecture'] == 'MobileNet':
+            model = MobileNet(self.configdata['model']['numclasses'])
+        elif self.configdata['model']['architecture'] == 'MobileNetV2':
+            model = MobileNetV2(self.configdata['model']['numclasses'])
+
         model = model.to(self.configdata['train_args']['device'])
         return model
 
