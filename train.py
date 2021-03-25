@@ -472,18 +472,19 @@ class TrainClassifier:
                                 val_acc.append(val_correct / val_total)
 
                 if "tst_loss" in print_args:
-                    for batch_idx, (inputs, targets) in enumerate(testloader):
-                        # print(batch_idx)
-                        inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(self.configdata['train_args']['device'], non_blocking=True)
-                        outputs = model(inputs)
-                        loss = criterion(outputs, targets)
-                        tst_loss += loss.item()
-                        tst_losses.append(tst_loss)
-                        if "tst_acc" in print_args:
-                            _, predicted = outputs.max(1)
-                            tst_total += targets.size(0)
-                            tst_correct += predicted.eq(targets).sum().item()
-                            tst_acc.append(tst_correct/tst_total)
+                    with torch.no_grad():
+                        for batch_idx, (inputs, targets) in enumerate(testloader):
+                            # print(batch_idx)
+                            inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(self.configdata['train_args']['device'], non_blocking=True)
+                            outputs = model(inputs)
+                            loss = criterion(outputs, targets)
+                            tst_loss += loss.item()
+                            tst_losses.append(tst_loss)
+                            if "tst_acc" in print_args:
+                                _, predicted = outputs.max(1)
+                                tst_total += targets.size(0)
+                                tst_correct += predicted.eq(targets).sum().item()
+                                tst_acc.append(tst_correct/tst_total)
 
                 if "subtrn_acc" in print_args:
                     subtrn_acc.append(subtrn_correct / subtrn_total)
