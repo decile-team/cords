@@ -98,7 +98,6 @@ class MobileNetV2(nn.Module):
         else:
             return out
 
-
     def get_embedding_dim(self):
         return self.embDim
 

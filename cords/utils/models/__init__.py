@@ -38,3 +38,4 @@ from .simpleNN_net import TwoLayerNet
 from .simpleNN_net import ThreeLayerNet
 from .vgg import VGG
 from .resnet164 import ResNet164
+from .mobilenetv2tf import MobileNet2

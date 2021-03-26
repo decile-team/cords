@@ -53,7 +53,8 @@ class TrainClassifier:
             model = MobileNet(self.configdata['model']['numclasses'])
         elif self.configdata['model']['architecture'] == 'MobileNetV2':
             model = MobileNetV2(self.configdata['model']['numclasses'])
-
+        elif self.configdata['model']['architecture'] == 'MobileNet2':
+            model = MobileNet2(input_size=32, num_classes=self.configdata['model']['numclasses'])
         model = model.to(self.configdata['train_args']['device'])
         return model
 
