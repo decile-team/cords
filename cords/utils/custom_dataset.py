@@ -208,6 +208,7 @@ def census_load(path, dim, save_data=False):
 
 
 def create_imbalance(x_trn, y_trn, x_val, y_val, x_tst, y_tst, num_cls, ratio):
+    np.random.seed(42)
     samples_per_class = np.zeros(num_cls)
     val_samples_per_class = np.zeros(num_cls)
     tst_samples_per_class = np.zeros(num_cls)
@@ -513,6 +514,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
         return fullset, valset, testset, num_cls
 
     elif dset_name == "usps":
+        np.random.seed(42)
         trn_file = os.path.join(datadir, 'usps.trn_full')
         tst_file = os.path.join(datadir, 'usps.tst')
         data_dims = 256
@@ -548,6 +550,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
         return fullset, valset, testset, num_cls
 
     elif dset_name == "ijcnn1":
+        np.random.seed(42)
         trn_file = os.path.join(datadir, 'ijcnn1.trn')
         val_file = os.path.join(datadir, 'ijcnn1.val')
         tst_file = os.path.join(datadir, 'ijcnn1.tst')
@@ -587,7 +590,6 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
         return fullset, valset, testset, num_cls
 
     elif dset_name == "sklearn-digits":
-
         np.random.seed(42)
         data, target = datasets.load_digits(return_X_y=True)
         # Test data is 10%
@@ -623,6 +625,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
                        'expand_large_linsep_4',
                        'shrink_large_linsep_4', 'red_conv_shift_large_linsep_4', "linsep_4", "large_linsep_4"]:
 
+        np.random.seed(42)
         trn_file = os.path.join(datadir, dset_name + '.trn')
         val_file = os.path.join(datadir, dset_name + '.val')
         tst_file = os.path.join(datadir, dset_name + '.tst')
@@ -653,7 +656,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
 
     elif dset_name in ['prior_shift_clf_2', 'prior_shift_gauss_2', 'conv_shift_clf_2', 'conv_shift_gauss_2', "gauss_2",
                        "clf_2", "linsep"]:
-
+        np.random.seed(42)
         trn_file = os.path.join(datadir, dset_name + '.trn')
         val_file = os.path.join(datadir, dset_name + '.val')
         tst_file = os.path.join(datadir, dset_name + '.tst')
@@ -688,6 +691,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
         return fullset, valset, testset, num_cls
 
     elif dset_name == "covertype":
+        np.random.seed(42)
         trn_file = os.path.join(datadir, 'covtype.data')
         data_dims = 54
         num_cls = 7
@@ -723,6 +727,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
         return fullset, valset, testset, num_cls
 
     elif dset_name == "census":
+        np.random.seed(42)
         trn_file = os.path.join(datadir, 'adult.data')
         tst_file = os.path.join(datadir, 'adult.test')
         data_dims = 14
@@ -758,6 +763,8 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
 
 
     elif dset_name == "mnist":
+        torch.cuda.manual_seed(42)
+        torch.manual_seed(42)
         mnist_transform = transforms.Compose([
             torchvision.transforms.ToTensor(),
             torchvision.transforms.Normalize((0.1307,), (0.3081,))
@@ -807,7 +814,8 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
 
 
     elif dset_name == "fashion-mnist":
-
+        torch.cuda.manual_seed(42)
+        torch.manual_seed(42)
         mnist_transform = transforms.Compose([
             torchvision.transforms.ToTensor(),
             torchvision.transforms.Normalize((0.1307,), (0.3081,))
@@ -858,6 +866,8 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
         return trainset, valset, testset, num_cls
 
     elif dset_name == "cifar10":
+        torch.cuda.manual_seed(42)
+        torch.manual_seed(42)
         cifar_transform = transforms.Compose([
             transforms.RandomCrop(32, padding=4),
             transforms.RandomHorizontalFlip(),
@@ -913,6 +923,8 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
 
 
     elif dset_name == "cifar100":
+        torch.cuda.manual_seed(42)
+        torch.manual_seed(42)
         cifar100_transform = transforms.Compose([
             transforms.RandomCrop(32, padding=4),
             transforms.RandomHorizontalFlip(),
@@ -968,6 +980,8 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
 
 
     elif dset_name == "svhn":
+        torch.cuda.manual_seed(42)
+        torch.manual_seed(42)
         svhn_transform = transforms.Compose([
             transforms.RandomCrop(32, padding=4),
             transforms.RandomHorizontalFlip(),
@@ -1022,6 +1036,8 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
 
 
     elif dset_name == "kmnist":
+        torch.cuda.manual_seed(42)
+        torch.manual_seed(42)
         kmnist_transform = transforms.Compose([
             transforms.RandomCrop(32, padding=4),
             transforms.RandomHorizontalFlip(),
@@ -1077,6 +1093,8 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
 
 
     elif dset_name == "stl10":
+        torch.cuda.manual_seed(42)
+        torch.manual_seed(42)
         stl10_transform = transforms.Compose([
             transforms.Pad(12),
             transforms.RandomCrop(96),
@@ -1133,6 +1151,8 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
 
 
     elif dset_name == "emnist":
+        torch.cuda.manual_seed(42)
+        torch.manual_seed(42)
         emnist_transform = transforms.Compose([
             torchvision.transforms.ToTensor(),
             torchvision.transforms.Normalize((0.1307,), (0.3081,))
@@ -1183,6 +1203,8 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
         return trainset, valset, testset, num_cls
 
     elif dset_name == "celeba":
+        torch.cuda.manual_seed(42)
+        torch.manual_seed(42)
         crop_size = 108
         re_size = 64
         offset_height = (218 - crop_size) // 2
