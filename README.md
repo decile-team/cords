@@ -95,7 +95,7 @@ Learn more about CORDS at our [documentation](https://cords.readthedocs.io/en/la
 
 Here are some [tutorials](https://github.com/decile-team/cords/tree/main/notebooks) to get you started with CORDS. 
 
-- [Efficient model training on data subsets]()
+- [Efficient model training on data subsets](https://github.com/decile-team/cords/blob/main/notebooks/CORDS_tutorial_all_CIFAR10.ipynb)
 - [Robust model training in class imbalance scenarios]()
 - [Efficient hyper-parameter tuning on data subsets]()
 
