@@ -151,9 +151,9 @@ Results are obtained by running each dataset with different strategies for 300 e
 
 ## Publications
 
-[1] Schwartz, Roy, et al. "Green ai." arXiv preprint arXiv:1907.10597 (2019).
+[1] Schwartz, Roy, et al., [Green AI](https://arxiv.org/pdf/1907.10597.pdf), arXiv preprint arXiv:1907.10597 (2019).
 
-[2] Strubell, Emma, Ananya Ganesh, and Andrew McCallum. "Energy and policy considerations for deep learning in NLP." In ACL 2019.
+[2] Strubell, Emma, Ananya Ganesh, and Andrew McCallum, [Energy and Policy Considerations for Deep Learning in NLP](https://arxiv.org/abs/1906.02243), In ACL 2019.
 
 [3] Krishnateja Killamsetty, Durga Sivasubramanian, Ganesh Ramakrishnan, and Rishabh Iyer, [GLISTER: Generalization based Data Subset Selection for Efficient and Robust Learning](https://arxiv.org/abs/2012.10630), 35th AAAI Conference on Artificial Intelligence, AAAI 2021
 
