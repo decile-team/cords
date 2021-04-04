@@ -97,8 +97,8 @@ class TrainClassifier:
         else:
             trainset, validset, testset, num_cls = load_dataset_custom(self.configdata['dataset']['datadir'],
                                                                        self.configdata['dataset']['name'],
-                                                                       self.configdata['dataset']['feature']
-                                                                       )
+                                                                       self.configdata['dataset']['feature'])
+
         N = len(trainset)
         trn_batch_size = 20
         val_batch_size = 1000
