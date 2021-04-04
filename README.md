@@ -67,7 +67,7 @@ We are continuously incorporating newer and better algorithms into CORDS. Some o
 - Benchmarking: We have benchmarked CORDS (and the algorithms present right now) on several datasets including CIFAR-10, CIFAR-100, MNIST, SVHN and ImageNet. 
 - Ease of Use: One of the main goals of CORDS is that it is easy to use and add to CORDS. Feel free to contribute to CORDS!
 - Modular design: The data selection algorithms are separate from the training loop, thereby enabling modular design and also varied scenarios of utility.
-- Broad number of usecases: CORDS is currently implemented for simple image classification tasks, but we are working on integrating a number of additional use cases like object detection, speech recognition, semi-supervised learning, Auto-ML, etc.
+- Broad number of usecases: CORDS is currently implemented for simple image classification tasks and hyperparameter tuning, but we are working on integrating a number of additional use cases like object detection, speech recognition, semi-supervised learning, Auto-ML, etc.
 
 ## Installation
 
@@ -95,9 +95,9 @@ Learn more about CORDS at our [documentation](https://cords.readthedocs.io/en/la
 
 Here are some [tutorials](https://github.com/decile-team/cords/tree/main/notebooks) to get you started with CORDS. 
 
-- [General Data Selection](https://github.com/decile-team/cords/blob/main/notebooks/general_dataselection.py)
-- [GLISTER](https://github.com/decile-team/cords/blob/main/notebooks/glister_example.py)
-- [Random Selection](https://github.com/decile-team/cords/blob/main/notebooks/tutorial_random.ipynb)
+- [Efficient model training on data subsets]()
+- [Robust model training in class imbalance scenarios]()
+- [Efficient hyper-parameter tuning on data subsets]()
 
 
 ## Results
