@@ -50,7 +50,9 @@
 <p align="center"><i><b>Data Efficiency</b></i></p>
 <p align="center"><i><b>Reducing End to End Training Time</b></i></p>
 <p align="center"><i><b>Reducing Energy Requirement</b></i></p>
+<p align="center"><i><b>Faster Hyper-parameter tuning </b></i></p>
 <p align="center"><i><b>Reducing Resource (GPU) Requirement and Costs</b></i></p>
+
 
 The primary purpose of CORDS is to select the right representative data subsets from massive datasets, and it does so iteratively. CORDS uses some recent advances in data subset selection and particularly, ideas of coresets and submodularity select such subsets. CORDS implements a number of state of the art data subset selection algorithms 
 and coreset algorithms. Some of the algorithms currently implemented with CORDS include:

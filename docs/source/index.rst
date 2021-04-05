@@ -13,19 +13,29 @@
 Welcome to CORDS's documentation!
 *********************************
 
-
 CORDS::COResets and Data Subset selection
 ==========================================
-CORDS:: COResets and Data Subset selection is an efficient and scalable library for
-data efficient machine learning built on top of pytorch.
-The primary purpose of CORDS is to select the right representative data subset from massive datasets. We use submodularity based data selection strategies to select such subsets.
+CORDS:: COResets and Data Subset slection is an efficient and scalable library for making machine learning time, energy, cost, and compute efficient
+built on top of pytorch.
 
-At a high level, submodular functions operate on sets of elements and optimizing them involves selecting a subset of elements. The functions implemented in apricot return a value that is inversely related to the redundancy of the selected elements, meaning that maximizing them involves selecting a set of non-redundant elements. A key property of these functions is that they are *submodular*, meaning that the gain in the function value that a particular element would yield either decreases or stays the same each time an element is added to the subset (this is also known as the diminishing returns property).
+**Background:** Deep Learning systems are extremely compute-intensive today, with significant turnaround times, energy inefficiencies leading to
+huge resource costs. Another aspect of deep learning systems is that they have a surprisingly large carbon footprint with lasting environmental
+impacts(see https://arxiv.org/pdf/1907.10597.pdf and https://arxiv.org/abs/1906.02243 for more details on quantifications of these impacts).
+Furthermore, to achieve the state of the art performances using deep learning models, we need to perform hyper-parameter tuning (which requires
+training a deep learning model multiple times).
 
-.. image:: imgs/submodularity.png
-   :width: 1000px
+CORDS is an effort to make deep learning more energy, cost, resource and time efficient while not sacrificing accuracy.
 
-|
+The following are the goals CORDS tries to achieve:
+       - Data Efficiency
+       - Reducing End to End Training Time
+       - Reducing Energy requirements
+       - Reducing Hyper-parameter tuning turnaround time
+       - Reducing Resource (GPU) requirements and Costs
+
+
+CORDS' key idea is to use a subset of training data for model training. In this effort, CORDS incorporate various state-of-the-art data
+selection strategies to select the proper representative data subset from massive datasets.
 
 The selected subsets can be used for summarizing the dataset like finding the key parts of a video.
 
@@ -41,13 +51,22 @@ Unfortunately, the compute required to train models on huge data sets might not 
 .. attention:: Training a Yolo V5X Model may take 8 days on a single V-100 GPU.
 
 Instead of relying on random subsampling, one could instead select a subset using various data selection strategies.
-The CORDS repo contains some of the state of the art data subset selection strategies that achieves close to full training accuracy even
+The CORDS repository contains some of the state of the art data subset selection strategies that achieves close to full training accuracy even
 when trained on a meager 10% subset of data while achieving significant speed ups.
 
-.. image:: imgs/cifar10_dss_300.png
+.. image:: imgs/cifar10_test_accuracy.png
     :width: 1000px
 
-.. image:: imgs/CIFAR10_timing_with_full.png
+.. image:: imgs/CIFAR100_test_accuracy.png
+    :width: 1000px
+
+.. image:: imgs/mnist_test_accuracy.png
+    :width: 1000px
+
+.. image:: imgs/svhn_test_accuracy.png
+    :width: 1000px
+
+.. image:: imgs/imagenet_test_accuracy.png
     :width: 1000px
 
 |
