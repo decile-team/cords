@@ -23,6 +23,7 @@ setup(
         "sphinx-rtd-theme",
         "scikit-learn",
         "torchvision >= 0.5.0",
-        "matplotlib"
+        "matplotlib",
+        "ray[tune]"
     ],
 )

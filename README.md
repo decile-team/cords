@@ -45,7 +45,7 @@
 
 ## What is CORDS?
 
-[CORDS](https://cords.readthedocs.io/en/latest/) is COReset and Data Selection library for making machine learning time, energy, cost, and compute efficient. CORDS is built on top of pytorch. Deep Learning systems are extremely compute intensive today with large turn around times, energy inefficiencies, higher costs and resourse requirements (see https://arxiv.org/pdf/1907.10597.pdf and https://arxiv.org/abs/1906.02243 for more details on quantifications of these impacts). CORDS is an effort to make deep learning more energy, cost, resource and time efficient while not sacrificing accuracy. The following are the goals CORDS tries to achieve:
+[CORDS](https://cords.readthedocs.io/en/latest/) is COReset and Data Selection library for making machine learning time, energy, cost, and compute efficient. CORDS is built on top of pytorch. Deep Learning systems are extremely compute intensive today with large turn around times, energy inefficiencies, higher costs and resourse requirements [1,2]. CORDS is an effort to make deep learning more energy, cost, resource and time efficient while not sacrificing accuracy. The following are the goals CORDS tries to achieve:
 
 <p align="center"><i><b>Data Efficiency</b></i></p>
 <p align="center"><i><b>Reducing End to End Training Time</b></i></p>
@@ -57,10 +57,10 @@
 The primary purpose of CORDS is to select the right representative data subsets from massive datasets, and it does so iteratively. CORDS uses some recent advances in data subset selection and particularly, ideas of coresets and submodularity select such subsets. CORDS implements a number of state of the art data subset selection algorithms 
 and coreset algorithms. Some of the algorithms currently implemented with CORDS include:
 
-- [GLISTER [1]](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.supervisedlearning.html#module-cords.selectionstrategies.supervisedlearning.glisterstrategy)
-- [GradMatch [2]](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.supervisedlearning.html#module-cords.selectionstrategies.supervisedlearning.ompgradmatchstrategy)
-- [CRAIG [2,3]](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.supervisedlearning.html#module-cords.selectionstrategies.supervisedlearning.craigstrategy)
-- [SubmodularSelection [4,5,6]](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.supervisedlearning.html#module-cords.selectionstrategies.supervisedlearning.submodularselectionstrategy) (Facility Location, Feature Based Functions, Coverage, Diversity)
+- [GLISTER [3]](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.supervisedlearning.html#module-cords.selectionstrategies.supervisedlearning.glisterstrategy)
+- [GradMatch [4]](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.supervisedlearning.html#module-cords.selectionstrategies.supervisedlearning.ompgradmatchstrategy)
+- [CRAIG [4,5]](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.supervisedlearning.html#module-cords.selectionstrategies.supervisedlearning.craigstrategy)
+- [SubmodularSelection [6,7,8]](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.supervisedlearning.html#module-cords.selectionstrategies.supervisedlearning.submodularselectionstrategy) (Facility Location, Feature Based Functions, Coverage, Diversity)
 - [RandomSelection](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.supervisedlearning.html#module-cords.selectionstrategies.supervisedlearning.randomstrategy)
 
 We are continuously incorporating newer and better algorithms into CORDS. Some of the features of CORDS includes:
@@ -69,7 +69,7 @@ We are continuously incorporating newer and better algorithms into CORDS. Some o
 - Benchmarking: We have benchmarked CORDS (and the algorithms present right now) on several datasets including CIFAR-10, CIFAR-100, MNIST, SVHN and ImageNet. 
 - Ease of Use: One of the main goals of CORDS is that it is easy to use and add to CORDS. Feel free to contribute to CORDS!
 - Modular design: The data selection algorithms are separate from the training loop, thereby enabling modular design and also varied scenarios of utility.
-- Broad number of usecases: CORDS is currently implemented for simple image classification tasks, but we are working on integrating a number of additional use cases like object detection, speech recognition, semi-supervised learning, Auto-ML, etc.
+- Broad number of usecases: CORDS is currently implemented for simple image classification tasks and hyperparameter tuning, but we are working on integrating a number of additional use cases like object detection, speech recognition, semi-supervised learning, Auto-ML, etc.
 
 ## Installation
 
@@ -97,9 +97,9 @@ Learn more about CORDS at our [documentation](https://cords.readthedocs.io/en/la
 
 Here are some [tutorials](https://github.com/decile-team/cords/tree/main/notebooks) to get you started with CORDS. 
 
-- [General Data Selection](https://github.com/decile-team/cords/blob/main/notebooks/general_dataselection.py)
-- [GLISTER](https://github.com/decile-team/cords/blob/main/notebooks/glister_example.py)
-- [Random Selection](https://github.com/decile-team/cords/blob/main/notebooks/tutorial_random.ipynb)
+- [Efficient model training on data subsets](https://github.com/decile-team/cords/blob/main/notebooks/CORDS_tutorial_all_CIFAR10.ipynb)
+- [Robust model training in class imbalance scenarios]()
+- [Efficient hyper-parameter tuning on data subsets]()
 
 
 ## Results
@@ -153,14 +153,18 @@ Results are obtained by running each dataset with different strategies for 300 e
 
 ## Publications
 
-[1] Krishnateja Killamsetty, Durga Sivasubramanian, Ganesh Ramakrishnan, and Rishabh Iyer, [GLISTER: Generalization based Data Subset Selection for Efficient and Robust Learning](https://arxiv.org/abs/2012.10630), 35th AAAI Conference on Artificial Intelligence, AAAI 2021
+[1] Schwartz, Roy, et al., [Green AI](https://arxiv.org/pdf/1907.10597.pdf), arXiv preprint arXiv:1907.10597 (2019).
 
-[2] Krishnateja Killamsetty, Durga Sivasubramanian, Abir De, Ganesh Ramakrishnan, Baharan Mirzasoleiman, Rishabh Iyer, [Grad-Match: A Gradient Matching based Data Selection Framework for Efficient Learning](https://arxiv.org/abs/2103.00123), 2021
+[2] Strubell, Emma, Ananya Ganesh, and Andrew McCallum, [Energy and Policy Considerations for Deep Learning in NLP](https://arxiv.org/abs/1906.02243), In ACL 2019.
 
-[3] Baharan Mirzasoleiman, Jeff Bilmes, and Jure Leskovec. [Coresets for Data-efficient Training of Machine Learning Models](https://arxiv.org/abs/1906.01827). In International Conference on Machine Learning (ICML), July 2020
+[3] Krishnateja Killamsetty, Durga Sivasubramanian, Ganesh Ramakrishnan, and Rishabh Iyer, [GLISTER: Generalization based Data Subset Selection for Efficient and Robust Learning](https://arxiv.org/abs/2012.10630), 35th AAAI Conference on Artificial Intelligence, AAAI 2021
 
-[4] Kai Wei, Rishabh Iyer, Jeff Bilmes, [Submodularity in Data Subset Selection and Active Learning](http://proceedings.mlr.press/v37/wei15-supp.pdf), International Conference on Machine Learning (ICML) 2015
+[4] Krishnateja Killamsetty, Durga Sivasubramanian, Abir De, Ganesh Ramakrishnan, Baharan Mirzasoleiman, Rishabh Iyer, [Grad-Match: A Gradient Matching based Data Selection Framework for Efficient Learning](https://arxiv.org/abs/2103.00123), 2021
 
-[5] Vishal Kaushal, Rishabh Iyer, Suraj Kothiwade, Rohan Mahadev, Khoshrav Doctor, and Ganesh Ramakrishnan, [Learning From Less Data: A Unified Data Subset Selection and Active Learning Framework for Computer Vision](https://arxiv.org/abs/1901.01151), 7th IEEE Winter Conference on Applications of Computer Vision (WACV), 2019 Hawaii, USA
+[5] Baharan Mirzasoleiman, Jeff Bilmes, and Jure Leskovec. [Coresets for Data-efficient Training of Machine Learning Models](https://arxiv.org/abs/1906.01827). In International Conference on Machine Learning (ICML), July 2020
 
-[6] Wei, Kai, et al. [Submodular subset selection for large-scale speech training data](https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.496.6287&rep=rep1&type=pdf), 2014 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP). IEEE, 2014.
+[6] Kai Wei, Rishabh Iyer, Jeff Bilmes, [Submodularity in Data Subset Selection and Active Learning](http://proceedings.mlr.press/v37/wei15-supp.pdf), International Conference on Machine Learning (ICML) 2015
+
+[7] Vishal Kaushal, Rishabh Iyer, Suraj Kothiwade, Rohan Mahadev, Khoshrav Doctor, and Ganesh Ramakrishnan, [Learning From Less Data: A Unified Data Subset Selection and Active Learning Framework for Computer Vision](https://arxiv.org/abs/1901.01151), 7th IEEE Winter Conference on Applications of Computer Vision (WACV), 2019 Hawaii, USA
+
+[8] Wei, Kai, et al. [Submodular subset selection for large-scale speech training data](https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.496.6287&rep=rep1&type=pdf), 2014 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP). IEEE, 2014.
