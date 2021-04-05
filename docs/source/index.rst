@@ -57,7 +57,7 @@ when trained on a meager 10% subset of data while achieving significant speed up
 .. image:: imgs/cifar10_test_accuracy.png
     :width: 1000px
 
-.. image:: imgs/CIFAR100_test_accuracy.png
+.. image:: imgs/cifar100_test_accuracy.png
     :width: 1000px
 
 .. image:: imgs/mnist_test_accuracy.png
