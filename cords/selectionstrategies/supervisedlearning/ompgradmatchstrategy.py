@@ -54,7 +54,8 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
     """
 
     def __init__(self, trainloader, valloader, model, loss,
-                 eta, device, num_classes, linear_layer, selection_type, valid=True, lam=0, eps=1e-4, r=1):
+                 eta, device, num_classes, linear_layer,
+                 selection_type, valid=True, lam=0, eps=1e-4):
         """
         Constructor method
         """

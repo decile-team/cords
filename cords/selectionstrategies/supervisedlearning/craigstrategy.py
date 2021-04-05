@@ -57,7 +57,8 @@ class CRAIGStrategy(DataSelectionStrategy):
     """
 
     def __init__(self, trainloader, valloader, model, loss,
-                 device, num_classes, linear_layer, if_convex, selection_type, optimizer='lazy'):
+                 device, num_classes, linear_layer, if_convex,
+                 selection_type, optimizer='lazy'):
         """
         Constructer method
         """
