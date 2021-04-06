@@ -54,17 +54,39 @@ Instead of relying on random subsampling, one could instead select a subset usin
 The CORDS repository contains some of the state of the art data subset selection strategies that achieves close to full training accuracy even
 when trained on a meager 10% subset of data while achieving significant speed ups.
 
+**Results:** Results show 3x to 7x improvements in energy and runtime with around 1 - 2% drop in accuracy. We expect to push the Pareto-optimal frontier even more over time.
+
+|
+
+**Cifar10**
+
 .. image:: imgs/cifar10_test_accuracy.png
     :width: 1000px
+
+|
+
+**Cifar100**
 
 .. image:: imgs/cifar100_test_accuracy.png
     :width: 1000px
 
+|
+
+**MNIST**
+
 .. image:: imgs/mnist_test_accuracy.png
     :width: 1000px
 
+|
+
+**SVHN**
+
 .. image:: imgs/svhn_test_accuracy.png
     :width: 1000px
+
+|
+
+**ImageNet**
 
 .. image:: imgs/imagenet_test_accuracy.png
     :width: 1000px
