@@ -20,7 +20,14 @@ model:
   architecture: "ResNet18"
   numclasses: 10
   type: "pre-defined"
-
+          
+#Checkpoint Settings
+ckpt:
+  is_load: False
+  is_save: True
+  dir: 'results/'
+  save_every: 20
+ 
 #Loss Function
 loss:
   name: "CrossEntropyLoss"
@@ -48,7 +55,7 @@ train_args:
   num_epochs: 300
   device: "cuda"
   print_every: 10
-  results_dir: 'C:\Users\krish\OneDrive - The University of Texas at Dallas\Documents\PyCharmProjects\cords\results'
+  results_dir: 'results/'
   print_args: ["val_loss", "val_acc", "tst_loss", "tst_acc"]
   return_args: []
 

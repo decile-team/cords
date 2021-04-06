@@ -87,6 +87,19 @@ class TrainClassifier:
             mod_cum_timing[i] = tmp
         return mod_cum_timing / 3600
 
+
+    def save_ckpt(self, state, ckpt_path):
+        torch.save(state, ckpt_path)
+
+    def load_ckp(self, ckpt_path, model, optimizer):
+        checkpoint = torch.load(ckpt_path)
+        model.load_state_dict(checkpoint['state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer'])
+        loss = checkpoint['loss']
+        start_epoch = checkpoint['epoch']
+        return model, optimizer, loss, start_epoch
+    
+    
     def train(self):
         """
         #General Training Loop with Data Selection Strategies
@@ -134,7 +147,7 @@ class TrainClassifier:
         val_losses = list() #np.zeros(configdata['train_args']['num_epochs'])
         tst_losses = list()
         subtrn_losses = list()
-        timing = np.zeros(self.configdata['train_args']['num_epochs'])
+        timing = list()
         trn_acc = list()
         val_acc = list() #np.zeros(configdata['train_args']['num_epochs'])
         tst_acc = list() #np.zeros(configdata['train_args']['num_epochs'])
@@ -146,11 +159,19 @@ class TrainClassifier:
         results_dir = osp.abspath(osp.expanduser(self.configdata['train_args']['results_dir']))
         all_logs_dir = os.path.join(results_dir,self.configdata['dss_strategy']['type'], self.configdata['dataset']['name'], str(
            self.configdata['dss_strategy']['fraction']), str(self.configdata['dss_strategy']['select_every']))
-
+        
         os.makedirs(all_logs_dir, exist_ok=True)
         path_logfile = os.path.join(all_logs_dir, self.configdata['dataset']['name'] + '.txt')
         logfile = open(path_logfile, 'w')
 
+        checkpoint_dir = osp.abspath(osp.expanduser(self.configdata['ckpt']['dir']))
+        ckpt_dir = os.path.join(checkpoint_dir,self.configdata['dss_strategy']['type'], self.configdata['dataset']['name'], str(
+           self.configdata['dss_strategy']['fraction']), str(self.configdata['dss_strategy']['select_every']))
+        checkpoint_path = os.path.join(ckpt_dir, 'model.pt')
+        best_checkpoint_path = os.path.join(ckpt_dir, 'best_ckpt_model.pt')
+        os.makedirs(ckpt_dir, exist_ok=True)
+        
+        
         # Model Creation
         model = self.create_model()
         model1 = self.create_model()
@@ -160,6 +181,7 @@ class TrainClassifier:
 
         # Getting the optimizer and scheduler
         optimizer, scheduler = self.optimizer_with_scheduler(model)
+
 
         if self.configdata['dss_strategy']['type'] == 'GradMatch':
             # OMPGradMatch Selection strategy
@@ -268,7 +290,15 @@ class TrainClassifier:
 
         print("=======================================", file=logfile)
 
-        for i in range(self.configdata['train_args']['num_epochs']):
+
+        if self.configdata['ckpt']['is_load'] == True:
+            model, optimizer, ckpt_loss, start_epoch = self.load_ckp(checkpoint_path, model, optimizer)
+            print("Loading saved checkpoint model at epoch " + str(start_epoch)) 
+        else:
+            start_epoch = 0
+
+
+        for i in range(start_epoch, self.configdata['train_args']['num_epochs']):
             subtrn_loss = 0
             subtrn_correct = 0
             subtrn_total = 0
@@ -431,9 +461,9 @@ class TrainClassifier:
                     subtrn_correct += predicted.eq(targets).sum().item()
                 train_time = time.time() - start_time
             scheduler.step()
-            timing[i] = train_time + subset_selection_time
+            timing.append(train_time + subset_selection_time)
             print_args = self.configdata['train_args']['print_args']
-            # print("Epoch timing is: " + str(timing[i]))
+            # print("Epoch timing is: " + str(timing[-1]))
             if ((i+1) % self.configdata['train_args']['print_every'] == 0):
                 trn_loss = 0
                 trn_correct = 0
@@ -526,13 +556,25 @@ class TrainClassifier:
                         print_str += " , " + "Subset Accuracy: " + str(subtrn_acc[-1])
 
                     if arg == "time":
-                        print_str += " , " + "Timing: " + str(timing[i])
+                        print_str += " , " + "Timing: " + str(timing[-1])
                     
                 # report metric to ray for hyperparameter optimization
                 if 'report_tune' in self.configdata and self.configdata['report_tune']:
                     tune.report(mean_accuracy=val_acc[-1])
 
                 print(print_str)
+        
+            if ((i+1) % self.configdata['ckpt']['save_every'] == 0) and self.configdata['ckpt']['is_save'] == True:
+                print("Saving model at epoch " + str(i+1))
+                ckpt_state = {
+                    'epoch': i+1,
+                    'state_dict': model.state_dict(),
+                    'optimizer': optimizer.state_dict(),
+                    'loss': self.loss_function(),
+                }
+        
+                # save checkpoint
+                self.save_ckpt(ckpt_state, checkpoint_path)
 
         print(self.configdata['dss_strategy']['type'] + " Selection Run---------------------------------")
         print("Final SubsetTrn:", subtrn_loss)
@@ -572,4 +614,4 @@ class TrainClassifier:
         omp_timing = np.array(timing)
         omp_cum_timing = list(self.generate_cumulative_timing(omp_timing))
         print("Total time taken by " + self.configdata['dss_strategy']['type'] + " = " + str(omp_cum_timing[-1]))
-        logfile.close()
+        logfile.close()        
