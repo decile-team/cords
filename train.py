@@ -168,7 +168,6 @@ class TrainClassifier:
         ckpt_dir = os.path.join(checkpoint_dir,self.configdata['dss_strategy']['type'], self.configdata['dataset']['name'], str(
            self.configdata['dss_strategy']['fraction']), str(self.configdata['dss_strategy']['select_every']))
         checkpoint_path = os.path.join(ckpt_dir, 'model.pt')
-        best_checkpoint_path = os.path.join(ckpt_dir, 'best_ckpt_model.pt')
         os.makedirs(ckpt_dir, exist_ok=True)
         
         
