@@ -93,11 +93,12 @@ class TrainClassifier:
 
     def load_ckp(self, ckpt_path, model, optimizer):
         checkpoint = torch.load(ckpt_path)
+        start_epoch = checkpoint['epoch']
         model.load_state_dict(checkpoint['state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer'])
         loss = checkpoint['loss']
-        start_epoch = checkpoint['epoch']
-        return model, optimizer, loss, start_epoch
+        metrics = checkpoint['metrics']
+        return start_epoch, model, optimizer, loss, metrics
     
     
     def train(self):
@@ -168,6 +169,7 @@ class TrainClassifier:
         ckpt_dir = os.path.join(checkpoint_dir,self.configdata['dss_strategy']['type'], self.configdata['dataset']['name'], str(
            self.configdata['dss_strategy']['fraction']), str(self.configdata['dss_strategy']['select_every']))
         checkpoint_path = os.path.join(ckpt_dir, 'model.pt')
+        best_checkpoint_path = os.path.join(ckpt_dir, 'best_ckpt_model.pt')
         os.makedirs(ckpt_dir, exist_ok=True)
         
         
@@ -288,11 +290,29 @@ class TrainClassifier:
                 raise KeyError("Specify a kappa value in the config file")
 
         print("=======================================", file=logfile)
-
-
+            
         if self.configdata['ckpt']['is_load'] == True:
-            model, optimizer, ckpt_loss, start_epoch = self.load_ckp(checkpoint_path, model, optimizer)
+            start_epoch, model, optimizer, ckpt_loss, load_metrics = self.load_ckp(checkpoint_path, model, optimizer)
             print("Loading saved checkpoint model at epoch " + str(start_epoch)) 
+            for arg in load_metrics.keys():
+                if arg == "val_loss":
+                    val_losses = load_metrics['val_loss']
+                if arg == "val_acc":
+                    val_acc = load_metrics['val_acc']
+                if arg == "tst_loss":
+                    tst_losses = load_metrics['tst_loss']
+                if arg == "tst_acc":
+                    tst_acc = load_metrics['tst_acc']
+                if arg == "trn_loss":
+                    trn_losses = load_metrics['trn_loss'] 
+                if arg == "trn_acc":
+                    trn_acc = load_metrics['trn_acc']
+                if arg == "subtrn_loss":
+                    subtrn_losses = load_metrics['subtrn_loss']
+                if arg == "subtrn_acc":
+                    subtrn_acc = load_metrics['subtrn_acc']
+                if arg == "time":
+                    timing = load_metrics['time']
         else:
             start_epoch = 0
 
@@ -463,6 +483,7 @@ class TrainClassifier:
             timing.append(train_time + subset_selection_time)
             print_args = self.configdata['train_args']['print_args']
             # print("Epoch timing is: " + str(timing[-1]))
+            
             if ((i+1) % self.configdata['train_args']['print_every'] == 0):
                 trn_loss = 0
                 trn_correct = 0
@@ -564,14 +585,39 @@ class TrainClassifier:
                 print(print_str)
         
             if ((i+1) % self.configdata['ckpt']['save_every'] == 0) and self.configdata['ckpt']['is_save'] == True:
+            
+                metric_dict = {}
+            
+                for arg in print_args:
+                    if arg == "val_loss":
+                        metric_dict['val_loss'] = val_losses
+                    if arg == "val_acc":
+                        metric_dict['val_acc'] = val_acc
+                    if arg == "tst_loss":
+                        metric_dict['tst_loss'] = tst_losses
+                    if arg == "tst_acc":
+                        metric_dict['tst_acc'] = tst_acc
+                    if arg == "trn_loss":
+                        metric_dict['trn_loss'] = trn_losses
+                    if arg == "trn_acc":
+                        metric_dict['trn_acc'] = trn_acc
+                    if arg == "subtrn_loss":
+                        metric_dict['subtrn_loss'] = subtrn_losses
+                    if arg == "subtrn_acc":
+                        metric_dict['subtrn_acc'] = subtrn_acc
+                    if arg == "time":
+                        metric_dict['time'] = timing
+                        
                 print("Saving model at epoch " + str(i+1))
                 ckpt_state = {
                     'epoch': i+1,
                     'state_dict': model.state_dict(),
                     'optimizer': optimizer.state_dict(),
                     'loss': self.loss_function(),
+                    'metrics': metric_dict
                 }
         
+                
                 # save checkpoint
                 self.save_ckpt(ckpt_state, checkpoint_path)
 
