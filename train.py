@@ -169,7 +169,6 @@ class TrainClassifier:
         ckpt_dir = os.path.join(checkpoint_dir,self.configdata['dss_strategy']['type'], self.configdata['dataset']['name'], str(
            self.configdata['dss_strategy']['fraction']), str(self.configdata['dss_strategy']['select_every']))
         checkpoint_path = os.path.join(ckpt_dir, 'model.pt')
-        best_checkpoint_path = os.path.join(ckpt_dir, 'best_ckpt_model.pt')
         os.makedirs(ckpt_dir, exist_ok=True)
         
         
@@ -608,7 +607,6 @@ class TrainClassifier:
                     if arg == "time":
                         metric_dict['time'] = timing
                         
-                print("Saving model at epoch " + str(i+1))
                 ckpt_state = {
                     'epoch': i+1,
                     'state_dict': model.state_dict(),
@@ -620,7 +618,8 @@ class TrainClassifier:
                 
                 # save checkpoint
                 self.save_ckpt(ckpt_state, checkpoint_path)
-
+                print("Model checkpoint saved at epoch " + str(i+1))
+                
         print(self.configdata['dss_strategy']['type'] + " Selection Run---------------------------------")
         print("Final SubsetTrn:", subtrn_loss)
         if "val_loss" in print_args:
