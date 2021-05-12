@@ -108,7 +108,7 @@ The below link contains the jupyter notebook link for cifar10 timing analysis ex
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg) CIFAR10 Notebook](https://colab.research.google.com/drive/1xT6sGmDGMz8XBDmOKs5cl1cipX0Ss1sh?usp=sharing)
 
-Results are obtained by running each dataset with different strategies for 300 epochs. The following experimental plots shows the relative test error vs speed up for different strategies. Currently we see between 3x to 7x improvements in energy and runtime with around 1 - 2\% drop in accuracy. We expect to push the Pareto-optimal frontier even more over time.
+Results are obtained by running each dataset with different strategies for 300 epochs. The following experimental plots shows the relative test error vs speed up for different strategies. Currently we see between 3x to 7x improvements in energy and runtime with around 1 - 2\% drop in accuracy. We expect to push the accuracy-speedup (or energy savings) frontier even more over time!
 
 ### CIFAR10
 
