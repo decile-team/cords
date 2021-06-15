@@ -75,8 +75,8 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
             ind = np.nonzero(reg)[0]
         else:
             reg = OrthogonalMP_REG_Parallel(X, Y, nnz=bud,
-                                          positive=True, lam=self.lam,
-                                          tol=self.eps, device=self.device)
+                                            positive=True, lam=self.lam,
+                                            tol=self.eps, device=self.device)
             ind = torch.nonzero(reg).view(-1)
         return ind.tolist(), reg[ind].tolist()
 
@@ -109,12 +109,12 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
                 trn_subset_idx = torch.where(self.trn_lbls == i)[0].tolist()
                 trn_data_sub = Subset(self.trainloader.dataset, trn_subset_idx)
                 self.pctrainloader = DataLoader(trn_data_sub, batch_size=self.trainloader.batch_size,
-                                          shuffle=False, pin_memory=True)
+                                                shuffle=False, pin_memory=True)
                 if self.valid:
                     val_subset_idx = torch.where(self.val_lbls == i)[0].tolist()
                     val_data_sub = Subset(self.valloader.dataset, val_subset_idx)
                     self.pcvalloader = DataLoader(val_data_sub, batch_size=self.trainloader.batch_size,
-                                                    shuffle=False, pin_memory=True)
+                                                  shuffle=False, pin_memory=True)
 
                 self.compute_gradients(self.valid, batch=False, perClass=True)
                 trn_gradients = self.grads_per_elem
@@ -123,7 +123,8 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
                 else:
                     sum_val_grad = torch.sum(trn_gradients, dim=0)
                 idxs_temp, gammas_temp = self.ompwrapper(torch.transpose(trn_gradients, 0, 1),
-                                          sum_val_grad, math.ceil(budget * len(trn_subset_idx) / self.N_trn))
+                                                         sum_val_grad,
+                                                         math.ceil(budget * len(trn_subset_idx) / self.N_trn))
                 idxs.extend(list(np.array(trn_subset_idx)[idxs_temp]))
                 gammas.extend(gammas_temp)
 
@@ -137,7 +138,7 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
             else:
                 sum_val_grad = torch.sum(trn_gradients, dim=0)
             idxs_temp, gammas_temp = self.ompwrapper(torch.transpose(trn_gradients, 0, 1),
-                                                     sum_val_grad, math.ceil(budget/self.trainloader.batch_size))
+                                                     sum_val_grad, math.ceil(budget / self.trainloader.batch_size))
             batch_wise_indices = list(self.trainloader.batch_sampler)
             for i in range(len(idxs_temp)):
                 tmp = batch_wise_indices[idxs_temp[i]]
@@ -153,12 +154,12 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
                 trn_subset_idx = torch.where(self.trn_lbls == i)[0].tolist()
                 trn_data_sub = Subset(self.trainloader.dataset, trn_subset_idx)
                 self.pctrainloader = DataLoader(trn_data_sub, batch_size=self.trainloader.batch_size,
-                                          shuffle=False, pin_memory=True)
+                                                shuffle=False, pin_memory=True)
                 if self.valid:
                     val_subset_idx = torch.where(self.val_lbls == i)[0].tolist()
                     val_data_sub = Subset(self.valloader.dataset, val_subset_idx)
                     self.pcvalloader = DataLoader(val_data_sub, batch_size=self.trainloader.batch_size,
-                                                    shuffle=False, pin_memory=True)
+                                                  shuffle=False, pin_memory=True)
                 self.compute_gradients(self.valid, batch=False, perClass=True)
                 trn_gradients = self.grads_per_elem
                 tmp_gradients = trn_gradients[:, i].view(-1, 1)
@@ -177,26 +178,27 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
                     sum_val_grad = torch.sum(trn_gradients, dim=0)
 
                 idxs_temp, gammas_temp = self.ompwrapper(torch.transpose(trn_gradients, 0, 1),
-                                          sum_val_grad, math.ceil(budget * len(trn_subset_idx) / self.N_trn))
+                                                         sum_val_grad,
+                                                         math.ceil(budget * len(trn_subset_idx) / self.N_trn))
                 idxs.extend(list(np.array(trn_subset_idx)[idxs_temp]))
                 gammas.extend(gammas_temp)
 
         omp_end_time = time.time()
         diff = budget - len(idxs)
-	print(diff)
-        if diff > 0:
-            remainList = set(np.arange(self.N_trn)).difference(set(idxs))
-            new_idxs = np.random.choice(list(remainList), size=diff, replace=False)
-            idxs.extend(new_idxs)
-            gammas.extend([1 for _ in range(diff)])
-            idxs = np.array(idxs)
-            gammas = np.array(gammas)
-	
-	
-        if self.selection_type in ["PerClass", "PerClassPerGradient"]:
-            rand_indices = np.random.permutation(len(idxs))
-            idxs = list(np.array(idxs)[rand_indices])
-            gammas = list(np.array(gammas)[rand_indices])
+        print(diff)
 
-        print("OMP algorithm Subset Selection time is: ", omp_end_time - omp_start_time)
-        return idxs, gammas
+    if diff > 0:
+        remainList = set(np.arange(self.N_trn)).difference(set(idxs))
+        new_idxs = np.random.choice(list(remainList), size=diff, replace=False)
+        idxs.extend(new_idxs)
+        gammas.extend([1 for _ in range(diff)])
+        idxs = np.array(idxs)
+        gammas = np.array(gammas)
+
+    if self.selection_type in ["PerClass", "PerClassPerGradient"]:
+        rand_indices = np.random.permutation(len(idxs))
+        idxs = list(np.array(idxs)[rand_indices])
+        gammas = list(np.array(gammas)[rand_indices])
+
+    print("OMP algorithm Subset Selection time is: ", omp_end_time - omp_start_time)
+    return idxs, gammas
