@@ -183,7 +183,7 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
 
         omp_end_time = time.time()
         diff = budget - len(idxs)
-
+	print(diff)
         if diff > 0:
             remainList = set(np.arange(self.N_trn)).difference(set(idxs))
             new_idxs = np.random.choice(list(remainList), size=diff, replace=False)
@@ -191,7 +191,8 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
             gammas.extend([1 for _ in range(diff)])
             idxs = np.array(idxs)
             gammas = np.array(gammas)
-
+	
+	
         if self.selection_type in ["PerClass", "PerClassPerGradient"]:
             rand_indices = np.random.permutation(len(idxs))
             idxs = list(np.array(idxs)[rand_indices])
