@@ -124,10 +124,14 @@ class MobileNet2(nn.Module):
             e = x.view(x.shape[0], -1)
         x = self.fc(e)
 
+        # if last:
+        #     return x, e
+        # else:
+        #     return x
         if last:
-            return x, e
+            return x, (x, e)
         else:
-            return x
+            return x, (x)
 
     def get_embedding_dim(self):
         return self.embDim

@@ -12,7 +12,7 @@ from torch.utils.data import Subset
 from cords.utils.config_utils import load_config_data
 import os.path as osp
 from cords.selectionstrategies.supervisedlearning import OMPGradMatchStrategy, GLISTERStrategy, RandomStrategy, CRAIGStrategy
-from ray import tune
+# from ray import tune
 
 
 class TrainClassifier:
@@ -578,8 +578,8 @@ class TrainClassifier:
                         print_str += " , " + "Timing: " + str(timing[-1])
                     
                 # report metric to ray for hyperparameter optimization
-                if 'report_tune' in self.configdata and self.configdata['report_tune']:
-                    tune.report(mean_accuracy=val_acc[-1])
+                # if 'report_tune' in self.configdata and self.configdata['report_tune']:
+                #     tune.report(mean_accuracy=val_acc[-1])
 
                 print(print_str)
         
@@ -658,4 +658,4 @@ class TrainClassifier:
         omp_timing = np.array(timing)
         omp_cum_timing = list(self.generate_cumulative_timing(omp_timing))
         print("Total time taken by " + self.configdata['dss_strategy']['type'] + " = " + str(omp_cum_timing[-1]))
-        logfile.close()        
+        logfile.close()
