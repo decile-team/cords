@@ -10,7 +10,7 @@ def generate_cumulative_timing(mod_timing):
             tmp += mod_timing[i]
             mod_cum_timing[i] = tmp
         return mod_cum_timing / 3600
-        
+
 
 def logtoxl(results_dir, print_arguments=['val_acc', 'tst_acc', 'time'], out_file='output.xlsx'):
     dir = results_dir
@@ -20,34 +20,34 @@ def logtoxl(results_dir, print_arguments=['val_acc', 'tst_acc', 'time'], out_fil
     df = pd.DataFrame()
     with pd.ExcelWriter(out_file, mode='w') as writer:
         df.to_excel(writer)
-        
-    with pd.ExcelWriter('output.xlsx', mode='a') as writer: 
+
+    with pd.ExcelWriter('output.xlsx', mode='a') as writer:
         column_names = ['Dataset', 'Select every', 'Strategy', 'Budget', 'Accuracy', 'Time']
-        mnist_df = pd.DataFrame(columns=column_names) 
-        fmnist_df = pd.DataFrame(columns=column_names) 
-        cifar10_df = pd.DataFrame(columns=column_names) 
-        cifar100_df = pd.DataFrame(columns=column_names) 
-        svhn_df = pd.DataFrame(columns=column_names) 
-                                        
-        for folder in sub_dir: 
+        mnist_df = pd.DataFrame(columns=column_names)
+        fmnist_df = pd.DataFrame(columns=column_names)
+        cifar10_df = pd.DataFrame(columns=column_names)
+        cifar100_df = pd.DataFrame(columns=column_names)
+        svhn_df = pd.DataFrame(columns=column_names)
+
+        for folder in sub_dir:
             dset_dir = glob.glob(folder + '/*') #craig, craigpb...
             strat_value = os.path.basename(folder)
-            
-            for fraction in dset_dir: 
+
+            for fraction in dset_dir:
                 frac_dir = glob.glob(fraction + '/*') #mnist, fashion-mnist,....
                 dset_value = os.path.basename(fraction)
-                
-                for select in frac_dir: 
+
+                for select in frac_dir:
                     sel_dir = glob.glob(select + '/*') #0.1,0.2,0.3,...
                     bud_value = os.path.basename(select)
                     bud_value = float(bud_value)*100
-                    
-                    for files_dir in sel_dir: 
+
+                    for files_dir in sel_dir:
                         f_dir = glob.glob(files_dir + '/*.txt') #10,20,...
                         select_value = os.path.basename(files_dir)
-                        
+
                         for file in f_dir: #.txt files
-                        
+
                             with open(file, "r") as fp:
                                 read_lines = fp.readlines()
                                 strategy_name = read_lines[1]
@@ -76,7 +76,7 @@ def logtoxl(results_dir, print_arguments=['val_acc', 'tst_acc', 'time'], out_fil
                                         req_timing = [i.replace(',', '') for i in req_timing]
                                         req_timing = [float(i) for i in req_timing]
                                         tim = generate_cumulative_timing(np.array(req_timing))[-1]
-                                        
+
                                 if dset_value=='mnist':
                                     mnist_df = mnist_df.append({'Dataset':dset_value, 'Select every':select_value, 'Strategy':strategy_name, 'Budget': bud_value, 'Accuracy':tst_acc, 'Time':tim}, ignore_index=True)
                                 elif dset_value=='fashion-mnist':
@@ -87,9 +87,18 @@ def logtoxl(results_dir, print_arguments=['val_acc', 'tst_acc', 'time'], out_fil
                                     cifar100_df = cifar100_df.append({'Dataset':dset_value, 'Select every':select_value, 'Strategy':strategy_name, 'Budget': bud_value, 'Accuracy':tst_acc, 'Time':tim}, ignore_index=True)
                                 elif dset_value=='svhn':
                                     svhn_df = svhn_df.append({'Dataset':dset_value, 'Select every':select_value, 'Strategy':strategy_name, 'Budget': bud_value, 'Accuracy':tst_acc, 'Time':tim}, ignore_index=True)
-        
+
         mnist_df.to_excel(writer, sheet_name='mnist')
         fmnist_df.to_excel(writer, sheet_name='fashion-mnist')
         cifar10_df.to_excel(writer, sheet_name='cifar10')
         cifar100_df.to_excel(writer, sheet_name='cifar100')
         svhn_df.to_excel(writer, sheet_name='svhn')
+
+
+# An object to preform a dummy with statement.
+class dummy_context(object):
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass

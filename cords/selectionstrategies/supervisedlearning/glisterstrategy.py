@@ -2,7 +2,7 @@ import math
 import random
 import time
 import torch
-import torch.nn.functional as F
+import logging
 from .dataselectionstrategy import DataSelectionStrategy
 
 
@@ -72,7 +72,7 @@ class GLISTERStrategy(DataSelectionStrategy):
     """
 
     def __init__(self, trainloader, valloader, model, loss_type,
-                 eta, device, num_classes, linear_layer, selection_type, r=15):
+                 eta, device, num_classes, linear_layer, selection_type, r=15, verbose=False):
         """
         Constructor method
         """
@@ -83,69 +83,10 @@ class GLISTERStrategy(DataSelectionStrategy):
         self.init_l1 = list()
         self.selection_type = selection_type
         self.r = r
-
-    def _update_grads_val(self, grads_currX=None, first_init=False):
-        """
-        Update the gradient values
-
-        Parameters
-        ----------
-        grad_currX: OrderedDict, optional
-            Gradients of the current element (default: None)
-        first_init: bool, optional
-            Gradient initialization (default: False)
-        """
-
-        self.model.zero_grad()
-        embDim = self.model.get_embedding_dim()
-
-        if first_init:
-            for batch_idx, (inputs, targets) in enumerate(self.valloader):
-                inputs, targets = inputs.to(self.device), targets.to(self.device, non_blocking=True)
-                if batch_idx == 0:
-                    out, l1 = self.model(inputs, last=True, freeze=True)
-                    loss = self.loss(out, targets).sum()
-                    l0_grads = torch.autograd.grad(loss, out)[0]
-                    if self.linear_layer:
-                        l0_expand = torch.repeat_interleave(l0_grads, embDim, dim=1)
-                        l1_grads = l0_expand * l1.repeat(1, self.num_classes)
-                    self.init_out = out
-                    self.init_l1 = l1
-                    self.y_val = targets.view(-1, 1)
-                else:
-                    out, l1 = self.model(inputs, last=True, freeze=True)
-                    loss = self.loss(out, targets).sum()
-                    batch_l0_grads = torch.autograd.grad(loss, out)[0]
-                    if self.linear_layer:
-                        batch_l0_expand = torch.repeat_interleave(batch_l0_grads, embDim, dim=1)
-                        batch_l1_grads = batch_l0_expand * l1.repeat(1, self.num_classes)
-
-                    l0_grads = torch.cat((l0_grads, batch_l0_grads), dim=0)
-                    if self.linear_layer:
-                        l1_grads = torch.cat((l1_grads, batch_l1_grads), dim=0)
-
-                    self.init_out = torch.cat((self.init_out, out), dim=0)
-                    self.init_l1 = torch.cat((self.init_l1, l1), dim=0)
-                    self.y_val = torch.cat((self.y_val, targets.view(-1, 1)), dim=0)
-
-        elif grads_currX is not None:
-            out_vec = self.init_out - (
-                        self.eta * grads_currX[0][0:self.num_classes].view(1, -1).expand(self.init_out.shape[0],-1))
-
-            if self.linear_layer:
-                out_vec = out_vec - (self.eta * torch.matmul(self.init_l1, grads_currX[0][self.num_classes:].view(
-                    self.num_classes, -1).transpose(0, 1)))
-
-            loss = self.loss(out_vec, self.y_val.view(-1)).sum()
-            l0_grads = torch.autograd.grad(loss, out_vec)[0]
-            if self.linear_layer:
-                l0_expand = torch.repeat_interleave(l0_grads, embDim, dim=1)
-                l1_grads = l0_expand * self.init_l1.repeat(1, self.num_classes)
-        torch.cuda.empty_cache()
-        if self.linear_layer:
-            self.grads_val_curr = torch.mean(torch.cat((l0_grads, l1_grads), dim=1), dim=0).view(-1, 1)
-        else:
-            self.grads_val_curr = torch.mean(l0_grads, dim=0).view(-1, 1)
+        self.verbose = verbose
+        # TODO: Put verbose in super class
+        if self.verbose:
+            logging.info('Glister stategy initialized. ')
 
     def eval_taylor_modular(self, grads):
         """
@@ -162,15 +103,26 @@ class GLISTERStrategy(DataSelectionStrategy):
             Matrix product of two tensors
         """
 
-        grads_val = self.grads_val_curr
         with torch.no_grad():
-            gains = torch.matmul(grads, grads_val)
+            gains = torch.matmul(grads, torch.mean(self.val_grads_per_elem, dim=0).view(-1, 1))
         return gains
+
+    def approximators_gradient_handler(self, approximators, loss, batch):
+        l0, l1 = approximators
+        l0_grads = torch.autograd.grad(loss, l0)[0]
+        _grads = [l0_grads]
+        if self.linear_layer:
+            l0_expand = torch.repeat_interleave(l0_grads, self.model_embedding_dim, dim=1)
+            l1_grads = l0_expand * l1.repeat(1, self.num_classes)
+            _grads += [l1_grads]
+        if batch:
+            _grads = [_g.mean(dim=0).view(1, -1) for _g in _grads]
+        return torch.cat(_grads, dim=1)
 
     def _update_gradients_subset(self, grads_X, element):
         """
         Update gradients of set X + element (basically adding element to X)
-        Note that it modifies the inpute vector! Also grads_X is a list! grad_e is a tuple!
+        Note that it modifies the input vector! Also grads_X is a list! grad_e is a tuple!
 
         Parameters
         ----------
@@ -200,10 +152,16 @@ class GLISTERStrategy(DataSelectionStrategy):
         budget: Tensor
             Tensor containing gradients of datapoints present in greedySet
         """
+        if self.verbose:
+            logging.info('Glister strategy selecting data...')
         self.update_model(model_params)
-        self.compute_gradients()
+        self.compute_gradients(valid=False)
+        if self.verbose:
+            logging.info('Train gradients initialized. ')
         t_ng_start = time.time()  # naive greedy start time
-        self._update_grads_val(first_init=True)
+        self.update_val_gradients(first_init=True)
+        if self.verbose:
+            logging.info('Validation gradients initialized. ')
         # Dont need the trainloader here!! Same as full batch version!
         self.numSelected = 0
         greedySet = list()
@@ -226,9 +184,10 @@ class GLISTERStrategy(DataSelectionStrategy):
                 else:  # If 1st selection, then just set it to bestId grads
                     self._update_gradients_subset(grads_currX, selected_indices)
                 # Update the grads_val_current using current greedySet grads
-                self._update_grads_val(grads_currX)
+                self.update_val_gradients(grads_currX)
                 self.numSelected += selection_size
-            print("R greedy GLISTER total time:", time.time() - t_ng_start)
+            if self.verbose:
+                logging.info("R greedy GLISTER total time {0}: ".format(time.time() - t_ng_start))
 
         # Stochastic Greedy Selection Algorithm
         elif self.selection_type == 'Stochastic':
@@ -250,8 +209,9 @@ class GLISTERStrategy(DataSelectionStrategy):
                 else:  # If 1st selection, then just set it to bestId grads
                     grads_currX = self.grads_per_elem[bestId].view(1, -1)  # Making it a list so that is mutable!
                 # Update the grads_val_current using current greedySet grads
-                self._update_grads_val(grads_currX)
-            print("Stochastic Greedy GLISTER total time:", time.time() - t_ng_start)
+                self.update_val_gradients(grads_currX)
+            if self.verbose:
+                logging.info("Stochastic Greedy GLISTER total time: {0}: ".format(time.time() - t_ng_start))
 
         elif self.selection_type == 'Naive':
             while (self.numSelected < budget):
@@ -271,7 +231,9 @@ class GLISTERStrategy(DataSelectionStrategy):
                 else:  # If 1st selection, then just set it to bestId grads
                     self._update_gradients_subset(grads_currX, bestId)
                 # Update the grads_val_current using current greedySet grads
-                self._update_grads_val(grads_currX)
-            print("Naive Greedy GLISTER total time:", time.time() - t_ng_start)
-
+                self.update_val_gradients(grads_currX)
+            if self.verbose:
+                logging.info("Naive Greedy GLISTER total time: {0}: ".format(time.time() - t_ng_start))
+        else:
+            raise Exception('Doesn\'t support this selection_type. ')
         return list(greedySet), torch.ones(budget)
