@@ -99,7 +99,7 @@ class GLISTERDataLoader(OnlineDSSDataLoader):
         super(GLISTERDataLoader, self).__init__(train_loader, val_loader, select_ratio, select_every, model, loss, device,
                                                 verbose=verbose, *args, **kwargs)
         self.strategy = GLISTERStrategy(train_loader, val_loader, copy.deepcopy(model), loss, eta, device,
-                                        num_cls, linear_layer, selection_type, r=r, verbose=verbose)
+                                        num_cls, linear_layer, selection_type, r=r)
         self.eta = eta
         self.num_cls = num_cls
         if self.verbose:
