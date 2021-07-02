@@ -19,8 +19,7 @@ class RandomStrategy(object):
         """
 
         self.trainloader = trainloader
-        # self.N_trn = len(trainloader.sampler.data_source)
-        self.N_trn = len(trainloader.dataset)
+        self.N_trn = len(trainloader.sampler.data_source)
         self.online = online
         self.indices = None
         self.gammas = None

@@ -1,6 +1,7 @@
-import numpy as np
+import logging
+from abc import abstractmethod
+
 import torch
-import torch.nn.functional as F
 
 
 class DataSelectionStrategy(object):
@@ -42,6 +43,7 @@ class DataSelectionStrategy(object):
         self.val_lbls = None
         self.loss = loss
         self.device = device
+        self.model_embedding_dim = self.model.get_embedding_dim()
 
     def select(self, budget, model_params):
         pass
@@ -61,6 +63,10 @@ class DataSelectionStrategy(object):
                 else:
                     self.val_lbls = torch.cat((self.val_lbls, targets.view(-1, 1)), dim=0)
             self.val_lbls = self.val_lbls.view(-1)
+
+    @abstractmethod
+    def approximators_gradient_handler(self, approximators, loss, batch):
+        raise Exception('Not implemented. ')
 
     def compute_gradients(self, valid=False, batch=False, perClass=False):
         """
@@ -98,147 +104,87 @@ class DataSelectionStrategy(object):
         perClass: bool
             if True, the function computes the gradients using perclass dataloaders
         """
-        if perClass:
-            embDim = self.model.get_embedding_dim()
-            for batch_idx, (inputs, targets) in enumerate(self.pctrainloader):
+        grads = []
+        train_loader = self.pctrainloader if perClass else self.trainloader
+
+        for batch_idx, (inputs, targets) in enumerate(train_loader):
+            inputs, targets = inputs.to(self.device), targets.to(self.device, non_blocking=True)
+            out, approximator = self.model(inputs, last=True, freeze=True)
+            # breakpoint()
+            loss = self.loss(out, targets).sum()
+            grads += [self.approximators_gradient_handler(approximator, loss, batch)]
+        torch.cuda.empty_cache()
+        self.grads_per_elem = torch.cat(grads, dim=0)
+
+        # valid
+        val_grads = []
+        if valid:
+            for batch_idx, (inputs, targets) in enumerate(self.pcvalloader):
                 inputs, targets = inputs.to(self.device), targets.to(self.device, non_blocking=True)
-                if batch_idx == 0:
-                    out, l1 = self.model(inputs, last=True, freeze=True)
-                    losses = self.loss(out, targets)
-                    loss = losses.sum()
-                    l0_grads = torch.autograd.grad(loss, out)[0]
-
-                    if self.linear_layer:
-                        l0_expand = torch.repeat_interleave(l0_grads, embDim, dim=1)
-                        l1_grads = l0_expand * l1.repeat(1, self.num_classes)
-                    if batch:
-                        l0_grads = l0_grads.mean(dim=0).view(1, -1)
-                        if self.linear_layer:
-                            l1_grads = l1_grads.mean(dim=0).view(1, -1)
-                else:
-                    out, l1 = self.model(inputs, last=True, freeze=True)
-                    loss = self.loss(out, targets).sum()
-                    batch_l0_grads = torch.autograd.grad(loss, out)[0]
-                    if self.linear_layer:
-                        batch_l0_expand = torch.repeat_interleave(batch_l0_grads, embDim, dim=1)
-                        batch_l1_grads = batch_l0_expand * l1.repeat(1, self.num_classes)
-                    if batch:
-                        batch_l0_grads = batch_l0_grads.mean(dim=0).view(1, -1)
-                        if self.linear_layer:
-                            batch_l1_grads = batch_l1_grads.mean(dim=0).view(1, -1)
-                    l0_grads = torch.cat((l0_grads, batch_l0_grads), dim=0)
-                    if self.linear_layer:
-                        l1_grads = torch.cat((l1_grads, batch_l1_grads), dim=0)
+                out, approximator = self.model(inputs, last=True, freeze=True)
+                loss = self.loss(out, targets).sum()
+                val_grads += [self.approximators_gradient_handler(approximator, loss, batch)]
             torch.cuda.empty_cache()
-            if self.linear_layer:
-                self.grads_per_elem = torch.cat((l0_grads, l1_grads), dim=1)
-            else:
-                self.grads_per_elem = l0_grads
+            self.val_grads_per_elem = torch.cat(val_grads, dim=0)
 
-            if valid:
-                for batch_idx, (inputs, targets) in enumerate(self.pcvalloader):
-                    inputs, targets = inputs.to(self.device), targets.to(self.device, non_blocking=True)
-                    if batch_idx == 0:
-                        out, l1 = self.model(inputs, last=True, freeze=True)
-                        loss = self.loss(out, targets).sum()
-                        l0_grads = torch.autograd.grad(loss, out)[0]
-                        if self.linear_layer:
-                            l0_expand = torch.repeat_interleave(l0_grads, embDim, dim=1)
-                            l1_grads = l0_expand * l1.repeat(1, self.num_classes)
-                        if batch:
-                            l0_grads = l0_grads.mean(dim=0).view(1, -1)
-                            if self.linear_layer:
-                                l1_grads = l1_grads.mean(dim=0).view(1, -1)
-                    else:
-                        out, l1 = self.model(inputs, last=True, freeze=True)
-                        loss = self.loss(out, targets).sum()
-                        batch_l0_grads = torch.autograd.grad(loss, out)[0]
-                        if self.linear_layer:
-                            batch_l0_expand = torch.repeat_interleave(batch_l0_grads, embDim, dim=1)
-                            batch_l1_grads = batch_l0_expand * l1.repeat(1, self.num_classes)
-                        if batch:
-                            batch_l0_grads = batch_l0_grads.mean(dim=0).view(1, -1)
-                            if self.linear_layer:
-                                batch_l1_grads = batch_l1_grads.mean(dim=0).view(1, -1)
-                        l0_grads = torch.cat((l0_grads, batch_l0_grads), dim=0)
-                        if self.linear_layer:
-                            l1_grads = torch.cat((l1_grads, batch_l1_grads), dim=0)
-                torch.cuda.empty_cache()
-                if self.linear_layer:
-                    self.val_grads_per_elem = torch.cat((l0_grads, l1_grads), dim=1)
-                else:
-                    self.val_grads_per_elem = l0_grads
+    def update_val_gradients(self, grads_currX=None, first_init=False, batch=True):
+        """
+        Update the gradient values
+
+        Parameters
+        ----------
+        grad_currX: OrderedDict, optional
+            Gradients of the current element (default: None)
+        first_init: bool, optional
+            Gradient initialization (default: False)
+        """
+
+        # if self.verbose:
+        #     logging.info('Updating validation set gradient. ')
+
+        self.model.zero_grad()
+        embDim = self.model.get_embedding_dim()
+
+        if first_init:
+            ################################################################
+            # TODO-2: l1 and approximator to be refactored after TODO-1
+            # val_grads, y_val_arr, out_arr, approximator_arr = [], [], [], []
+            val_grads, y_val_arr, out_arr, l1_arr = [], [], [], []
+            for batch_idx, (inputs, targets) in enumerate(self.valloader):
+                inputs, targets = inputs.to(self.device), targets.to(self.device, non_blocking=True)
+                out, approximator = self.model(inputs, last=True, freeze=True)
+                loss = self.loss(out, targets).sum()
+                val_grads += [self.approximators_gradient_handler(approximator, loss, batch)]
+                out_arr += [out]
+                y_val_arr += [targets.view(-1, 1)]
+                l1_arr += [approximator[1]]
+                self.out = torch.cat(out_arr, dim=0)
+                self.l1 = torch.cat(l1_arr, dim=0)
+                self.y_val = torch.cat(y_val_arr, dim=0)
+                self.val_grads_per_elem = torch.cat(val_grads, dim=0)
+            ################################################################
         else:
-            embDim = self.model.get_embedding_dim()
-            for batch_idx, (inputs, targets) in enumerate(self.trainloader):
-                inputs, targets = inputs.to(self.device), targets.to(self.device, non_blocking=True)
-                if batch_idx == 0:
-                    out, l1 = self.model(inputs, last=True, freeze=True)
-                    loss = self.loss(out, targets).sum()
-                    l0_grads = torch.autograd.grad(loss, out)[0]
-                    if self.linear_layer:
-                        l0_expand = torch.repeat_interleave(l0_grads, embDim, dim=1)
-                        l1_grads = l0_expand * l1.repeat(1, self.num_classes)
-                    if batch:
-                        l0_grads = l0_grads.mean(dim=0).view(1, -1)
-                        if self.linear_layer:
-                            l1_grads = l1_grads.mean(dim=0).view(1, -1)
-                else:
-                    out, l1 = self.model(inputs, last=True, freeze=True)
-                    loss = self.loss(out, targets).sum()
-                    batch_l0_grads = torch.autograd.grad(loss, out)[0]
-                    if self.linear_layer:
-                        batch_l0_expand = torch.repeat_interleave(batch_l0_grads, embDim, dim=1)
-                        batch_l1_grads = batch_l0_expand * l1.repeat(1, self.num_classes)
-
-                    if batch:
-                        batch_l0_grads = batch_l0_grads.mean(dim=0).view(1, -1)
-                        if self.linear_layer:
-                            batch_l1_grads = batch_l1_grads.mean(dim=0).view(1, -1)
-                    l0_grads = torch.cat((l0_grads, batch_l0_grads), dim=0)
-                    if self.linear_layer:
-                        l1_grads = torch.cat((l1_grads, batch_l1_grads), dim=0)
-
-            torch.cuda.empty_cache()
+            ################################################################
+            # TODO-1: integrate in approximators_gradient_handler
+            if grads_currX is None:
+                raise Exception('Not first time initialization must have a grads_currX! ')
+            out_vec = self.out - (
+                        self.eta * grads_currX[0][0:self.num_classes].view(1, -1).expand(self.out.shape[0], -1))
 
             if self.linear_layer:
-                self.grads_per_elem = torch.cat((l0_grads, l1_grads), dim=1)
-            else:
-                self.grads_per_elem = l0_grads
-            if valid:
-                for batch_idx, (inputs, targets) in enumerate(self.valloader):
-                    inputs, targets = inputs.to(self.device), targets.to(self.device, non_blocking=True)
-                    if batch_idx == 0:
-                        out, l1 = self.model(inputs, last=True, freeze=True)
-                        loss = self.loss(out, targets).sum()
-                        l0_grads = torch.autograd.grad(loss, out)[0]
-                        if self.linear_layer:
-                            l0_expand = torch.repeat_interleave(l0_grads, embDim, dim=1)
-                            l1_grads = l0_expand * l1.repeat(1, self.num_classes)
-                        if batch:
-                            l0_grads = l0_grads.mean(dim=0).view(1, -1)
-                            if self.linear_layer:
-                                l1_grads = l1_grads.mean(dim=0).view(1, -1)
-                    else:
-                        out, l1 = self.model(inputs, last=True, freeze=True)
-                        loss = self.loss(out, targets).sum()
-                        batch_l0_grads = torch.autograd.grad(loss, out)[0]
-                        if self.linear_layer:
-                            batch_l0_expand = torch.repeat_interleave(batch_l0_grads, embDim, dim=1)
-                            batch_l1_grads = batch_l0_expand * l1.repeat(1, self.num_classes)
+                out_vec = out_vec - (self.eta * torch.matmul(self.l1, grads_currX[0][self.num_classes:].view(
+                    self.num_classes, -1).transpose(0, 1)))
 
-                        if batch:
-                            batch_l0_grads = batch_l0_grads.mean(dim=0).view(1, -1)
-                            if self.linear_layer:
-                                batch_l1_grads = batch_l1_grads.mean(dim=0).view(1, -1)
-                        l0_grads = torch.cat((l0_grads, batch_l0_grads), dim=0)
-                        if self.linear_layer:
-                            l1_grads = torch.cat((l1_grads, batch_l1_grads), dim=0)
-                torch.cuda.empty_cache()
-                if self.linear_layer:
-                    self.val_grads_per_elem = torch.cat((l0_grads, l1_grads), dim=1)
-                else:
-                    self.val_grads_per_elem = l0_grads
+            loss = self.loss(out_vec, self.y_val.view(-1)).sum()
+            l0_grads = torch.autograd.grad(loss, out_vec)[0]
+            if self.linear_layer:
+                l0_expand = torch.repeat_interleave(l0_grads, embDim, dim=1)
+                l1_grads = l0_expand * self.l1.repeat(1, self.num_classes)
+                self.val_grads_per_elem = torch.cat((l0_grads, l1_grads), dim=1)
+            else:
+                self.val_grads_per_elem = l0_grads
+            ################################################################
+        torch.cuda.empty_cache()
 
     def update_model(self, model_params):
         """
