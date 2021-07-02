@@ -24,6 +24,7 @@ class DSSDataset(Dataset):
 class DSSDataLoader:
     def __init__(self, full_data, verbose=False, *args, **kwargs):
         super(DSSDataLoader, self).__init__()
+        # TODO: Integrate verbose in logging
         self.verbose = verbose
         self.dataset = DSSDataset(full_data)
         self.subset_loader = DataLoader(self.dataset, *args, **kwargs)
@@ -35,9 +36,19 @@ class DSSDataLoader:
     def _resample(self):
         raise Exception('Not implemented. ')
 
+    @abstractmethod
+    def state_dict(self):
+        # data, subset, index
+        pass
+
+    @abstractmethod
+    def load_state_dict(self):
+        pass
+
 
 class OnlineDSSDataLoader(DSSDataLoader):
-    def __init__(self, train_loader, val_loader, budget, select_every, model, loss, device, verbose=False, *args, **kwargs):
+    def __init__(self, train_loader, val_loader, budget, select_every, model, loss, device, verbose=False, *args,
+                 **kwargs):
         super(OnlineDSSDataLoader, self).__init__(train_loader.dataset, verbose=verbose, *args, **kwargs)
         self.cur_epoch = 1
         self.train_loader = train_loader
@@ -55,9 +66,9 @@ class OnlineDSSDataLoader(DSSDataLoader):
             logging.info('Epoch: {0:d}, reading data... '.format(self.cur_epoch))
         if self.cur_epoch % self.select_every == 0:
             self._resample()
-        self.cur_epoch += 1
         if self.verbose:
             logging.info('Epoch: {0:d}, finished reading data. '.format(self.cur_epoch))
+        self.cur_epoch += 1
         # breakpoint()
         return self.subset_loader.__iter__()
 
@@ -68,13 +79,20 @@ class OnlineDSSDataLoader(DSSDataLoader):
     def _resample(self):
         raise Exception('Not implemented. ')
 
+    def state_dict(self):
+        pass
+
+    def load_state_dict(self):
+        pass
+
 
 # GLISTER
 class GLISTERDataLoader(OnlineDSSDataLoader):
 
     def __init__(self, train_loader, val_loader, budget, select_every, model, loss, eta, device, num_cls,
                  linear_layer, selection_type, r, batch_size, verbose=True, *args, **kwargs):
-        super(GLISTERDataLoader, self).__init__(train_loader, val_loader, budget, select_every, model, loss, device, verbose=verbose, *args, **kwargs)
+        super(GLISTERDataLoader, self).__init__(train_loader, val_loader, budget, select_every, model, loss, device,
+                                                verbose=verbose, *args, **kwargs)
         self.strategy = GLISTERStrategy(train_loader, val_loader, copy.deepcopy(model), loss, eta, device,
                                         num_cls, linear_layer, selection_type, r=r, verbose=verbose)
         self.eta = eta
@@ -96,13 +114,16 @@ class GLISTERDataLoader(OnlineDSSDataLoader):
         self.dataset.reload(subset_idxes)
         if self.verbose:
             end = time.time()
-            logging.info('Epoch: {0:d}, subset selection finished, takes {1:.2f}. '.format(self.cur_epoch, (end-start)))
+            logging.info(
+                'Epoch: {0:d}, subset selection finished, takes {1:.2f}. '.format(self.cur_epoch, (end - start)))
 
 
 # Random
 class OnlineRandomDataLoader(OnlineDSSDataLoader):
-    def __init__(self, train_loader, val_loader, budget, select_every, model, loss, device, verbose=True, *args, **kwargs):
-        super(OnlineRandomDataLoader, self).__init__(train_loader, val_loader, budget, select_every, model, loss, device, verbose=verbose, *args,
+    def __init__(self, train_loader, val_loader, budget, select_every, model, loss, device, verbose=True, *args,
+                 **kwargs):
+        super(OnlineRandomDataLoader, self).__init__(train_loader, val_loader, budget, select_every, model, loss,
+                                                     device, verbose=verbose, *args,
                                                      **kwargs)
         self.strategy = RandomStrategy(train_loader, online=True)
         super(OnlineRandomDataLoader, self)._finalize_initialization()
