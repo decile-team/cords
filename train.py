@@ -495,7 +495,7 @@ class TrainClassifier:
                 tst_loss = 0
                 model.eval()
 
-                if "trn_loss" in print_args:
+                if (("trn_loss" in print_args) or ("trn_acc" in print_args)):
                     with torch.no_grad():
                         for batch_idx, (inputs, targets) in enumerate(trainloader):
                             # print(batch_idx)
@@ -508,9 +508,11 @@ class TrainClassifier:
                                 _, predicted = outputs.max(1)
                                 trn_total += targets.size(0)
                                 trn_correct += predicted.eq(targets).sum().item()
-                                trn_acc.append(trn_correct / trn_total)
+                                
+                    if "trn_acc" in print_args:
+                        trn_acc.append(trn_correct / trn_total)
 
-                if "val_loss" in print_args:
+                if (("val_loss" in print_args) or ("val_acc" in print_args)):
                     with torch.no_grad():
                         for batch_idx, (inputs, targets) in enumerate(valloader):
                             # print(batch_idx)
@@ -523,9 +525,11 @@ class TrainClassifier:
                                 _, predicted = outputs.max(1)
                                 val_total += targets.size(0)
                                 val_correct += predicted.eq(targets).sum().item()
-                                val_acc.append(val_correct / val_total)
+                                
+                    if "val_acc" in print_args:                                
+                        val_acc.append(val_correct / val_total)
 
-                if "tst_loss" in print_args:
+                if (("tst_loss" in print_args) or ("tst_acc" in print_args)):
                     with torch.no_grad():
                         for batch_idx, (inputs, targets) in enumerate(testloader):
                             # print(batch_idx)
@@ -538,7 +542,9 @@ class TrainClassifier:
                                 _, predicted = outputs.max(1)
                                 tst_total += targets.size(0)
                                 tst_correct += predicted.eq(targets).sum().item()
-                                tst_acc.append(tst_correct/tst_total)
+                                
+                    if "tst_acc" in print_args:
+                        tst_acc.append(tst_correct/tst_total)
 
                 if "subtrn_acc" in print_args:
                     subtrn_acc.append(subtrn_correct / subtrn_total)
