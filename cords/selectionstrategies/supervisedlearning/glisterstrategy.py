@@ -108,9 +108,13 @@ class GLISTERStrategy(DataSelectionStrategy):
         return gains
 
     def approximators_gradient_handler(self, approximators, loss, batch):
-        l0, l1 = approximators
-        l0_grads = torch.autograd.grad(loss, l0)[0]
-        _grads = [l0_grads]
+        if self.linear_layer:
+            l0, l1 = approximators
+        else:
+            l0 = approximators
+        # breakpoint()
+        l0_grads = torch.autograd.grad(loss, l0)
+        _grads = [torch.cat(l0_grads, dim=1)]
         if self.linear_layer:
             l0_expand = torch.repeat_interleave(l0_grads, self.model_embedding_dim, dim=1)
             l1_grads = l0_expand * l1.repeat(1, self.num_classes)
@@ -236,4 +240,34 @@ class GLISTERStrategy(DataSelectionStrategy):
                 logging.info("Naive Greedy GLISTER total time: {0}: ".format(time.time() - t_ng_start))
         else:
             raise Exception('Doesn\'t support this selection_type. ')
+
+        # cnt = {}
+        # for idx in greedySet:
+        #     label = self.trainloader.dataset[idx][1]
+        #     if label not in cnt:
+        #         cnt[label] = 0
+        #     cnt[label] += 1
+        #
+        # accu = {}
+        # with torch.no_grad():
+        #     for batch_idx, (inputs, targets) in enumerate(self.valloader):
+        #         # inputs, targets = inputs.cuda(), targets.cuda()
+        #         outputs, _ = self.model(inputs)
+        #         _, predicted = outputs.max(1)
+        #         correct = targets == predicted
+        #         for _target, _correct in zip(targets, correct):
+        #             _target = _target.data.item()
+        #             _correct = _correct.data.item()
+        #             if _target not in accu:
+        #                 accu[_target] = []
+        #             accu[_target] += [_correct]
+        # import numpy as np; accu = {k: np.mean(accu[k]) for k in accu}
+        #
+        # print("------------------------------------------------------------------------------------")
+        # print("cnt: ")
+        # print(cnt)
+        # print("accu: ")
+        # print(accu)
+        # print("------------------------------------------------------------------------------------")
+
         return list(greedySet), torch.ones(budget)

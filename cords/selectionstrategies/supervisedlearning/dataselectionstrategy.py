@@ -33,6 +33,7 @@ class DataSelectionStrategy(object):
         self.valloader = valloader
         self.model = model
         self.N_trn = len(trainloader.sampler)
+        logging.debug("N_trn: %d", self.N_trn)
         self.N_val = len(valloader.sampler)
         self.grads_per_elem = None
         self.val_grads_per_elem = None
@@ -109,19 +110,17 @@ class DataSelectionStrategy(object):
 
         for batch_idx, (inputs, targets) in enumerate(train_loader):
             inputs, targets = inputs.to(self.device), targets.to(self.device, non_blocking=True)
-            out, approximator = self.model(inputs, last=True, freeze=True)
-            # breakpoint()
+            out, approximator = self.model(inputs, last=self.linear_layer, freeze=True)
             loss = self.loss(out, targets).sum()
             grads += [self.approximators_gradient_handler(approximator, loss, batch)]
         torch.cuda.empty_cache()
         self.grads_per_elem = torch.cat(grads, dim=0)
-
         # valid
         val_grads = []
         if valid:
             for batch_idx, (inputs, targets) in enumerate(self.pcvalloader):
                 inputs, targets = inputs.to(self.device), targets.to(self.device, non_blocking=True)
-                out, approximator = self.model(inputs, last=True, freeze=True)
+                out, approximator = self.model(inputs, last=self.linear_layer, freeze=True)
                 loss = self.loss(out, targets).sum()
                 val_grads += [self.approximators_gradient_handler(approximator, loss, batch)]
             torch.cuda.empty_cache()
@@ -152,14 +151,15 @@ class DataSelectionStrategy(object):
             val_grads, y_val_arr, out_arr, l1_arr = [], [], [], []
             for batch_idx, (inputs, targets) in enumerate(self.valloader):
                 inputs, targets = inputs.to(self.device), targets.to(self.device, non_blocking=True)
-                out, approximator = self.model(inputs, last=True, freeze=True)
+                out, approximator = self.model(inputs, last=self.linear_layer, freeze=True)
                 loss = self.loss(out, targets).sum()
                 val_grads += [self.approximators_gradient_handler(approximator, loss, batch)]
                 out_arr += [out]
                 y_val_arr += [targets.view(-1, 1)]
-                l1_arr += [approximator[1]]
                 self.out = torch.cat(out_arr, dim=0)
-                self.l1 = torch.cat(l1_arr, dim=0)
+                if self.linear_layer:
+                    l1_arr += [approximator[1]]
+                    self.l1 = torch.cat(l1_arr, dim=0)
                 self.y_val = torch.cat(y_val_arr, dim=0)
                 self.val_grads_per_elem = torch.cat(val_grads, dim=0)
             ################################################################

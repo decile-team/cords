@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import logging
 
 
 class RandomStrategy(object):
@@ -19,7 +20,9 @@ class RandomStrategy(object):
         """
 
         self.trainloader = trainloader
-        self.N_trn = len(trainloader.sampler.data_source)
+        # self.N_trn = len(trainloader.sampler.data_source)
+        self.N_trn = len(trainloader.sampler)
+        logging.debug("N_trn: %d", self.N_trn)
         self.online = online
         self.indices = None
         self.gammas = None

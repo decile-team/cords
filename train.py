@@ -33,7 +33,7 @@ class TrainClassifier:
         with torch.no_grad():
             for batch_idx, (inputs, targets) in enumerate(data_loader):
                 inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(self.configdata['train_args']['device'], non_blocking=True)
-                outputs = model(inputs)
+                outputs, _ = model(inputs)
                 loss = criterion(outputs, targets)
                 total_loss += loss.item()
         return total_loss
@@ -42,19 +42,26 @@ class TrainClassifier:
     #Model Creation
     """
     def create_model(self):
-
-        if self.configdata['model']['architecture'] == 'ResNet18':
-            model = ResNet18(self.configdata['model']['numclasses'])
-        elif self.configdata['model']['architecture'] == 'MnistNet':
+        architecture = self.configdata['model']['architecture']
+        num_classes = self.configdata['model']['numclasses']
+        if architecture == 'ResNet18':
+            model = ResNet18(num_classes)
+        elif architecture == 'MnistNet':
             model = MnistNet()
-        elif self.configdata['model']['architecture'] == 'ResNet164':
-            model = ResNet164(self.configdata['model']['numclasses'])
-        elif self.configdata['model']['architecture'] == 'MobileNet':
-            model = MobileNet(self.configdata['model']['numclasses'])
-        elif self.configdata['model']['architecture'] == 'MobileNetV2':
-            model = MobileNetV2(self.configdata['model']['numclasses'])
-        elif self.configdata['model']['architecture'] == 'MobileNet2':
-            model = MobileNet2(output_size=self.configdata['model']['numclasses'])
+        elif architecture == 'ResNet164':
+            model = ResNet164(num_classes)
+        elif architecture == 'MobileNet':
+            model = MobileNet(num_classes)
+        elif architecture == 'MobileNetV2':
+            model = MobileNetV2(num_classes)
+        elif architecture == 'MobileNet2':
+            model = MobileNet2(num_classes)
+        elif architecture == 'SimpleNN':
+            input_dim = self.configdata['model']['input_dim']
+            hidden_units = self.configdata['model']['hidden_units']
+            model = TwoLayerNet(input_dim=input_dim, num_classes=num_classes, hidden_units=hidden_units)
+        else:
+            raise Exception('Architecture type %s does not exist. ' % architecture)
         model = model.to(self.configdata['train_args']['device'])
         return model
 
@@ -181,7 +188,6 @@ class TrainClassifier:
 
         # Getting the optimizer and scheduler
         optimizer, scheduler = self.optimizer_with_scheduler(model)
-
 
         if self.configdata['dss_strategy']['type'] == 'GradMatch':
             # OMPGradMatch Selection strategy
@@ -373,7 +379,7 @@ class TrainClassifier:
                     inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(self.configdata['train_args']['device'],
                                                                                                    non_blocking=True)  # targets can have non_blocking=True.
                     optimizer.zero_grad()
-                    outputs = model(inputs)
+                    outputs, _ = model(inputs)
                     losses = criterion_nored(outputs, targets)
                     loss = torch.dot(losses, gammas[batch_wise_indices[batch_idx]]) / (gammas[batch_wise_indices[batch_idx]].sum())
                     loss.backward()
@@ -391,7 +397,7 @@ class TrainClassifier:
                         inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(self.configdata['train_args']['device'],
                                                                                                        non_blocking=True)  # targets can have non_blocking=True.
                         optimizer.zero_grad()
-                        outputs = model(inputs)
+                        outputs, _ = model(inputs)
                         loss = criterion(outputs, targets)
                         loss.backward()
                         subtrn_loss += loss.item()
@@ -405,7 +411,7 @@ class TrainClassifier:
                         inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(self.configdata['train_args']['device'],
                                                                                                        non_blocking=True)  # targets can have non_blocking=True.
                         optimizer.zero_grad()
-                        outputs = model(inputs)
+                        outputs, _ = model(inputs)
                         losses = criterion_nored(outputs, targets)
                         loss = torch.dot(losses, gammas[batch_wise_indices[batch_idx]]) / (
                             gammas[batch_wise_indices[batch_idx]].sum())
@@ -423,7 +429,7 @@ class TrainClassifier:
                     inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(self.configdata['train_args']['device'],
                                                                                                    non_blocking=True)  # targets can have non_blocking=True.
                     optimizer.zero_grad()
-                    outputs = model(inputs)
+                    outputs, _ = model(inputs)
                     loss = criterion(outputs, targets)
                     loss.backward()
                     subtrn_loss += loss.item()
@@ -440,7 +446,7 @@ class TrainClassifier:
                         inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(self.configdata['train_args']['device'],
                                                                                                        non_blocking=True)  # targets can have non_blocking=True.
                         optimizer.zero_grad()
-                        outputs = model(inputs)
+                        outputs, _ = model(inputs)
                         loss = criterion(outputs, targets)
                         loss.backward()
                         subtrn_loss += loss.item()
@@ -453,7 +459,7 @@ class TrainClassifier:
                         inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(self.configdata['train_args']['device'],
                                                                                                        non_blocking=True)  # targets can have non_blocking=True.
                         optimizer.zero_grad()
-                        outputs = model(inputs)
+                        outputs, _ = model(inputs)
                         loss = criterion(outputs, targets)
                         loss.backward()
                         subtrn_loss += loss.item()
@@ -469,7 +475,7 @@ class TrainClassifier:
                     inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(self.configdata['train_args']['device'],
                                                                                                    non_blocking=True)  # targets can have non_blocking=True.
                     optimizer.zero_grad()
-                    outputs = model(inputs)
+                    outputs, _ = model(inputs)
                     loss = criterion(outputs, targets)
                     loss.backward()
                     subtrn_loss += loss.item()
@@ -500,7 +506,7 @@ class TrainClassifier:
                         for batch_idx, (inputs, targets) in enumerate(trainloader):
                             # print(batch_idx)
                             inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(self.configdata['train_args']['device'], non_blocking=True)
-                            outputs = model(inputs)
+                            outputs, _ = model(inputs)
                             loss = criterion(outputs, targets)
                             trn_loss += loss.item()
                             trn_losses.append(trn_loss)
@@ -515,7 +521,7 @@ class TrainClassifier:
                         for batch_idx, (inputs, targets) in enumerate(valloader):
                             # print(batch_idx)
                             inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(self.configdata['train_args']['device'], non_blocking=True)
-                            outputs = model(inputs)
+                            outputs, _ = model(inputs)
                             loss = criterion(outputs, targets)
                             val_loss += loss.item()
                             val_losses.append(val_loss)
@@ -530,7 +536,7 @@ class TrainClassifier:
                         for batch_idx, (inputs, targets) in enumerate(testloader):
                             # print(batch_idx)
                             inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(self.configdata['train_args']['device'], non_blocking=True)
-                            outputs = model(inputs)
+                            outputs, _ = model(inputs)
                             loss = criterion(outputs, targets)
                             tst_loss += loss.item()
                             tst_losses.append(tst_loss)
