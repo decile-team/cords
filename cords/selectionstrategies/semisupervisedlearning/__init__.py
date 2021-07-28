@@ -1,6 +1,5 @@
 from .craigstrategy import CRAIGStrategy
 from .dataselectionstrategy import DataSelectionStrategy
-from .glisterstrategy import GLISTERStrategy
+from .retrievestrategy import RETRIEVEStrategy
 from .randomstrategy import RandomStrategy
 from .ompgradmatchstrategy import OMPGradMatchStrategy
-from .fixedweightstrategy import FixedWeightStrategy

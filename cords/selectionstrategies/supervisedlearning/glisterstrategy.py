@@ -51,8 +51,8 @@ class GLISTERStrategy(DataSelectionStrategy):
         Loading the validation data using pytorch DataLoader
     model: class
         Model architecture used for training
-    loss_type: class
-        The type of loss criterion
+    loss_func: object
+        Loss function object
     eta: float
         Learning rate. Step size for the one step gradient update
     device: str
@@ -71,20 +71,21 @@ class GLISTERStrategy(DataSelectionStrategy):
         Number of greedy selection rounds when selection method is RGreedy (default: 15)
     """
 
-    def __init__(self, trainloader, valloader, model, loss_type,
-                 eta, device, num_classes, linear_layer, selection_type, r=15):
+    def __init__(self, trainloader, valloader, model, loss_func,
+                 eta, device, num_classes, linear_layer, selection_type, r=15, verbose='INFO'):
         """
         Constructor method
         """
 
-        super().__init__(trainloader, valloader, model, num_classes, linear_layer, loss_type, device)
+        super().__init__(trainloader, valloader, model, num_classes, linear_layer, loss_func, device)
         self.eta = eta  # step size for the one step gradient update
         self.init_out = list()
         self.init_l1 = list()
         self.selection_type = selection_type
         self.r = r
+        self.verbose = verbose
 
-    def _update_grads_val(self, grads_currX=None, first_init=False):
+    def _update_grads_val(self, grads_curr=None, first_init=False):
         """
         Update the gradient values
 
@@ -128,12 +129,12 @@ class GLISTERStrategy(DataSelectionStrategy):
                     self.init_l1 = torch.cat((self.init_l1, l1), dim=0)
                     self.y_val = torch.cat((self.y_val, targets.view(-1, 1)), dim=0)
 
-        elif grads_currX is not None:
+        elif grads_curr is not None:
             out_vec = self.init_out - (
-                        self.eta * grads_currX[0][0:self.num_classes].view(1, -1).expand(self.init_out.shape[0],-1))
+                    self.eta * grads_curr[0][0:self.num_classes].view(1, -1).expand(self.init_out.shape[0], -1))
 
             if self.linear_layer:
-                out_vec = out_vec - (self.eta * torch.matmul(self.init_l1, grads_currX[0][self.num_classes:].view(
+                out_vec = out_vec - (self.eta * torch.matmul(self.init_l1, grads_curr[0][self.num_classes:].view(
                     self.num_classes, -1).transpose(0, 1)))
 
             loss = self.loss(out_vec, self.y_val.view(-1)).sum()
@@ -141,6 +142,7 @@ class GLISTERStrategy(DataSelectionStrategy):
             if self.linear_layer:
                 l0_expand = torch.repeat_interleave(l0_grads, embDim, dim=1)
                 l1_grads = l0_expand * self.init_l1.repeat(1, self.num_classes)
+
         torch.cuda.empty_cache()
         if self.linear_layer:
             self.grads_val_curr = torch.mean(torch.cat((l0_grads, l1_grads), dim=1), dim=0).view(-1, 1)
@@ -167,20 +169,20 @@ class GLISTERStrategy(DataSelectionStrategy):
             gains = torch.matmul(grads, grads_val)
         return gains
 
-    def _update_gradients_subset(self, grads_X, element):
+    def _update_gradients_subset(self, grads, element):
         """
         Update gradients of set X + element (basically adding element to X)
-        Note that it modifies the inpute vector! Also grads_X is a list! grad_e is a tuple!
+        Note that it modifies the input vector! Also grads is a list! grad_e is a tuple!
 
         Parameters
         ----------
-        grads_X: list
+        grads: list
             Gradients
         element: int
             Element that need to be added to the gradients
         """
         # if isinstance(element, list):
-        grads_X += self.grads_per_elem[element].sum(dim=0)
+        grads += self.grads_per_elem[element].sum(dim=0)
 
     def select(self, budget, model_params):
         """
@@ -222,11 +224,11 @@ class GLISTERStrategy(DataSelectionStrategy):
                 greedySet.extend(selected_indices)
                 [remainSet.remove(idx) for idx in selected_indices]
                 if self.numSelected == 0:
-                    grads_currX = self.grads_per_elem[selected_indices].sum(dim=0).view(1, -1)
+                    grads_curr = self.grads_per_elem[selected_indices].sum(dim=0).view(1, -1)
                 else:  # If 1st selection, then just set it to bestId grads
-                    self._update_gradients_subset(grads_currX, selected_indices)
+                    self._update_gradients_subset(grads_curr, selected_indices)
                 # Update the grads_val_current using current greedySet grads
-                self._update_grads_val(grads_currX)
+                self._update_grads_val(grads_curr)
                 self.numSelected += selection_size
             print("R greedy GLISTER total time:", time.time() - t_ng_start)
 
@@ -246,11 +248,11 @@ class GLISTERStrategy(DataSelectionStrategy):
                 self.numSelected += 1
                 # Update info in grads_currX using element=bestId
                 if self.numSelected > 1:
-                    self._update_gradients_subset(grads_currX, bestId)
+                    self._update_gradients_subset(grads_curr, bestId)
                 else:  # If 1st selection, then just set it to bestId grads
-                    grads_currX = self.grads_per_elem[bestId].view(1, -1)  # Making it a list so that is mutable!
+                    grads_curr = self.grads_per_elem[bestId].view(1, -1)  # Making it a list so that is mutable!
                 # Update the grads_val_current using current greedySet grads
-                self._update_grads_val(grads_currX)
+                self._update_grads_val(grads_curr)
             print("Stochastic Greedy GLISTER total time:", time.time() - t_ng_start)
 
         elif self.selection_type == 'Naive':
@@ -267,11 +269,11 @@ class GLISTERStrategy(DataSelectionStrategy):
                 self.numSelected += 1
                 # Update info in grads_currX using element=bestId
                 if self.numSelected == 1:
-                    grads_currX = self.grads_per_elem[bestId[0]].view(1, -1)
+                    grads_curr = self.grads_per_elem[bestId[0]].view(1, -1)
                 else:  # If 1st selection, then just set it to bestId grads
-                    self._update_gradients_subset(grads_currX, bestId)
+                    self._update_gradients_subset(grads_curr, bestId)
                 # Update the grads_val_current using current greedySet grads
-                self._update_grads_val(grads_currX)
+                self._update_grads_val(grads_curr)
             print("Naive Greedy GLISTER total time:", time.time() - t_ng_start)
 
         return list(greedySet), torch.ones(budget)

@@ -6,7 +6,7 @@ import torch.nn.functional as F
 from .dataselectionstrategy import DataSelectionStrategy
 
 
-class GLISTERStrategy(DataSelectionStrategy):
+class RETRIEVEStrategy(DataSelectionStrategy):
     """
     Implementation of GLISTER-ONLINE Strategy from the paper :footcite:`killamsetty2020glister`  for supervised learning frameworks.
     GLISTER-ONLINE methods tries to solve the  bi-level optimization problem given below:
