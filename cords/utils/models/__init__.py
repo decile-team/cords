@@ -1,3 +1,4 @@
+from .custom_hyperparam_net import HyperParamNet
 from .cifar10net import CifarNet
 from .densenet import DenseNet121
 from .densenet import DenseNet161

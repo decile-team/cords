@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data.sampler import SubsetRandomSampler
-from cords.utils.models import *
+from cords.utils.models import *custom_hyperparam_net, 
 from cords.utils.custom_dataset import load_dataset_custom
 from torch.utils.data import Subset
 from cords.utils.config_utils import load_config_data
@@ -42,7 +42,6 @@ class TrainClassifier:
     #Model Creation
     """
     def create_model(self):
-
         if self.configdata['model']['architecture'] == 'ResNet18':
             model = ResNet18(self.configdata['model']['numclasses'])
         elif self.configdata['model']['architecture'] == 'MnistNet':
@@ -55,6 +54,8 @@ class TrainClassifier:
             model = MobileNetV2(self.configdata['model']['numclasses'])
         elif self.configdata['model']['architecture'] == 'MobileNet2':
             model = MobileNet2(output_size=self.configdata['model']['numclasses'])
+        elif self.configdata['model']['architecture'] == 'HyperParamNet':
+            model = HyperParamNet()
         model = model.to(self.configdata['train_args']['device'])
         return model
 
