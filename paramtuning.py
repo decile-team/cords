@@ -6,7 +6,6 @@ import sys
 from train import TrainClassifier
 
 class HyperParamTuning:
-
     def __init__(self, config_file):
         self.config_data = load_config_data(config_file)
         self.train_class = TrainClassifier(self.config_data['subset_config'])
