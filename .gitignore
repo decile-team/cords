@@ -6,3 +6,6 @@ build
 dist
 __pycache__
 /results/
+RESULTS
+BATCH_PROCESS_*
+venv

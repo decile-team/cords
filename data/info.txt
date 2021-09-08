@@ -1,0 +1,2 @@
+# Please download all folders, putting in this directory then executing processing.py at the root folder of cords
+https://drive.google.com/drive/folders/1AcvjnsLnijOX-MKzbGX79aSxSh1-FfqA?usp=sharing
