@@ -27,7 +27,7 @@ def normalize_numeric_(data):
                 data[column_name] = (column - column_min) / (column_max - column_min)
 
 
-# fill nans with median of training dataloader
+# Fill nans with median of training data
 def fill_nan(X_train, X_valid, X_test):
     for column_name in X_train.columns:
         column_train, column_valid, column_test = X_train[column_name], X_valid[column_name], X_test[column_name]

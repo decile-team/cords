@@ -9,3 +9,5 @@ __pycache__
 RESULTS
 BATCH_PROCESS_*
 venv
+*.pickle
+.DS_Store

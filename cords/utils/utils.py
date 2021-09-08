@@ -112,7 +112,7 @@ def copy_(t, l):
         t[i] = l[i]
 
 
-# An object to preform a dummy with statement.
+# An object to preform a dummy with statement
 class dummy_context(object):
     def __enter__(self):
         pass
