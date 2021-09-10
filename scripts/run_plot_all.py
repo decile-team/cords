@@ -5,6 +5,7 @@ import pickle
 import numpy as np
 import itertools
 import json
+import time
 
 from scripts.run_plot import plot
 
@@ -20,6 +21,10 @@ if __name__ == '__main__':
     results_path = os.path.join("./", "scripts", "RESULTS")
     exp_metrics = {}
     first_k, first_k_obj, second_k = [], [], []
+
+    start = time.time()
+    save_path = os.path.join(".", "scripts", "PLOTS_%s" % start)
+    os.makedirs(save_path)
 
     # Organize dataloader
     for dir in os.listdir(results_path):
@@ -76,5 +81,10 @@ if __name__ == '__main__':
             # Disable avg_metric it for the time
             # note_obj = {"args": _first_k_obj, "avg_metric": avg_metric[_first_k]}
             note_obj = {"args": _first_k_obj}
+            # plot(x_list, y_list, labels=labels, xlabel=_x_metric, ylabel=_y_metric,
+            #      note=json.dumps(note_obj, sort_keys=True, indent=4), legend=True)
             plot(x_list, y_list, labels=labels, xlabel=_x_metric, ylabel=_y_metric,
-                 note=json.dumps(note_obj, sort_keys=True, indent=4), legend=True)
+                 note=json.dumps(note_obj, sort_keys=True, indent=4), legend=True,
+                 save_path=os.path.join(save_path, "%s_%s_%s_%s.png" % (_first_k_obj["dataset"], _x_metric, _y_metric,
+                                                                        "adaptive" if _first_k_obj[
+                                                                            "is_adaptive"] else "nonadaptive")))

@@ -6,13 +6,21 @@ log_path="./scripts/BATCH_PROCESS_$start"
 script_path="./scripts/run_tabular.py"
 dataset="airline"
 mkdir -p $log_path
-strategies=("glister" "random-ol" "full" "random" "facloc" "graphcut" "sumredun" "satcov")
+datasets=("airline" "loan" "olympic")
+strategies=("glister" "random-ol" "full" "random" "facloc" "graphcut" "sumredun" "satcov" "CRAIG")
+
 pid=()
-for strategy in "${strategies[@]}"; do
-  echo "Running strategy: $strategy... "
-  python3 $script_path --dataset $dataset --dss_strategy $strategy 1>$log_path/$strategy.log 2>$log_path/$strategy.err &
-  _pid=$!
-  pid+=($_pid)
+for dataset in "${datasets[@]}"; do
+  for strategy in "${strategies[@]}"; do
+    echo "Running dataset: $dataset with strategy: $strategy... "
+    python3 $script_path --dataset $dataset --dss_strategy $strategy 1>$log_path/$dataset_$strategy.log 2>$log_path/$dataset_$strategy.err &
+    _pid=$!
+    pid+=($_pid)
+  done
+  for _pid in "${pid[@]}"; do
+    wait $_pid
+  done
+  pid=()
 done
 
 kill_scripts() {
@@ -27,7 +35,3 @@ trap_quit() {
 }
 
 trap trap_quit EXIT
-
-for _pid in "${pid[@]}"; do
-  wait $_pid
-done

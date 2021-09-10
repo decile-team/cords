@@ -143,3 +143,32 @@ class OnlineRandomDataLoader(AdaptiveDSSDataLoader):
             end = time.time()
             print("Epoch: {0:d}, subset selection finished, takes {1:.2f}. ".format(self.cur_epoch, (end - start)))
         return subset_indices
+
+
+class GLISTERDataLoader(AdaptiveDSSDataLoader):
+
+    def __init__(self, train_loader, val_loader, budget, select_every, model, loss, eta, device, num_cls,
+                 linear_layer, selection_type, r, verbose=True, *args, **kwargs):
+        super(GLISTERDataLoader, self).__init__(train_loader, val_loader, budget, select_every, model, loss,
+                                                device,
+                                                verbose=verbose, *args, **kwargs)
+        self.strategy = GLISTERStrategy(train_loader, val_loader, copy.deepcopy(model), loss, eta, device,
+                                        num_cls, linear_layer, selection_type, r=r)
+        self.train_model = model
+        self.eta = eta
+        self.num_cls = num_cls
+        if self.verbose:
+            print('Glister dataloader loader initialized. ')
+
+    def _resample_subset_indices(self):
+        if self.verbose:
+            start = time.time()
+            print('Epoch: {0:d}, requires subset selection. '.format(self.cur_epoch))
+        cached_state_dict = copy.deepcopy(self.train_model.state_dict())
+        clone_dict = copy.deepcopy(self.train_model.state_dict())
+        subset_indices, _ = self.strategy.select(self.budget, clone_dict)
+        self.train_model.load_state_dict(cached_state_dict)
+        if self.verbose:
+            end = time.time()
+            print('Epoch: {0:d}, subset selection finished, takes {1:.2f}. '.format(self.cur_epoch, (end - start)))
+        return subset_indices

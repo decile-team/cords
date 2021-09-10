@@ -14,7 +14,7 @@ parser.add_argument("--dir_name", type=str)
 args = parser.parse_args()
 
 
-def plot(x_list, y_list, labels=None, title=None, xlabel=None, ylabel=None, note=None, legend=True):
+def plot(x_list, y_list, labels=None, title=None, xlabel=None, ylabel=None, note=None, legend=True, save_path=None):
     if note:
         fig, (ax, note_ax) = plt.subplots(1, 2, figsize=(12, 5), gridspec_kw={'width_ratios': [1.5, 1]})
     else:
@@ -42,7 +42,10 @@ def plot(x_list, y_list, labels=None, title=None, xlabel=None, ylabel=None, note
     if legend:
         ax.legend()
 
-    plt.show()
+    if save_path:
+        plt.savefig(save_path)
+    else:
+        plt.show()
 
 
 if __name__ == "__main__":

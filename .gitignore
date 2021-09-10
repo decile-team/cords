@@ -8,6 +8,7 @@ __pycache__
 /results/
 RESULTS
 BATCH_PROCESS_*
+PLOTS_*
 venv
 *.pickle
 .DS_Store

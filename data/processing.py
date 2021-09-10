@@ -1,8 +1,26 @@
 # Please run this script at the root dir of cords
+import pickle
 
 import pandas as pd
 import numpy as np
-import pickle
+import torch
+from torch.nn.utils.rnn import pad_sequence
+from torchtext.data.utils import get_tokenizer
+from collections import Counter
+from torchtext.vocab import Vocab
+import spacy
+
+
+def build_vocab(texts, tokenizer):
+    counter = Counter()
+    d_index = {}
+    for text in texts:
+        tokenized_text = tokenizer(text)
+        for word in tokenized_text:
+            if word not in d_index:
+                d_index[word] = len(d_index) + 1
+        counter.update(tokenized_text)
+    return Vocab(counter), d_index
 
 
 def split_X_y(train, valid, test, y_ind):
@@ -38,10 +56,52 @@ def fill_nan(X_train, X_valid, X_test):
             X_test[column_name] = column_test.replace(np.nan, train_median)
 
 
+spacy.load('en_core_web_sm')
+
+
 def process_and_save_data(filename, data, y_ind, text, r_train=0.7, r_valid=0.1, r_test=0.2):
     assert r_train + r_valid + r_test == 1, "Ratio should sum up to one. "
+    assert (not text) or (text and y_ind == -1)
     # Factorize y
     data.iloc[:, y_ind] = pd.factorize(data.iloc[:, y_ind])[0]
+    data.iloc[:, y_ind][data.iloc[:, y_ind] == -1] = len(np.unique(data.iloc[:, y_ind])) - 1
+    print("unique y: %s. " % np.unique(data.iloc[:, y_ind]))
+    if text:
+        texts = data.iloc[:, 0]
+        tokenizer = get_tokenizer('spacy', language='en')
+        vocab, d_index = build_vocab(texts, tokenizer)
+        tokenized_index = []
+        for text in texts:
+            _tokenized_index = torch.tensor([d_index[token] for token in tokenizer(text)], dtype=torch.long)
+            tokenized_index.append(_tokenized_index)
+
+        # Test tensors
+        d = {}
+        for _tokenized_index in tokenized_index:
+            for index in _tokenized_index:
+                index = index.item()
+                if index not in d:
+                    d[index] = 0
+                d[index] += 1
+
+        for word in d_index:
+            assert vocab[word] == d[d_index[word]]
+
+        # Truncate data length to 0.9 quantile (reject long outliers), then padding 0
+        max_len = int(
+            np.quantile(np.sort([_tokenized_index.size(0) for _tokenized_index in tokenized_index])[::-1], 0.9))
+        tokenized_index = [_tokenized_index[:max_len] for _tokenized_index in tokenized_index]
+
+        padded_tokenized_index = pad_sequence(tokenized_index, batch_first=True).detach().numpy()
+        y = data.iloc[:, y_ind]
+
+        data = np.concatenate([padded_tokenized_index, y[:, np.newaxis]], axis=1)
+        data = pd.DataFrame(data, dtype=np.long)
+
+    # data.iloc[:, 0] = padded_tokenized_index
+    # data = [(_padded_tokenized_index, data.iloc[i, 1]) for (i, _padded_tokenized_index) in
+    #         enumerate(padded_tokenized_index)]
+
     # Split dataloader
     train, valid, test = np.split(data.sample(frac=1),
                                   [int(r_train * len(data)), int((r_train + r_valid) * len(data))])
@@ -56,11 +116,15 @@ def process_and_save_data(filename, data, y_ind, text, r_train=0.7, r_valid=0.1,
         X_train = pd.get_dummies(X_train)
         X_valid = pd.get_dummies(X_valid)
         X_test = pd.get_dummies(X_test)
+
     n_classes = np.unique(np.concatenate([y_train, y_valid, y_test])).size
 
     # Pandas to numpy
     X_train, X_valid, X_test = X_train.to_numpy(), X_valid.to_numpy(), X_test.to_numpy()
-    input_dim = X_train.shape[1]
+    if text:
+        input_dim = len(d_index)
+    else:
+        input_dim = X_train.shape[1]
     train = [(x, _y) for (x, _y) in zip(X_train, y_train)]
     valid = [(x, _y) for (x, _y) in zip(X_valid, y_valid)]
     test = [(x, _y) for (x, _y) in zip(X_test, y_test)]

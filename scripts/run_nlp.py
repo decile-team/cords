@@ -1,6 +1,9 @@
 # Please run this script at the root dir of cords
-
+# Efficient text classification algorithms
 import sys
+
+from cords.utils.models.embedding_bag import EmbeddingBagModel
+from cords.utils.models.lstm import LSTMModel
 
 sys.path.append("../")
 sys.path.append("./")
@@ -13,21 +16,27 @@ import torch.optim as optim
 from cords.utils.models import TwoLayerNet
 from cords.utils.dataloader import *
 
-filepaths = {"airline": "data/airline.pickle",
-             "loan": "data/loan.pickle",
-             "olympic": "data/olympic.pickle"}
+filepaths = {"corona": "data/corona.pickle",
+             "news": "data/news.pickle",
+             "twitter": "data/twitter.pickle"}
 
 _adaptive_methods = ["glister", "random-ol"]
 # _nonadaptive_methods = ["full", "random", "facloc", "graphcut", "sumredun", "satcov", "CRAIG"]
 _nonadaptive_methods = ["random", "facloc", "graphcut", "sumredun", "satcov", "CRAIG"]
+_nlp_models = ["LSTM", "bag"]
 
 parser = argparse.ArgumentParser()
 # Dataset name
 parser.add_argument("--dataset", type=str, choices=list(filepaths.keys()))
 
+# Model selection
+parser.add_argument("--model", type=str, default="LSTM", choices=_nlp_models)
+
 # Model arguments
-parser.add_argument("--hidden_units", type=int, default=128)
-parser.add_argument("--batch_size", type=int, default=512)
+parser.add_argument("--hidden_units", type=int, default=32)
+parser.add_argument("--num_layers", type=int, default=1)
+parser.add_argument("--batch_size", type=int, default=64)
+parser.add_argument("--embed_dim", type=int, default=32)
 
 # Training arguments
 parser.add_argument("--n_epochs", type=int, default=200)
@@ -85,13 +94,21 @@ if __name__ == "__main__":
     filepath = filepaths[args.dataset]
 
     with open(filepath, 'rb') as handle:
-        train, valid, test, input_dim, n_classes = pickle.load(handle)
+        # train, valid, test, input_dim, n_classes = pickle.load(handle)
+        train, valid, test, vocab_size, n_classes = pickle.load(handle)
     n_train, n_valid, n_test = len(train), len(valid), len(test)
     n_epochs, batch_size = args.n_epochs, args.batch_size
     train_queue = DataLoader(train, batch_size=args.batch_size)
     valid_queue = DataLoader(valid, batch_size=args.batch_size)
     test_queue = DataLoader(test, batch_size=args.batch_size)
-    model = TwoLayerNet(input_dim, n_classes, args.hidden_units).double()
+    if args.model == "bag":
+        # model = TwoLayerNet(input_dim, n_classes, args.hidden_units).double()
+        model = EmbeddingBagModel(vocab_size, args.embed_dim, n_classes)
+    elif args.model == "LSTM":
+        model = LSTMModel(vocab_size, args.hidden_units, args.num_layers, args.embed_dim, n_classes)
+        pass
+    else:
+        raise Exception("Model %s is not supported, supported models are: %s. " % (args.model, str(_nlp_models)))
     lr, momentum, weight_decay = args.lr, args.momentum, args.weight_decay
     optimizer = optim.SGD(model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay)
 
