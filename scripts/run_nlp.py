@@ -13,7 +13,7 @@ import pickle
 import argparse
 import torch.nn as nn
 import torch.optim as optim
-from cords.utils.models import TwoLayerNet
+from cords.utils.models import EmbeddingBagModel, LSTMModel
 from cords.utils.dataloader import *
 
 filepaths = {"corona": "data/corona.pickle",
@@ -21,8 +21,8 @@ filepaths = {"corona": "data/corona.pickle",
              "twitter": "data/twitter.pickle"}
 
 _adaptive_methods = ["glister", "random-ol"]
-# _nonadaptive_methods = ["full", "random", "facloc", "graphcut", "sumredun", "satcov", "CRAIG"]
-_nonadaptive_methods = ["random", "facloc", "graphcut", "sumredun", "satcov", "CRAIG"]
+_nonadaptive_methods = ["full", "random", "facloc", "graphcut", "sumredun", "satcov", "CRAIG"]
+# _nonadaptive_methods = ["random", "facloc", "graphcut", "sumredun", "satcov", "CRAIG"]
 _nlp_models = ["LSTM", "bag"]
 
 parser = argparse.ArgumentParser()
@@ -39,8 +39,8 @@ parser.add_argument("--batch_size", type=int, default=64)
 parser.add_argument("--embed_dim", type=int, default=32)
 
 # Training arguments
-parser.add_argument("--n_epochs", type=int, default=200)
-parser.add_argument("--lr", type=float, default=0.05)
+parser.add_argument("--n_epochs", type=int, default=30)
+parser.add_argument("--lr", type=float, default=0.1)
 parser.add_argument("--momentum", type=float, default=0.9)
 parser.add_argument("--weight_decay", type=float, default=5e-4)
 parser.add_argument("--report_every_batch", type=int, default=50)
@@ -51,7 +51,7 @@ parser.add_argument("--dss_strategy", type=str, choices=_adaptive_methods + _non
 # DSS arguments
 parser.add_argument("--select_ratio", type=float, default=0.1)
 parser.add_argument("--select_every", type=int, default=10)
-parser.add_argument("--device", type=str, default="cpu")
+parser.add_argument("--device", type=str)
 parser.add_argument("--r_ratio", type=float, default=1)
 
 # CRAIG argument
@@ -76,6 +76,7 @@ def validate(model, queue):
     _valid_loss, _valid_tot, _valid_correct = .0, 0, 0
     with torch.no_grad():
         for i_batch, (X, y) in enumerate(queue):
+            X, y = X.to(args.device), y.to(args.device)
             _logits = model(X)
             _y = _logits.argmax(1)
             _valid_loss += criterion(_logits, y).sum().item()
@@ -94,21 +95,20 @@ if __name__ == "__main__":
     filepath = filepaths[args.dataset]
 
     with open(filepath, 'rb') as handle:
-        # train, valid, test, input_dim, n_classes = pickle.load(handle)
         train, valid, test, vocab_size, n_classes = pickle.load(handle)
+    print("vocab_size: %s, n_classes: %s. " % (vocab_size, n_classes))
     n_train, n_valid, n_test = len(train), len(valid), len(test)
     n_epochs, batch_size = args.n_epochs, args.batch_size
     train_queue = DataLoader(train, batch_size=args.batch_size)
     valid_queue = DataLoader(valid, batch_size=args.batch_size)
     test_queue = DataLoader(test, batch_size=args.batch_size)
     if args.model == "bag":
-        # model = TwoLayerNet(input_dim, n_classes, args.hidden_units).double()
         model = EmbeddingBagModel(vocab_size, args.embed_dim, n_classes)
     elif args.model == "LSTM":
         model = LSTMModel(vocab_size, args.hidden_units, args.num_layers, args.embed_dim, n_classes)
-        pass
     else:
         raise Exception("Model %s is not supported, supported models are: %s. " % (args.model, str(_nlp_models)))
+    model = model.to(args.device)
     lr, momentum, weight_decay = args.lr, args.momentum, args.weight_decay
     optimizer = optim.SGD(model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay)
 
@@ -158,6 +158,7 @@ if __name__ == "__main__":
     for i_epoch in range(n_epochs):
         _train_loss, _train_tot, _train_correct = .0, 0, 0
         for i_batch, (X, y) in enumerate(dss_train_queue):
+            X, y = X.to(args.device), y.to(args.device)
             logits = model(X)
             _y = logits.argmax(1)
             _loss = criterion(logits, y).sum()

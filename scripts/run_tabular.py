@@ -18,12 +18,15 @@ filepaths = {"airline": "data/airline.pickle",
              "olympic": "data/olympic.pickle"}
 
 _adaptive_methods = ["glister", "random-ol"]
-# _nonadaptive_methods = ["full", "random", "facloc", "graphcut", "sumredun", "satcov", "CRAIG"]
-_nonadaptive_methods = ["random", "facloc", "graphcut", "sumredun", "satcov", "CRAIG"]
+_nonadaptive_methods = ["full", "random", "facloc", "graphcut", "sumredun", "satcov", "CRAIG"]
+# _nonadaptive_methods = ["random", "facloc", "graphcut", "sumredun", "satcov", "CRAIG"]
 
 parser = argparse.ArgumentParser()
 # Dataset name
 parser.add_argument("--dataset", type=str, choices=list(filepaths.keys()))
+
+# Model selection
+parser.add_argument("--model", type=str, default="TwoLayerNet", choices=["TwoLayerNet"])
 
 # Model arguments
 parser.add_argument("--hidden_units", type=int, default=128)
@@ -42,7 +45,7 @@ parser.add_argument("--dss_strategy", type=str, choices=_adaptive_methods + _non
 # DSS arguments
 parser.add_argument("--select_ratio", type=float, default=0.1)
 parser.add_argument("--select_every", type=int, default=10)
-parser.add_argument("--device", type=str, default="cpu")
+parser.add_argument("--device", type=str)
 parser.add_argument("--r_ratio", type=float, default=1)
 
 # CRAIG argument
@@ -67,6 +70,7 @@ def validate(model, queue):
     _valid_loss, _valid_tot, _valid_correct = .0, 0, 0
     with torch.no_grad():
         for i_batch, (X, y) in enumerate(queue):
+            X, y = X.to(args.device), y.to(args.device)
             _logits = model(X)
             _y = _logits.argmax(1)
             _valid_loss += criterion(_logits, y).sum().item()
@@ -89,9 +93,11 @@ if __name__ == "__main__":
     n_train, n_valid, n_test = len(train), len(valid), len(test)
     n_epochs, batch_size = args.n_epochs, args.batch_size
     train_queue = DataLoader(train, batch_size=args.batch_size)
+    # print("Dataset size: %s" % len(n_train))
     valid_queue = DataLoader(valid, batch_size=args.batch_size)
     test_queue = DataLoader(test, batch_size=args.batch_size)
     model = TwoLayerNet(input_dim, n_classes, args.hidden_units).double()
+    model = model.to(args.device)
     lr, momentum, weight_decay = args.lr, args.momentum, args.weight_decay
     optimizer = optim.SGD(model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay)
 
@@ -141,6 +147,7 @@ if __name__ == "__main__":
     for i_epoch in range(n_epochs):
         _train_loss, _train_tot, _train_correct = .0, 0, 0
         for i_batch, (X, y) in enumerate(dss_train_queue):
+            X, y = X.to(args.device), y.to(args.device)
             logits = model(X)
             _y = logits.argmax(1)
             _loss = criterion(logits, y).sum()

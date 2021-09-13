@@ -1,7 +1,8 @@
 # Please run this script at the root dir of cords
 
 import os
-import pickle
+# import pickle
+import pickle5 as pickle
 import numpy as np
 import itertools
 import json
@@ -83,8 +84,9 @@ if __name__ == '__main__':
             note_obj = {"args": _first_k_obj}
             # plot(x_list, y_list, labels=labels, xlabel=_x_metric, ylabel=_y_metric,
             #      note=json.dumps(note_obj, sort_keys=True, indent=4), legend=True)
+            filename = "%s_%s_%s_%s_%s.png" % (_first_k_obj["dataset"], _x_metric, _y_metric,
+                                                                "adaptive: %s" % _first_k_obj["is_adaptive"],
+                                                                _first_k_obj["model"])
             plot(x_list, y_list, labels=labels, xlabel=_x_metric, ylabel=_y_metric,
                  note=json.dumps(note_obj, sort_keys=True, indent=4), legend=True,
-                 save_path=os.path.join(save_path, "%s_%s_%s_%s.png" % (_first_k_obj["dataset"], _x_metric, _y_metric,
-                                                                        "adaptive" if _first_k_obj[
-                                                                            "is_adaptive"] else "nonadaptive")))
+                 save_path=os.path.join(save_path, filename))

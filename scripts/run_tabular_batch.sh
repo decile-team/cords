@@ -1,5 +1,5 @@
 #!/bin/bash
-# Please run this script at the root dir of cords using "sh ./scripts/run_tabular_batch.sh"
+# Please run this script at the root dir of cords using "bash ./scripts/run_tabular_batch.sh"
 
 start=$(date +%s)
 log_path="./scripts/BATCH_PROCESS_$start"
@@ -8,12 +8,13 @@ dataset="airline"
 mkdir -p $log_path
 datasets=("airline" "loan" "olympic")
 strategies=("glister" "random-ol" "full" "random" "facloc" "graphcut" "sumredun" "satcov" "CRAIG")
+device="cpu"
 
 pid=()
 for dataset in "${datasets[@]}"; do
   for strategy in "${strategies[@]}"; do
     echo "Running dataset: $dataset with strategy: $strategy... "
-    python3 $script_path --dataset $dataset --dss_strategy $strategy 1>$log_path/$dataset_$strategy.log 2>$log_path/$dataset_$strategy.err &
+    python3 $script_path --dataset $dataset --dss_strategy $strategy --device $device 1>$log_path/${dataset}_$strategy.log 2>$log_path/${dataset}_$strategy.err &
     _pid=$!
     pid+=($_pid)
   done
