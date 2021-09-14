@@ -19,9 +19,9 @@ class EmbeddingBagModel(nn.Module):
     #     self.fc.weight.data.uniform_(-initrange, initrange)
     #     self.fc.bias.data.zero_()
 
-    def forward(self, text, last=False, freeze=False):
+    def forward(self, text, offsets, last=False, freeze=False):
         with torch.no_grad() if freeze else dummy_context():
-            embedded = self.embedding(text)
+            embedded = self.embedding(text, offsets)
         scores = self.fc(embedded)
         if last:
             return scores, embedded

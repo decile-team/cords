@@ -1,7 +1,6 @@
 # Please run this script at the root dir of cords
 import pickle
 
-import os
 import pandas as pd
 import numpy as np
 import torch
@@ -15,7 +14,7 @@ import spacy
 def build_vocab(texts, tokenizer):
     counter = Counter()
     d_index = {}
-    for i, text in enumerate(texts):
+    for text in texts:
         tokenized_text = tokenizer(text)
         for word in tokenized_text:
             if word not in d_index:
@@ -63,7 +62,6 @@ spacy.load('en_core_web_sm')
 def process_and_save_data(filename, data, y_ind, text, r_train=0.7, r_valid=0.1, r_test=0.2):
     assert r_train + r_valid + r_test == 1, "Ratio should sum up to one. "
     assert (not text) or (text and y_ind == -1)
-    data.fillna('', inplace=True)
     # Factorize y
     data.iloc[:, y_ind] = pd.factorize(data.iloc[:, y_ind])[0]
     data.iloc[:, y_ind][data.iloc[:, y_ind] == -1] = len(np.unique(data.iloc[:, y_ind])) - 1
@@ -124,15 +122,14 @@ def process_and_save_data(filename, data, y_ind, text, r_train=0.7, r_valid=0.1,
     # Pandas to numpy
     X_train, X_valid, X_test = X_train.to_numpy(), X_valid.to_numpy(), X_test.to_numpy()
     if text:
-        # Index starts from 1, vocab_size should be len(d_index)+1
-        input_dim = len(d_index) + 1
+        input_dim = len(d_index)
     else:
         input_dim = X_train.shape[1]
     train = [(x, _y) for (x, _y) in zip(X_train, y_train)]
     valid = [(x, _y) for (x, _y) in zip(X_valid, y_valid)]
     test = [(x, _y) for (x, _y) in zip(X_test, y_test)]
 
-    with open(os.path.join("data", "%s.pickle" % filename), "wb") as handle:
+    with open('%s.pickle' % filename, 'wb') as handle:
         pickle.dump((train, valid, test, input_dim, n_classes), handle,
                     protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -183,10 +180,8 @@ if __name__ == "__main__":
     twitter_test = pd.read_csv("./data/NLP/twitter/twitter_validation.csv", usecols=[3, 2])
     twitter_test.columns = ["Sentiment", "text"]
     twitter = pd.concat([twitter_train, twitter_test])
-    # twitter = twitter.sample(frac=1).reset_index(drop=True)
-    columns_titles = ["text", "Sentiment"]
-    twitter = twitter.reindex(columns=columns_titles)
-    process_and_save_data("twitter", twitter, -1, True, r_train=0.7, r_valid=0.1, r_test=0.2)
+    twitter = twitter.sample(frac=1).reset_index(drop=True)
+    process_and_save_data("twitter", twitter, 0, True, r_train=0.7, r_valid=0.1, r_test=0.2)
 
     # [74681 rows x 4 columns]
     print("twitter_train: \n", twitter_train)
