@@ -565,8 +565,8 @@ def OrthogonalMP_REG_NNLS_Parallel(A, b, tol=1E-4, nnz=None, positive=False, lam
     indices = []
     argmin = torch.tensor([-1])
     for i in range(nnz):
-        if resid.norm().item() / normb < tol:
-            break
+        # if resid.norm().item() / normb < tol:
+        #     break
         projections = torch.matmul(AT, resid)  # AT.dot(resid)
         # print("Projections",projections.shape)
         if positive:
