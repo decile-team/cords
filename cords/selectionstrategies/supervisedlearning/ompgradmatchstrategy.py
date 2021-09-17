@@ -78,7 +78,7 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
                 reg = OrthogonalMP_REG_NNLS(X.numpy(), Y.numpy(), nnz=bud, positive=True, lam=0)
                 ind = np.nonzero(reg)[0]
             else:
-                reg = OrthogonalMP_REG_NNLS_Parallel(X, Y, nnz=bud,
+                reg = OrthogonalMP_REG_NNLS_Parallel1(X, Y, nnz=bud,
                                                      positive=True, lam=self.lam,
                                                      tol=self.eps, device=self.device)
                 ind = torch.nonzero(reg).view(-1)
