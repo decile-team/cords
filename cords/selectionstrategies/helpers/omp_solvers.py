@@ -573,8 +573,9 @@ def OrthogonalMP_REG_NNLS_Parallel(A, b, tol=1E-4, nnz=None, positive=False, lam
             index = torch.argmax(projections)
         else:
             index = torch.argmax(torch.abs(projections))
-        if index not in indices:
-            indices.append(index)
+        if index in indices:
+            break
+        indices.append(index)
             #break
         if len(indices) == 1:
             A_i = A[:, index]
