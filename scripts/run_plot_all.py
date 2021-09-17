@@ -1,7 +1,8 @@
 # Please run this script at the root dir of cords
 
 import os
-import pickle
+# import pickle
+import pickle5 as pickle
 import numpy as np
 import itertools
 import json
@@ -26,11 +27,12 @@ if __name__ == '__main__':
     save_path = os.path.join(".", "scripts", "PLOTS_%s" % start)
     os.makedirs(save_path)
 
-    # Organize dataloader
-    for dir in os.listdir(results_path):
-        if not dir.startswith("EXP_"):
+    # Organize data
+    for f in os.listdir(results_path):
+        save_file = os.path.join(results_path, f, "save_dict.pickle")
+        if not f.startswith("EXP_") or (not os.path.exists(save_file)):
             continue
-        with open(os.path.join(results_path, dir, "save_dict.pickle"), 'rb') as handle:
+        with open(save_file, 'rb') as handle:
             save_dict = pickle.load(handle)
 
         training_args = vars(save_dict[_metrics_first_k])
@@ -83,8 +85,9 @@ if __name__ == '__main__':
             note_obj = {"args": _first_k_obj}
             # plot(x_list, y_list, labels=labels, xlabel=_x_metric, ylabel=_y_metric,
             #      note=json.dumps(note_obj, sort_keys=True, indent=4), legend=True)
+            filename = "%s_%s_%s_%s_%s.png" % (_first_k_obj["dataset"], _x_metric, _y_metric,
+                                                                "adaptive: %s" % _first_k_obj["is_adaptive"],
+                                                                _first_k_obj["model"])
             plot(x_list, y_list, labels=labels, xlabel=_x_metric, ylabel=_y_metric,
                  note=json.dumps(note_obj, sort_keys=True, indent=4), legend=True,
-                 save_path=os.path.join(save_path, "%s_%s_%s_%s.png" % (_first_k_obj["dataset"], _x_metric, _y_metric,
-                                                                        "adaptive" if _first_k_obj[
-                                                                            "is_adaptive"] else "nonadaptive")))
+                 save_path=os.path.join(save_path, filename))

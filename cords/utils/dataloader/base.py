@@ -35,8 +35,8 @@ class DSSDataLoader:
         logging.debug("Subset indices length: %d", len(self.subset_indices))
         self._refresh_subset_loader(self.subset_indices)
         logging.debug("Subset loader inited, args: %s, kwargs: %s", self.loader_args, self.loader_kwargs)
-        logging.info('Sample finished, total number of dataloader: %d, number of subset: %d', self.len_full,
-                     len(self.subset_loader.dataset))
+        logging.info('Sample finished, total number of dataloader: %d, number of subset: %d',
+                     self.len_full, len(self.subset_loader.dataset))
 
     def _init_subset_loader(self):
         # All strategies start with random selection
@@ -48,7 +48,11 @@ class DSSDataLoader:
         return np.random.choice(len(self.dataset), size=self.budget, replace=False)
 
     def _refresh_subset_loader(self, indices):
-        self.subset_loader = DataLoader(Subset(self.dataset, indices), *self.loader_args, **self.loader_kwargs)
+        # data_sub = Subset(trainset, idxs)
+        # subset_trnloader = torch.utils.data.DataLoader(data_sub, batch_size=trn_batch_size, shuffle=False,
+        #                                                pin_memory=True)
+        self.subset_loader = DataLoader(Subset(self.dataset, indices), shuffle=False,
+                                        *self.loader_args, **self.loader_kwargs)
         self.batch_wise_indices = list(self.subset_loader.batch_sampler)
 
     # TODO: checkpoints

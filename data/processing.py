@@ -1,6 +1,7 @@
 # Please run this script at the root dir of cords
 import pickle
 
+import os
 import pandas as pd
 import numpy as np
 import torch
@@ -14,7 +15,7 @@ import spacy
 def build_vocab(texts, tokenizer):
     counter = Counter()
     d_index = {}
-    for text in texts:
+    for i, text in enumerate(texts):
         tokenized_text = tokenizer(text)
         for word in tokenized_text:
             if word not in d_index:
@@ -23,12 +24,27 @@ def build_vocab(texts, tokenizer):
     return Vocab(counter), d_index
 
 
-def split_X_y(train, valid, test, y_ind):
-    X_train, X_valid, X_test = train.drop(train.columns[y_ind], axis=1), \
-                               valid.drop(valid.columns[y_ind], axis=1), \
-                               test.drop(test.columns[y_ind], axis=1),
-    y_train, y_valid, y_test = train.iloc[:, y_ind], valid.iloc[:, y_ind], test.iloc[:, y_ind]
-    return X_train, X_valid, X_test, y_train, y_valid, y_test
+# def split_X_y(train, valid, test, y_ind):
+#     X_train, X_valid, X_test = train.drop(train.columns[y_ind], axis=1), \
+#                                valid.drop(valid.columns[y_ind], axis=1), \
+#                                test.drop(test.columns[y_ind], axis=1),
+#     y_train, y_valid, y_test = train.iloc[:, y_ind], valid.iloc[:, y_ind], test.iloc[:, y_ind]
+#     return X_train, X_valid, X_test, y_train, y_valid, y_test
+
+
+def split_X_y(data, y_ind):
+    X = data.drop(data.columns[y_ind], axis=1)
+    y = data.iloc[:, y_ind]
+    return X, y
+
+
+def split_train_valid_test(X, y, r_train, r_valid):
+    l = X.shape[0]
+    i_train, i_valid = int(l * r_train), int(l * (r_train + r_valid))
+    indices = np.random.permutation(X.shape[0])
+    train_indices, valid_indices, test_indices = indices[: i_train], indices[i_train: i_valid], indices[i_valid:]
+    return X.iloc[train_indices], X.iloc[valid_indices], X.iloc[test_indices], y[train_indices], y[valid_indices], y[
+        test_indices]
 
 
 def normalize_numeric_(data):
@@ -61,13 +77,15 @@ spacy.load('en_core_web_sm')
 
 def process_and_save_data(filename, data, y_ind, text, r_train=0.7, r_valid=0.1, r_test=0.2):
     assert r_train + r_valid + r_test == 1, "Ratio should sum up to one. "
-    assert (not text) or (text and y_ind == -1)
+    assert y_ind < 0, "Please negative indexing for y. "
+    data.fillna('', inplace=True)
+    # split X and y
+    X, y = split_X_y(data, y_ind)
     # Factorize y
-    data.iloc[:, y_ind] = pd.factorize(data.iloc[:, y_ind])[0]
-    data.iloc[:, y_ind][data.iloc[:, y_ind] == -1] = len(np.unique(data.iloc[:, y_ind])) - 1
-    print("unique y: %s. " % np.unique(data.iloc[:, y_ind]))
+    y = pd.factorize(y)[0]
+    print("unique y: %s. " % np.unique(y))
     if text:
-        texts = data.iloc[:, 0]
+        texts = X.iloc[:, 0]
         tokenizer = get_tokenizer('spacy', language='en')
         vocab, d_index = build_vocab(texts, tokenizer)
         tokenized_index = []
@@ -92,44 +110,38 @@ def process_and_save_data(filename, data, y_ind, text, r_train=0.7, r_valid=0.1,
             np.quantile(np.sort([_tokenized_index.size(0) for _tokenized_index in tokenized_index])[::-1], 0.9))
         tokenized_index = [_tokenized_index[:max_len] for _tokenized_index in tokenized_index]
 
-        padded_tokenized_index = pad_sequence(tokenized_index, batch_first=True).detach().numpy()
-        y = data.iloc[:, y_ind]
+        X = pad_sequence(tokenized_index, batch_first=True).detach().numpy()
+        X = pd.DataFrame(X, dtype=np.long)
+    else:
+        # Normalize X
+        normalize_numeric_(X)
+        X = pd.get_dummies(X)
 
-        data = np.concatenate([padded_tokenized_index, y[:, np.newaxis]], axis=1)
-        data = pd.DataFrame(data, dtype=np.long)
+    X_train, X_valid, X_test, y_train, y_valid, y_test = split_train_valid_test(X, y, r_train, r_valid)
 
-    # data.iloc[:, 0] = padded_tokenized_index
-    # data = [(_padded_tokenized_index, data.iloc[i, 1]) for (i, _padded_tokenized_index) in
-    #         enumerate(padded_tokenized_index)]
-
-    # Split dataloader
-    train, valid, test = np.split(data.sample(frac=1),
-                                  [int(r_train * len(data)), int((r_train + r_valid) * len(data))])
-    X_train, X_valid, X_test, y_train, y_valid, y_test = split_X_y(train, valid, test, y_ind)
     fill_nan(X_train, X_valid, X_test)
-    if not text:
-        # Normalize numerical dataloader
-        normalize_numeric_(X_train)
-        normalize_numeric_(X_valid)
-        normalize_numeric_(X_test)
-        # Transfer to dummy variable if not text dataloader
-        X_train = pd.get_dummies(X_train)
-        X_valid = pd.get_dummies(X_valid)
-        X_test = pd.get_dummies(X_test)
 
-    n_classes = np.unique(np.concatenate([y_train, y_valid, y_test])).size
+    n_classes = np.unique(y).size
 
-    # Pandas to numpy
-    X_train, X_valid, X_test = X_train.to_numpy(), X_valid.to_numpy(), X_test.to_numpy()
     if text:
-        input_dim = len(d_index)
+        # Index starts from 1, vocab_size should be len(d_index)+1
+        input_dim = len(d_index) + 1
+        # Pandas to numpy
+        X_train, X_valid, X_test = \
+            X_train.to_numpy().astype("long"), \
+            X_valid.to_numpy().astype("long"), \
+            X_test.to_numpy().astype("long")
     else:
         input_dim = X_train.shape[1]
+        X_train, X_valid, X_test = \
+            X_train.to_numpy().astype("float32"), \
+            X_valid.to_numpy().astype("float32"), \
+            X_test.to_numpy().astype("float32")
     train = [(x, _y) for (x, _y) in zip(X_train, y_train)]
     valid = [(x, _y) for (x, _y) in zip(X_valid, y_valid)]
     test = [(x, _y) for (x, _y) in zip(X_test, y_test)]
 
-    with open('%s.pickle' % filename, 'wb') as handle:
+    with open(os.path.join("data", "%s.pickle" % filename), "wb") as handle:
         pickle.dump((train, valid, test, input_dim, n_classes), handle,
                     protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -180,8 +192,10 @@ if __name__ == "__main__":
     twitter_test = pd.read_csv("./data/NLP/twitter/twitter_validation.csv", usecols=[3, 2])
     twitter_test.columns = ["Sentiment", "text"]
     twitter = pd.concat([twitter_train, twitter_test])
-    twitter = twitter.sample(frac=1).reset_index(drop=True)
-    process_and_save_data("twitter", twitter, 0, True, r_train=0.7, r_valid=0.1, r_test=0.2)
+    # twitter = twitter.sample(frac=1).reset_index(drop=True)
+    columns_titles = ["text", "Sentiment"]
+    twitter = twitter.reindex(columns=columns_titles)
+    process_and_save_data("twitter", twitter, -1, True, r_train=0.7, r_valid=0.1, r_test=0.2)
 
     # [74681 rows x 4 columns]
     print("twitter_train: \n", twitter_train)

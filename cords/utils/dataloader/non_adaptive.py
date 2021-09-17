@@ -31,7 +31,7 @@ class RandomDataLoader(NonAdaptiveDSSDataLoader):
 
 
 class SubmodDataLoader(NonAdaptiveDSSDataLoader):
-    # Currently split dataset with size of |max_chunk| then proportionable select samples in every chunk
+    # Currently split dataset with size of |max_chunk| then proportionably select samples in every chunk
     # Otherwise distance matrix will be too large
     def __init__(self, train_loader, val_loader, budget, model, loss, device, size_chunk=2000, verbose=False, *args,
                  **kwargs):
@@ -124,7 +124,7 @@ class SaturatedCoverageDataLoader(SubmodDataLoader):
 #         return subset_indices
 
 
-class CRAIGDataLoader(NonAdaptiveDSSDataLoader, ABC):
+class CRAIGDataLoader(NonAdaptiveDSSDataLoader):
 
     def __init__(self, train_loader, val_loader, budget, model, loss, device, num_cls,
                  linear_layer, if_convex, selection_type, optimizer, *args, **kwargs):

@@ -55,6 +55,20 @@ class TrainClassifier:
             model = MobileNetV2(self.configdata['model']['numclasses'])
         elif self.configdata['model']['architecture'] == 'MobileNet2':
             model = MobileNet2(output_size=self.configdata['model']['numclasses'])
+        elif self.configdata['model']['architecture'] == 'TwoLayerNet':
+            input_dim = self.configdata["model"]["input_dim"]
+            num_classes = self.configdata["model"]["numclasses"]
+            hidden_units = self.configdata["model"]["hidden_units"]
+            model = TwoLayerNet(input_dim, num_classes, hidden_units)
+        elif self.configdata['model']['architecture'] == 'LSTM':
+            vocab_size = self.configdata["model"]["vocab_size"]
+            hidden_units = self.configdata["model"]["hidden_units"]
+            num_layers = self.configdata["model"]["num_layers"]
+            embed_dim = self.configdata["model"]["embed_dim"]
+            num_classes = self.configdata["model"]["numclasses"]
+            model = LSTMModel(vocab_size, hidden_units, num_layers, embed_dim, num_classes)
+        else:
+            raise Exception("model %s does not exist. " % self.configdata['model']['architecture'])
         model = model.to(self.configdata['train_args']['device'])
         return model
 
@@ -74,7 +88,7 @@ class TrainClassifier:
             optimizer = optim.Adam(model.parameters(), lr=self.configdata['optimizer']['lr'])
         elif self.configdata['optimizer']['type'] == "rmsprop":
             optimizer = optim.RMSprop(model.parameters(), lr=self.configdata['optimizer']['lr'])
-    
+
         if self.configdata['scheduler']['type'] == 'cosine_annealing':
             scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.configdata['scheduler']['T_max'])
         return optimizer, scheduler
@@ -99,13 +113,14 @@ class TrainClassifier:
         loss = checkpoint['loss']
         metrics = checkpoint['metrics']
         return start_epoch, model, optimizer, loss, metrics
-    
-    
+
+
     def train(self):
         """
         #General Training Loop with Data Selection Strategies
         """
         # Loading the Dataset
+        # breakpoint()
         if self.configdata['dataset']['feature'] == 'classimb':
             trainset, validset, testset, num_cls = load_dataset_custom(self.configdata['dataset']['datadir'], self.configdata['dataset']['name'], self.configdata['dataset']['feature'], classimb_ratio=self.configdata['dataset']['classimb_ratio'])
         else:
@@ -160,7 +175,7 @@ class TrainClassifier:
         results_dir = osp.abspath(osp.expanduser(self.configdata['train_args']['results_dir']))
         all_logs_dir = os.path.join(results_dir,self.configdata['dss_strategy']['type'], self.configdata['dataset']['name'], str(
            self.configdata['dss_strategy']['fraction']), str(self.configdata['dss_strategy']['select_every']))
-        
+
         os.makedirs(all_logs_dir, exist_ok=True)
         path_logfile = os.path.join(all_logs_dir, self.configdata['dataset']['name'] + '.txt')
         logfile = open(path_logfile, 'w')
@@ -170,11 +185,12 @@ class TrainClassifier:
            self.configdata['dss_strategy']['fraction']), str(self.configdata['dss_strategy']['select_every']))
         checkpoint_path = os.path.join(ckpt_dir, 'model.pt')
         os.makedirs(ckpt_dir, exist_ok=True)
-        
-        
+
+
         # Model Creation
         model = self.create_model()
         model1 = self.create_model()
+        # print(model.linear1.weight.dtype)
 
         # Loss Functions
         criterion, criterion_nored = self.loss_function()
@@ -289,10 +305,10 @@ class TrainClassifier:
                 raise KeyError("Specify a kappa value in the config file")
 
         print("=======================================", file=logfile)
-            
+
         if self.configdata['ckpt']['is_load'] == True:
             start_epoch, model, optimizer, ckpt_loss, load_metrics = self.load_ckp(checkpoint_path, model, optimizer)
-            print("Loading saved checkpoint model at epoch " + str(start_epoch)) 
+            print("Loading saved checkpoint model at epoch " + str(start_epoch))
             for arg in load_metrics.keys():
                 if arg == "val_loss":
                     val_losses = load_metrics['val_loss']
@@ -303,7 +319,7 @@ class TrainClassifier:
                 if arg == "tst_acc":
                     tst_acc = load_metrics['tst_acc']
                 if arg == "trn_loss":
-                    trn_losses = load_metrics['trn_loss'] 
+                    trn_losses = load_metrics['trn_loss']
                 if arg == "trn_acc":
                     trn_acc = load_metrics['trn_acc']
                 if arg == "subtrn_loss":
@@ -440,6 +456,8 @@ class TrainClassifier:
                         inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(self.configdata['train_args']['device'],
                                                                                                        non_blocking=True)  # targets can have non_blocking=True.
                         optimizer.zero_grad()
+                        # print(model.linear1.weight.dtype)
+                        # print(inputs.dtype)
                         outputs = model(inputs)
                         loss = criterion(outputs, targets)
                         loss.backward()
@@ -480,9 +498,10 @@ class TrainClassifier:
                 train_time = time.time() - start_time
             scheduler.step()
             timing.append(train_time + subset_selection_time)
+            print("adding timing, length: %s" % len(timing))
             print_args = self.configdata['train_args']['print_args']
             # print("Epoch timing is: " + str(timing[-1]))
-            
+
             if ((i+1) % self.configdata['train_args']['print_every'] == 0):
                 trn_loss = 0
                 trn_correct = 0
@@ -508,7 +527,7 @@ class TrainClassifier:
                                 _, predicted = outputs.max(1)
                                 trn_total += targets.size(0)
                                 trn_correct += predicted.eq(targets).sum().item()
-                                
+
                     if "trn_acc" in print_args:
                         trn_acc.append(trn_correct / trn_total)
 
@@ -525,9 +544,10 @@ class TrainClassifier:
                                 _, predicted = outputs.max(1)
                                 val_total += targets.size(0)
                                 val_correct += predicted.eq(targets).sum().item()
-                                
-                    if "val_acc" in print_args:                                
+
+                    if "val_acc" in print_args:
                         val_acc.append(val_correct / val_total)
+                        print("adding val_acc, length: %s" % len(val_acc))
 
                 if (("tst_loss" in print_args) or ("tst_acc" in print_args)):
                     with torch.no_grad():
@@ -542,7 +562,7 @@ class TrainClassifier:
                                 _, predicted = outputs.max(1)
                                 tst_total += targets.size(0)
                                 tst_correct += predicted.eq(targets).sum().item()
-                                
+
                     if "tst_acc" in print_args:
                         tst_acc.append(tst_correct/tst_total)
 
@@ -582,17 +602,17 @@ class TrainClassifier:
 
                     if arg == "time":
                         print_str += " , " + "Timing: " + str(timing[-1])
-                    
+
                 # report metric to ray for hyperparameter optimization
                 if 'report_tune' in self.configdata and self.configdata['report_tune']:
                     tune.report(mean_accuracy=val_acc[-1])
 
                 print(print_str)
-        
+
             if ((i+1) % self.configdata['ckpt']['save_every'] == 0) and self.configdata['ckpt']['is_save'] == True:
-            
+
                 metric_dict = {}
-            
+
                 for arg in print_args:
                     if arg == "val_loss":
                         metric_dict['val_loss'] = val_losses
@@ -612,7 +632,7 @@ class TrainClassifier:
                         metric_dict['subtrn_acc'] = subtrn_acc
                     if arg == "time":
                         metric_dict['time'] = timing
-                        
+
                 ckpt_state = {
                     'epoch': i+1,
                     'state_dict': model.state_dict(),
@@ -620,12 +640,12 @@ class TrainClassifier:
                     'loss': self.loss_function(),
                     'metrics': metric_dict
                 }
-        
-                
+
+
                 # save checkpoint
                 self.save_ckpt(ckpt_state, checkpoint_path)
                 print("Model checkpoint saved at epoch " + str(i+1))
-                
+
         print(self.configdata['dss_strategy']['type'] + " Selection Run---------------------------------")
         print("Final SubsetTrn:", subtrn_loss)
         if "val_loss" in print_args:
@@ -664,4 +684,4 @@ class TrainClassifier:
         omp_timing = np.array(timing)
         omp_cum_timing = list(self.generate_cumulative_timing(omp_timing))
         print("Total time taken by " + self.configdata['dss_strategy']['type'] + " = " + str(omp_cum_timing[-1]))
-        logfile.close()        
+        logfile.close()

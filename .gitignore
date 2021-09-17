@@ -6,9 +6,11 @@ build
 dist
 __pycache__
 /results/
+_ARCHIVE
 RESULTS
 BATCH_PROCESS_*
 PLOTS_*
 venv
 *.pickle
 .DS_Store
+_CHECK_SCRIPTS

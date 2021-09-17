@@ -9,6 +9,8 @@ from torch.utils.data import Dataset, random_split
 from torchvision import transforms
 import PIL.Image as Image
 from sklearn.datasets import load_boston
+import pickle
+
 
 ## Custom PyTorch Dataset Class wrapper
 class CustomDataset(Dataset):
@@ -314,7 +316,7 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
         x_trn, y_trn = load_boston(return_X_y=True)
 
         # create train and test indices
-        #train, test = train_test_split(list(range(X.shape[0])), test_size=.3)
+        # train, test = train_test_split(list(range(X.shape[0])), test_size=.3)
         x_trn, x_tst, y_trn, y_tst = train_test_split(x_trn, y_trn, test_size=0.2, random_state=42)
         x_trn, x_val, y_trn, y_val = train_test_split(x_trn, y_trn, test_size=0.1, random_state=42)
         if isnumpy:
@@ -784,7 +786,8 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
             for i in range(num_cls):
                 samples_per_class[i] = len(torch.where(fullset.targets == i)[0])
             min_samples = int(torch.min(samples_per_class) * 0.1)
-            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
+            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls),
+                                                replace=False)
             for i in range(num_cls):
                 if i == 0:
                     if i in selected_classes:
@@ -837,7 +840,8 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
             for i in range(num_cls):
                 samples_per_class[i] = len(torch.where(fullset.targets == i)[0])
             min_samples = int(torch.min(samples_per_class) * 0.1)
-            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
+            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls),
+                                                replace=False)
             for i in range(num_cls):
                 if i == 0:
                     if i in selected_classes:
@@ -891,7 +895,8 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
             for i in range(num_cls):
                 samples_per_class[i] = len(torch.where(torch.Tensor(fullset.targets) == i)[0])
             min_samples = int(torch.min(samples_per_class) * 0.1)
-            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
+            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls),
+                                                replace=False)
             for i in range(num_cls):
                 if i == 0:
                     if i in selected_classes:
@@ -948,7 +953,8 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
             for i in range(num_cls):
                 samples_per_class[i] = len(torch.where(torch.Tensor(fullset.targets) == i)[0])
             min_samples = int(torch.min(samples_per_class) * 0.1)
-            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
+            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls),
+                                                replace=False)
             for i in range(num_cls):
                 if i == 0:
                     if i in selected_classes:
@@ -1004,7 +1010,8 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
             for i in range(num_cls):
                 samples_per_class[i] = len(torch.where(torch.Tensor(fullset.targets) == i)[0])
             min_samples = int(torch.min(samples_per_class) * 0.1)
-            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
+            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls),
+                                                replace=False)
             for i in range(num_cls):
                 if i == 0:
                     if i in selected_classes:
@@ -1061,7 +1068,8 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
             for i in range(num_cls):
                 samples_per_class[i] = len(torch.where(torch.Tensor(fullset.targets) == i)[0])
             min_samples = int(torch.min(samples_per_class) * 0.1)
-            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
+            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls),
+                                                replace=False)
             for i in range(num_cls):
                 if i == 0:
                     if i in selected_classes:
@@ -1119,7 +1127,8 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
             for i in range(num_cls):
                 samples_per_class[i] = len(torch.where(torch.Tensor(fullset.targets) == i)[0])
             min_samples = int(torch.min(samples_per_class) * 0.1)
-            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
+            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls),
+                                                replace=False)
             for i in range(num_cls):
                 if i == 0:
                     if i in selected_classes:
@@ -1175,7 +1184,8 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
             for i in range(num_cls):
                 samples_per_class[i] = len(torch.where(fullset.targets == i)[0])
             min_samples = int(torch.min(samples_per_class) * 0.1)
-            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
+            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls),
+                                                replace=False)
             for i in range(num_cls):
                 if i == 0:
                     if i in selected_classes:
@@ -1222,13 +1232,13 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
         num_cls = 10177
 
         trainset = torchvision.datasets.CelebA(root=datadir, split='train', target_type=['identity'],
-                                              transform=celeba_transform, download=True)
+                                               transform=celeba_transform, download=True)
 
         testset = torchvision.datasets.CelebA(root=datadir, split='test', target_type=['identity'],
                                               transform=celeba_transform, download=True)
 
         valset = torchvision.datasets.CelebA(root=datadir, split='valid', target_type=['identity'],
-                                              transform=celeba_transform, download=True)
+                                             transform=celeba_transform, download=True)
 
         trainset.identity.sub_(1)
         valset.identity.sub_(1)
@@ -1239,7 +1249,8 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
             for i in range(num_cls):
                 samples_per_class[i] = len(torch.where(trainset.identity == i)[0])
             min_samples = int(torch.min(samples_per_class) * 0.1)
-            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
+            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls),
+                                                replace=False)
             for i in range(num_cls):
                 if i == 0:
                     if i in selected_classes:
@@ -1258,3 +1269,36 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
                     subset_idxs.extend(batch_subset_idxs)
             trainset = torch.utils.data.Subset(trainset, subset_idxs)
         return trainset, valset, testset, num_cls
+
+    elif dset_name == "airline":
+        with open("data/airline.pickle", 'rb') as handle:
+            train, valid, test, _, n_classes = pickle.load(handle)
+        return train, valid, test, n_classes
+
+    elif dset_name == "loan":
+        with open("data/loan.pickle", 'rb') as handle:
+            train, valid, test, _, n_classes = pickle.load(handle)
+        return train, valid, test, n_classes
+
+    elif dset_name == "olympic":
+        with open("data/olympic.pickle", 'rb') as handle:
+            train, valid, test, _, n_classes = pickle.load(handle)
+        return train, valid, test, n_classes
+
+    elif dset_name == "corona":
+        with open("data/corona.pickle", 'rb') as handle:
+            train, valid, test, _, n_classes = pickle.load(handle)
+        return train, valid, test, n_classes
+
+    elif dset_name == "news":
+        with open("data/news.pickle", 'rb') as handle:
+            train, valid, test, _, n_classes = pickle.load(handle)
+        return train, valid, test, n_classes
+
+    elif dset_name == "twitter":
+        with open("data/twitter.pickle", 'rb') as handle:
+            train, valid, test, _, n_classes = pickle.load(handle)
+        return train, valid, test, n_classes
+
+    else:
+        raise Exception("Dataset %s does not exist. " % dset_name)

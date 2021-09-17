@@ -7,7 +7,8 @@ class EmbeddingBagModel(nn.Module):
 
     def __init__(self, vocab_size, embed_dim, num_classes):
         super(EmbeddingBagModel, self).__init__()
-        self.embedding = nn.EmbeddingBag(vocab_size, embed_dim, sparse=True)
+        # self.embedding = nn.Embedding(vocab_size, embed_dim)
+        self.embedding = nn.EmbeddingBag(vocab_size, embed_dim)
         self.fc = nn.Linear(embed_dim, num_classes)
         # self.init_weights()
         self.num_classes = num_classes
@@ -19,9 +20,9 @@ class EmbeddingBagModel(nn.Module):
     #     self.fc.weight.data.uniform_(-initrange, initrange)
     #     self.fc.bias.data.zero_()
 
-    def forward(self, text, offsets, last=False, freeze=False):
+    def forward(self, text, last=False, freeze=False):
         with torch.no_grad() if freeze else dummy_context():
-            embedded = self.embedding(text, offsets)
+            embedded = self.embedding(text)
         scores = self.fc(embedded)
         if last:
             return scores, embedded

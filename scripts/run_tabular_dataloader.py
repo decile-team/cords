@@ -1,4 +1,3 @@
-# Run tabular data without dataloader
 # Please run this script at the root dir of cords
 
 import sys
@@ -98,7 +97,8 @@ if __name__ == "__main__":
     # print("Dataset size: %s" % len(n_train))
     valid_queue = DataLoader(valid, batch_size=args.batch_size, shuffle=False, pin_memory=True)
     test_queue = DataLoader(test, batch_size=args.batch_size, shuffle=False, pin_memory=True)
-    model = TwoLayerNet(input_dim, n_classes, args.hidden_units).double()
+    # model = TwoLayerNet(input_dim, n_classes, args.hidden_units).double()
+    model = TwoLayerNet(input_dim, n_classes, args.hidden_units)
     model = model.to(args.device)
     lr, momentum, weight_decay = args.lr, args.momentum, args.weight_decay
     optimizer = optim.SGD(model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay)
@@ -149,6 +149,8 @@ if __name__ == "__main__":
     for i_epoch in range(n_epochs):
         _train_loss, _train_tot, _train_correct = .0, 0, 0
         for i_batch, (X, y) in enumerate(dss_train_queue):
+            # print(X.dtype)
+            # print(model.linear1.weight.dtype)
             X, y = X.to(args.device), y.to(args.device)
             logits = model(X)
             _y = logits.argmax(1)
