@@ -3,7 +3,7 @@ import time
 import torch
 import numpy as np
 from .dataselectionstrategy import DataSelectionStrategy
-from ..helpers import OrthogonalMP_REG_Parallel, OrthogonalMP_REG
+from ..helpers import OrthogonalMP_REG_Parallel, OrthogonalMP_REG, OrthogonalMP_REG_NNLS_Parallel, OrthogonalMP_REG_NNLS
 from torch.utils.data import Subset, DataLoader
 
 
@@ -55,7 +55,7 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
 
     def __init__(self, trainloader, valloader, model, loss,
                  eta, device, num_classes, linear_layer,
-                 selection_type, valid=True, lam=0, eps=1e-4):
+                 selection_type, valid=False, nnls=False, lam=0, eps=1e-4):
         """
         Constructor method
         """
@@ -68,16 +68,27 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
         self.valid = valid
         self.lam = lam
         self.eps = eps
+        self.nnls = nnls
 
     def ompwrapper(self, X, Y, bud):
-        if self.device == "cpu":
-            reg = OrthogonalMP_REG(X.cpu().numpy(), Y.cpu().numpy(), nnz=bud, positive=True, lam=0)
-            ind = np.nonzero(reg)[0]
+        if self.nnls:
+            if self.device == "cpu":
+                reg = OrthogonalMP_REG_NNLS(X.numpy(), Y.numpy(), nnz=bud, positive=True, lam=0)
+                ind = np.nonzero(reg)[0]
+            else:
+                reg = OrthogonalMP_REG_NNLS_Parallel(X, Y, nnz=bud,
+                                                positive=True, lam=self.lam,
+                                                tol=self.eps, device=self.device)
+                ind = torch.nonzero(reg).view(-1)
         else:
-            reg = OrthogonalMP_REG_Parallel(X, Y, nnz=bud,
-                                            positive=True, lam=self.lam,
-                                            tol=self.eps, device=self.device)
-            ind = torch.nonzero(reg).view(-1)
+            if self.device == "cpu":
+                reg = OrthogonalMP_REG(X.numpy(), Y.numpy(), nnz=bud, positive=True, lam=0)
+                ind = np.nonzero(reg)[0]
+            else:
+                reg = OrthogonalMP_REG_Parallel(X, Y, nnz=bud,
+                                                positive=True, lam=self.lam,
+                                                tol=self.eps, device=self.device)
+                ind = torch.nonzero(reg).view(-1)
         return ind.tolist(), reg[ind].tolist()
 
     def select(self, budget, model_params):
@@ -185,7 +196,7 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
 
         omp_end_time = time.time()
         diff = budget - len(idxs)
-        print(diff)
+        print("Random points added: ", diff)
 
         if diff > 0:
             remainList = set(np.arange(self.N_trn)).difference(set(idxs))

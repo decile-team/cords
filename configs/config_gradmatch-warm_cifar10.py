@@ -35,6 +35,7 @@ config = dict(setting="supervisedlearning",
                                 select_every=20,
                                 kappa=0.6,
                                 lam=0.5,
+                                nnls=False,
                                 valid=False),
 
               train_args=dict(num_epochs=300,
