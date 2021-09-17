@@ -441,7 +441,7 @@ def OrthogonalMP_REG_Parallel1(A, b, tol=1E-4, nnz=None, positive=False, lam=1, 
             # print(indices)
             A_i = torch.cat((A_i, A[:, index].view(1, -1)), dim=0)  # np.vstack([A_i, A[:,index]])
             temp = torch.matmul(A_i, torch.transpose(A_i, 0, 1)) + lam * torch.eye(A_i.shape[0], device=device)
-            x_i, _, _, _ = torch.linalg.lstsq(torch.matmul(A_i, b).view(-1, 1), temp)
+            x_i, _, _, _ = torch.linalg.lstsq(temp, torch.matmul(A_i, b).view(-1, 1))
             # print(x_i.shape)
             if positive:
                 while min(x_i) < 0.0:
