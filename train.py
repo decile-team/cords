@@ -91,6 +91,10 @@ class TrainClassifier:
 
         if self.configdata['scheduler']['type'] == 'cosine_annealing':
             scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.configdata['scheduler']['T_max'])
+        elif self.configdata['scheduler']['type'] == 'step':
+            scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=self.configdata['scheduler']['step_size'])
+        else:
+            scheduler = None
         return optimizer, scheduler
 
     def generate_cumulative_timing(self, mod_timing):
@@ -212,7 +216,7 @@ class TrainClassifier:
             # GLISTER Selection strategy
             setf_model = GLISTERStrategy(trainloader, valloader, model1, criterion_nored,
                                          self.configdata['optimizer']['lr'], self.configdata['train_args']['device'],
-                                         num_cls, False, 'Stochastic', r=int(bud))
+                                         num_cls, True, 'Stochastic', r=int(bud))
 
         elif self.configdata['dss_strategy']['type'] == 'CRAIG':
             # CRAIG Selection strategy
@@ -332,7 +336,7 @@ class TrainClassifier:
             start_epoch = 0
 
 
-        for i in range(start_epoch, self.configdata['train_args']['num_epochs']):
+        for epoch in range(start_epoch, self.configdata['train_args']['num_epochs']):
             subtrn_loss = 0
             subtrn_correct = 0
             subtrn_total = 0
@@ -349,7 +353,7 @@ class TrainClassifier:
                 pass
 
             elif (self.configdata['dss_strategy']['type'] in ['GLISTER', 'GradMatch', 'GradMatchPB', 'CRAIG', 'CRAIGPB']) and (
-                    ((i + 1) % self.configdata['dss_strategy']['select_every']) == 0):
+                    ((epoch + 1) % self.configdata['dss_strategy']['select_every']) == 0):
                 start_time = time.time()
                 cached_state_dict = copy.deepcopy(model.state_dict())
                 clone_dict = copy.deepcopy(model.state_dict())
@@ -363,7 +367,7 @@ class TrainClassifier:
             elif (self.configdata['dss_strategy']['type'] in ['GLISTER-Warm', 'GradMatch-Warm', 'GradMatchPB-Warm', 'CRAIG-Warm',
                                'CRAIGPB-Warm']):
                 start_time = time.time()
-                if ((i % self.configdata['dss_strategy']['select_every'] == 0) and (i >= kappa_epochs)):
+                if ((epoch % self.configdata['dss_strategy']['select_every'] == 0) and (epoch >= kappa_epochs)):
                     cached_state_dict = copy.deepcopy(model.state_dict())
                     clone_dict = copy.deepcopy(model.state_dict())
                     subset_idxs, gammas = setf_model.select(int(bud), clone_dict)
@@ -378,6 +382,10 @@ class TrainClassifier:
 
             #print("selEpoch: %d, Selection Ended at:" % (i), str(datetime.datetime.now()))
             data_sub = Subset(trainset, idxs)
+            # subset_labels = torch.tensor([data_sub[i][1] for i in range(len(data_sub))])
+            # for i in range(self.configdata['model']['numclasses']):
+            #     print(" \n Class " + str(i) + " percentage: " + str(len(torch.where(subset_labels == i)[0])/len(subset_labels)))
+
             subset_trnloader = torch.utils.data.DataLoader(data_sub, batch_size=trn_batch_size, shuffle=False,
                                                            pin_memory=True)
 
@@ -385,6 +393,8 @@ class TrainClassifier:
             batch_wise_indices = list(subset_trnloader.batch_sampler)
             if self.configdata['dss_strategy']['type'] in ['CRAIG', 'CRAIGPB', 'GradMatch', 'GradMatchPB']:
                 start_time = time.time()
+                total_targets = []
+                total_preds = []
                 for batch_idx, (inputs, targets) in enumerate(subset_trnloader):
                     inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(self.configdata['train_args']['device'],
                                                                                                    non_blocking=True)  # targets can have non_blocking=True.
@@ -402,7 +412,7 @@ class TrainClassifier:
 
             elif self.configdata['dss_strategy']['type'] in ['CRAIGPB-Warm', 'CRAIG-Warm', 'GradMatch-Warm', 'GradMatchPB-Warm']:
                 start_time = time.time()
-                if i < full_epochs:
+                if epoch < full_epochs:
                     for batch_idx, (inputs, targets) in enumerate(trainloader):
                         inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(self.configdata['train_args']['device'],
                                                                                                        non_blocking=True)  # targets can have non_blocking=True.
@@ -416,7 +426,7 @@ class TrainClassifier:
                         subtrn_total += targets.size(0)
                         subtrn_correct += predicted.eq(targets).sum().item()
 
-                elif i >= kappa_epochs:
+                elif epoch >= kappa_epochs:
                     for batch_idx, (inputs, targets) in enumerate(subset_trnloader):
                         inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(self.configdata['train_args']['device'],
                                                                                                        non_blocking=True)  # targets can have non_blocking=True.
@@ -442,8 +452,8 @@ class TrainClassifier:
                     outputs = model(inputs)
                     loss = criterion(outputs, targets)
                     loss.backward()
-                    subtrn_loss += loss.item()
                     optimizer.step()
+                    subtrn_loss += loss.item()
                     _, predicted = outputs.max(1)
                     subtrn_total += targets.size(0)
                     subtrn_correct += predicted.eq(targets).sum().item()
@@ -451,7 +461,7 @@ class TrainClassifier:
 
             elif self.configdata['dss_strategy']['type'] in ['GLISTER-Warm', 'Random-Warm']:
                 start_time = time.time()
-                if i < full_epochs:
+                if epoch < full_epochs:
                     for batch_idx, (inputs, targets) in enumerate(trainloader):
                         inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(self.configdata['train_args']['device'],
                                                                                                        non_blocking=True)  # targets can have non_blocking=True.
@@ -466,7 +476,7 @@ class TrainClassifier:
                         _, predicted = outputs.max(1)
                         subtrn_total += targets.size(0)
                         subtrn_correct += predicted.eq(targets).sum().item()
-                elif i >= kappa_epochs:
+                elif epoch >= kappa_epochs:
                     for batch_idx, (inputs, targets) in enumerate(subset_trnloader):
                         inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(self.configdata['train_args']['device'],
                                                                                                        non_blocking=True)  # targets can have non_blocking=True.
@@ -496,13 +506,14 @@ class TrainClassifier:
                     subtrn_total += targets.size(0)
                     subtrn_correct += predicted.eq(targets).sum().item()
                 train_time = time.time() - start_time
+            
             scheduler.step()
             timing.append(train_time + subset_selection_time)
             print("adding timing, length: %s" % len(timing))
             print_args = self.configdata['train_args']['print_args']
             # print("Epoch timing is: " + str(timing[-1]))
 
-            if ((i+1) % self.configdata['train_args']['print_every'] == 0):
+            if ((epoch+1) % self.configdata['train_args']['print_every'] == 0):
                 trn_loss = 0
                 trn_correct = 0
                 trn_total = 0
@@ -533,17 +544,29 @@ class TrainClassifier:
 
                 if (("val_loss" in print_args) or ("val_acc" in print_args)):
                     with torch.no_grad():
+                        total_targets = []
+                        total_preds = []
                         for batch_idx, (inputs, targets) in enumerate(valloader):
                             # print(batch_idx)
                             inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(self.configdata['train_args']['device'], non_blocking=True)
                             outputs = model(inputs)
                             loss = criterion(outputs, targets)
-                            val_loss += loss.item()
-                            val_losses.append(val_loss)
+                            val_loss += loss.item()    
                             if "val_acc" in print_args:
                                 _, predicted = outputs.max(1)
                                 val_total += targets.size(0)
                                 val_correct += predicted.eq(targets).sum().item()
+                            total_targets.extend(targets.cpu().tolist())
+                            total_preds.extend(predicted.cpu().tolist())
+                        val_losses.append(val_loss)
+
+                    targets_array = np.array(total_targets)
+                    preds_array = np.array(total_preds)
+                    # for i in range(self.configdata["model"]["numclasses"]):    
+                    #     cls_idxs = np.where(targets_array == i)
+                    #     preds = preds_array[cls_idxs]
+                    #     crct_preds = np.where(preds == i)
+                    #     print("\n Class "+ str(i) + " val accuracy: ", 100 * len(crct_preds[0])/len(cls_idxs[0]))
 
                     if "val_acc" in print_args:
                         val_acc.append(val_correct / val_total)
@@ -551,20 +574,31 @@ class TrainClassifier:
 
                 if (("tst_loss" in print_args) or ("tst_acc" in print_args)):
                     with torch.no_grad():
+                        total_targets = []
+                        total_preds = []
                         for batch_idx, (inputs, targets) in enumerate(testloader):
                             # print(batch_idx)
                             inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(self.configdata['train_args']['device'], non_blocking=True)
                             outputs = model(inputs)
                             loss = criterion(outputs, targets)
                             tst_loss += loss.item()
-                            tst_losses.append(tst_loss)
                             if "tst_acc" in print_args:
                                 _, predicted = outputs.max(1)
                                 tst_total += targets.size(0)
                                 tst_correct += predicted.eq(targets).sum().item()
-
+                            total_targets.extend(targets.cpu().tolist())
+                            total_preds.extend(predicted.cpu().tolist())
+                        tst_losses.append(tst_loss)
                     if "tst_acc" in print_args:
                         tst_acc.append(tst_correct/tst_total)
+
+                    # targets_array = np.array(total_targets)
+                    # preds_array = np.array(total_preds)
+                    # for i in range(self.configdata["model"]["numclasses"]):    
+                    #     cls_idxs = np.where(targets_array == i)
+                    #     preds = preds_array[cls_idxs]
+                    #     crct_preds = np.where(preds == i)
+                    #     print("\n Class "+ str(i) + " tst accuracy: ", 100 * len(crct_preds[0])/len(cls_idxs[0]))
 
                 if "subtrn_acc" in print_args:
                     subtrn_acc.append(subtrn_correct / subtrn_total)
@@ -572,7 +606,7 @@ class TrainClassifier:
                 if "subtrn_losses" in print_args:
                     subtrn_losses.append(subtrn_loss)
 
-                print_str = "Epoch: " + str(i+1)
+                print_str = "Epoch: " + str(epoch+1)
 
                 for arg in print_args:
 
@@ -609,7 +643,7 @@ class TrainClassifier:
 
                 print(print_str)
 
-            if ((i+1) % self.configdata['ckpt']['save_every'] == 0) and self.configdata['ckpt']['is_save'] == True:
+            if ((epoch+1) % self.configdata['ckpt']['save_every'] == 0) and self.configdata['ckpt']['is_save'] == True:
 
                 metric_dict = {}
 
@@ -634,7 +668,7 @@ class TrainClassifier:
                         metric_dict['time'] = timing
 
                 ckpt_state = {
-                    'epoch': i+1,
+                    'epoch': epoch+1,
                     'state_dict': model.state_dict(),
                     'optimizer': optimizer.state_dict(),
                     'loss': self.loss_function(),
@@ -644,7 +678,7 @@ class TrainClassifier:
 
                 # save checkpoint
                 self.save_ckpt(ckpt_state, checkpoint_path)
-                print("Model checkpoint saved at epoch " + str(i+1))
+                print("Model checkpoint saved at epoch " + str(epoch+1))
 
         print(self.configdata['dss_strategy']['type'] + " Selection Run---------------------------------")
         print("Final SubsetTrn:", subtrn_loss)

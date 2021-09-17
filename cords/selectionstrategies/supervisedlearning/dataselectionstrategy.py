@@ -198,9 +198,7 @@ class DataSelectionStrategy(object):
                     l0_grads = torch.cat((l0_grads, batch_l0_grads), dim=0)
                     if self.linear_layer:
                         l1_grads = torch.cat((l1_grads, batch_l1_grads), dim=0)
-
             torch.cuda.empty_cache()
-
             if self.linear_layer:
                 self.grads_per_elem = torch.cat((l0_grads, l1_grads), dim=1)
             else:

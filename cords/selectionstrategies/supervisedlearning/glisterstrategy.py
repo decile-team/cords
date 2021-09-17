@@ -248,7 +248,8 @@ class GLISTERStrategy(DataSelectionStrategy):
                 if self.numSelected > 1:
                     self._update_gradients_subset(grads_currX, bestId)
                 else:  # If 1st selection, then just set it to bestId grads
-                    grads_currX = self.grads_per_elem[bestId].view(1, -1)  # Making it a list so that is mutable!
+                    grads_currX = self.grads_per_elem[bestId].view(1, -1) 
+                # Making it a list so that is mutable!
                 # Update the grads_val_current using current greedySet grads
                 self._update_grads_val(grads_currX)
             print("Stochastic Greedy GLISTER total time:", time.time() - t_ng_start)
@@ -273,5 +274,4 @@ class GLISTERStrategy(DataSelectionStrategy):
                 # Update the grads_val_current using current greedySet grads
                 self._update_grads_val(grads_currX)
             print("Naive Greedy GLISTER total time:", time.time() - t_ng_start)
-
         return list(greedySet), torch.ones(budget)

@@ -45,7 +45,7 @@ parser.add_argument("--dss_strategy", type=str, choices=_adaptive_methods + _non
 
 # DSS arguments
 parser.add_argument("--select_ratio", type=float, default=0.2)
-parser.add_argument("--select_every", type=int, default=10)
+parser.add_argument("--select_every", type=int, default=5)
 parser.add_argument("--device", type=str)
 parser.add_argument("--r_ratio", type=float, default=1)
 
