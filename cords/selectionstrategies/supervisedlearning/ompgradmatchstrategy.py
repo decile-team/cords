@@ -3,7 +3,7 @@ import time
 import torch
 import numpy as np
 from .dataselectionstrategy import DataSelectionStrategy
-from ..helpers import OrthogonalMP_REG_Parallel, OrthogonalMP_REG
+from ..helpers import OrthogonalMP_REG_Parallel, OrthogonalMP_REG, OrthogonalMP_REG_NNLS_Parallel, OrthogonalMP_REG_NNLS
 from torch.utils.data import Subset, DataLoader
 
 
@@ -45,8 +45,10 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
         - 'PerClass': PerClass method is where OMP algorithm is applied on each class data points seperately.
         - 'PerBatch': PerBatch method is where OMP algorithm is applied on each minibatch data points.
         - 'PerClassPerGradient': PerClassPerGradient method is same as PerClass but we use the gradient corresponding to classification layer of that class only.
-    valid : bool, optional
-        If valid==True we use validation dataset gradient sum in OMP otherwise we use training dataset (default: False)
+    valid : bool
+        If valid==True, we use validation dataset gradient sum in OMP otherwise we use training dataset (default: False)
+    nnls : bool
+        If nnls==True, we use non-negative least squared version of OMP algorithm for GradMatch
     lam : float
         Regularization constant of OMP solver
     eps : float
@@ -55,7 +57,7 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
 
     def __init__(self, trainloader, valloader, model, loss,
                  eta, device, num_classes, linear_layer,
-                 selection_type, valid=True, lam=0, eps=1e-4):
+                 selection_type, valid=False, nnls=False, lam=0, eps=1e-4):
         """
         Constructor method
         """
@@ -68,16 +70,27 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
         self.valid = valid
         self.lam = lam
         self.eps = eps
+        self.nnls = nnls
 
     def ompwrapper(self, X, Y, bud):
-        if self.device == "cpu":
-            reg = OrthogonalMP_REG(X.cpu().numpy(), Y.cpu().numpy(), nnz=bud, positive=True, lam=0)
-            ind = np.nonzero(reg)[0]
+        if self.nnls:
+            if self.device == "cpu":
+                reg = OrthogonalMP_REG_NNLS(X.numpy(), Y.numpy(), nnz=bud, positive=True, lam=0)
+                ind = np.nonzero(reg)[0]
+            else:
+                reg = OrthogonalMP_REG_NNLS_Parallel(X, Y, nnz=bud,
+                                                     positive=True, lam=self.lam,
+                                                     tol=self.eps, device=self.device)
+                ind = torch.nonzero(reg).view(-1)
         else:
-            reg = OrthogonalMP_REG_Parallel(X, Y, nnz=bud,
-                                            positive=True, lam=self.lam,
-                                            tol=self.eps, device=self.device)
-            ind = torch.nonzero(reg).view(-1)
+            if self.device == "cpu":
+                reg = OrthogonalMP_REG(X.numpy(), Y.numpy(), nnz=bud, positive=True, lam=0)
+                ind = np.nonzero(reg)[0]
+            else:
+                reg = OrthogonalMP_REG_Parallel(X, Y, nnz=bud,
+                                                positive=True, lam=self.lam,
+                                                tol=self.eps, device=self.device)
+                ind = torch.nonzero(reg).view(-1)
         return ind.tolist(), reg[ind].tolist()
 
     def select(self, budget, model_params):
@@ -185,7 +198,7 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
 
         omp_end_time = time.time()
         diff = budget - len(idxs)
-        print(diff)
+        print("Random points added: ", diff)
 
         if diff > 0:
             remainList = set(np.arange(self.N_trn)).difference(set(idxs))
@@ -194,11 +207,11 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
             gammas.extend([1 for _ in range(diff)])
             idxs = np.array(idxs)
             gammas = np.array(gammas)
-    
+
         if self.selection_type in ["PerClass", "PerClassPerGradient"]:
             rand_indices = np.random.permutation(len(idxs))
             idxs = list(np.array(idxs)[rand_indices])
             gammas = list(np.array(gammas)[rand_indices])
-    
+
         print("OMP algorithm Subset Selection time is: ", omp_end_time - omp_start_time)
         return idxs, gammas
