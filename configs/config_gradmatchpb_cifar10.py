@@ -34,7 +34,7 @@ config = dict(setting="supervisedlearning",
                                 fraction=0.1,
                                 select_every=20,
                                 lam=0,
-                                nnls=False,
+                                v1=True,
                                 valid=False),
 
               train_args=dict(num_epochs=300,

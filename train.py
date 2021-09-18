@@ -199,14 +199,14 @@ class TrainClassifier:
                                               self.configdata['train_args']['device'],
                                               num_cls, True, 'PerClassPerGradient',
                                               valid=self.configdata['dss_strategy']['valid'],
-                                              nnls=self.configdata['dss_strategy']['nnls'],
+                                              v1=self.configdata['dss_strategy']['v1'],
                                               lam=self.configdata['dss_strategy']['lam'], eps=1e-100)
         elif self.configdata['dss_strategy']['type'] == 'GradMatchPB':
             setf_model = OMPGradMatchStrategy(trainloader, valloader, model1, criterion_nored,
                                               self.configdata['optimizer']['lr'],
                                               self.configdata['train_args']['device'],
                                               num_cls, True, 'PerBatch', valid=self.configdata['dss_strategy']['valid'],
-                                              nnls=self.configdata['dss_strategy']['nnls'],
+                                              v1=self.configdata['dss_strategy']['v1'],
                                               lam=self.configdata['dss_strategy']['lam'], eps=1e-100)
         elif self.configdata['dss_strategy']['type'] == 'GLISTER':
             # GLISTER Selection strategy
@@ -279,7 +279,7 @@ class TrainClassifier:
                                               self.configdata['train_args']['device'],
                                               num_cls, True, 'PerClassPerGradient',
                                               valid=self.configdata['dss_strategy']['valid'],
-                                              nnls=self.configdata['dss_strategy']['nnls'],
+                                              v1=self.configdata['dss_strategy']['v1'],
                                               lam=self.configdata['dss_strategy']['lam'], eps=1e-100)
             # Random-Online Selection strategy
             # rand_setf_model = RandomStrategy(trainloader, online=True)
@@ -296,7 +296,7 @@ class TrainClassifier:
                                               self.configdata['optimizer']['lr'],
                                               self.configdata['train_args']['device'],
                                               num_cls, True, 'PerBatch', valid=self.configdata['dss_strategy']['valid'],
-                                              nnls=self.configdata['dss_strategy']['nnls'],
+                                              v1=self.configdata['dss_strategy']['v1'],
                                               lam=self.configdata['dss_strategy']['lam'], eps=1e-100)
             # Random-Online Selection strategy
             # rand_setf_model = RandomStrategy(trainloader, online=True)

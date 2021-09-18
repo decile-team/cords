@@ -398,7 +398,7 @@ def OrthogonalMP_REG(A, b, tol=1E-4, nnz=None, positive=False, lam=1):
 
 
 # NOTE: Standard Algorithm, e.g. Tropp, ``Greed is Good: Algorithmic Results for Sparse Approximation," IEEE Trans. Info. Theory, 2004.
-def OrthogonalMP_REG_Parallel1(A, b, tol=1E-4, nnz=None, positive=False, lam=1, device="cpu"):
+def OrthogonalMP_REG_Parallel_V1(A, b, tol=1E-4, nnz=None, positive=False, lam=1, device="cpu"):
     '''approximately solves min_x |x|_0 s.t. Ax=b using Orthogonal Matching Pursuit
     Args:
       A: design matrix of size (d, n)

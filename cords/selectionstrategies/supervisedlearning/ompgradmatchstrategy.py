@@ -3,7 +3,7 @@ import time
 import torch
 import numpy as np
 from .dataselectionstrategy import DataSelectionStrategy
-from ..helpers import OrthogonalMP_REG_Parallel, OrthogonalMP_REG, OrthogonalMP_REG_NNLS_Parallel, OrthogonalMP_REG_NNLS, OrthogonalMP_REG_Parallel1
+from ..helpers import OrthogonalMP_REG_Parallel, OrthogonalMP_REG, OrthogonalMP_REG_Parallel_V1
 from torch.utils.data import Subset, DataLoader
 
 
@@ -47,8 +47,8 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
         - 'PerClassPerGradient': PerClassPerGradient method is same as PerClass but we use the gradient corresponding to classification layer of that class only.
     valid : bool
         If valid==True, we use validation dataset gradient sum in OMP otherwise we use training dataset (default: False)
-    nnls : bool
-        If nnls==True, we use non-negative least squared version of OMP algorithm for GradMatch
+    v1 : bool
+        If v1==True, we use newer version of OMP solver that is more accurate
     lam : float
         Regularization constant of OMP solver
     eps : float
@@ -57,7 +57,7 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
 
     def __init__(self, trainloader, valloader, model, loss,
                  eta, device, num_classes, linear_layer,
-                 selection_type, valid=False, nnls=False, lam=0, eps=1e-4):
+                 selection_type, valid=False, v1=True, lam=0, eps=1e-4):
         """
         Constructor method
         """
@@ -70,15 +70,15 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
         self.valid = valid
         self.lam = lam
         self.eps = eps
-        self.nnls = nnls
+        self.v1 = v1
 
     def ompwrapper(self, X, Y, bud):
-        if self.nnls:
+        if self.v1:
             if self.device == "cpu":
                 reg = OrthogonalMP_REG_NNLS(X.numpy(), Y.numpy(), nnz=bud, positive=True, lam=0)
                 ind = np.nonzero(reg)[0]
             else:
-                reg = OrthogonalMP_REG_Parallel1(X, Y, nnz=bud,
+                reg = OrthogonalMP_REG_Parallel_V1(X, Y, nnz=bud,
                                                      positive=True, lam=self.lam,
                                                      tol=self.eps, device=self.device)
                 ind = torch.nonzero(reg).view(-1)
