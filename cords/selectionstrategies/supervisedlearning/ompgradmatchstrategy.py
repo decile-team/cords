@@ -73,24 +73,20 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
         self.v1 = v1
 
     def ompwrapper(self, X, Y, bud):
-        if self.v1:
-            if self.device == "cpu":
-                reg = OrthogonalMP_REG_NNLS(X.numpy(), Y.numpy(), nnz=bud, positive=True, lam=0)
-                ind = np.nonzero(reg)[0]
-            else:
-                reg = OrthogonalMP_REG_Parallel_V1(X, Y, nnz=bud,
-                                                     positive=True, lam=self.lam,
-                                                     tol=self.eps, device=self.device)
-                ind = torch.nonzero(reg).view(-1)
+
+        if self.device == "cpu":
+            reg = OrthogonalMP_REG(X.numpy(), Y.numpy(), nnz=bud, positive=True, lam=0)
+            ind = np.nonzero(reg)[0]
         else:
-            if self.device == "cpu":
-                reg = OrthogonalMP_REG(X.numpy(), Y.numpy(), nnz=bud, positive=True, lam=0)
-                ind = np.nonzero(reg)[0]
+            if self.v1:
+                reg = OrthogonalMP_REG_Parallel_V1(X, Y, nnz=bud,
+                                                 positive=True, lam=self.lam,
+                                                 tol=self.eps, device=self.device)
             else:
                 reg = OrthogonalMP_REG_Parallel(X, Y, nnz=bud,
                                                 positive=True, lam=self.lam,
                                                 tol=self.eps, device=self.device)
-                ind = torch.nonzero(reg).view(-1)
+            ind = torch.nonzero(reg).view(-1)
         return ind.tolist(), reg[ind].tolist()
 
     def select(self, budget, model_params):
