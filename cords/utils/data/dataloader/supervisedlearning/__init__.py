@@ -1,3 +1,4 @@
 from .dssdataloader import DSSDataLoader
 from .glisterdataloader import GLISTERDataLoader
-from .adaptivedssdataloader import AdaptiveDSSDataLoader
+from .adaptivedataloader import AdaptiveDSSDataLoader
+from .nonadaptivedataloader import NonAdaptiveDSSDataLoader

@@ -398,7 +398,7 @@ def OrthogonalMP_REG(A, b, tol=1E-4, nnz=None, positive=False, lam=1):
 
 
 # NOTE: Standard Algorithm, e.g. Tropp, ``Greed is Good: Algorithmic Results for Sparse Approximation," IEEE Trans. Info. Theory, 2004.
-def OrthogonalMP_REG_Parallel1(A, b, tol=1E-4, nnz=None, positive=False, lam=1, device="cpu"):
+def OrthogonalMP_REG_Parallel_V1(A, b, tol=1E-4, nnz=None, positive=False, lam=1, device="cpu"):
     '''approximately solves min_x |x|_0 s.t. Ax=b using Orthogonal Matching Pursuit
     Args:
       A: design matrix of size (d, n)
@@ -441,7 +441,7 @@ def OrthogonalMP_REG_Parallel1(A, b, tol=1E-4, nnz=None, positive=False, lam=1, 
             # print(indices)
             A_i = torch.cat((A_i, A[:, index].view(1, -1)), dim=0)  # np.vstack([A_i, A[:,index]])
             temp = torch.matmul(A_i, torch.transpose(A_i, 0, 1)) + lam * torch.eye(A_i.shape[0], device=device)
-            x_i, _ = torch.lstsq(torch.matmul(A_i, b).view(-1, 1), temp)
+            x_i, _, _, _ = torch.linalg.lstsq(temp, torch.matmul(A_i, b).view(-1, 1))
             # print(x_i.shape)
             if positive:
                 while min(x_i) < 0.0:
@@ -450,13 +450,8 @@ def OrthogonalMP_REG_Parallel1(A, b, tol=1E-4, nnz=None, positive=False, lam=1, 
                     indices = indices[:argmin] + indices[argmin + 1:]
                     A_i = torch.cat((A_i[:argmin], A_i[argmin + 1:]),
                                     dim=0)  # np.vstack([A_i[:argmin], A_i[argmin+1:]])
-                    if argmin.item() == A_i.shape[0]:
-                        break
-                    # print(argmin.item(),A_i.shape[0],index.item())
                     temp = torch.matmul(A_i, torch.transpose(A_i, 0, 1)) + lam * torch.eye(A_i.shape[0], device=device)
-                    x_i, _ = torch.lstsq(torch.matmul(A_i, b).view(-1, 1), temp)
-        if argmin.item() == A_i.shape[0]:
-            break
+                    x_i, _, _, _ = torch.linalg.lstsq(temp, torch.matmul(A_i, b).view(-1, 1))
         resid = b - torch.matmul(torch.transpose(A_i, 0, 1), x_i).view(-1)  # A_i.T.dot(x_i)
     x_i = x_i.view(-1)
     for i, index in enumerate(indices):
@@ -565,16 +560,17 @@ def OrthogonalMP_REG_NNLS_Parallel(A, b, tol=1E-4, nnz=None, positive=False, lam
     indices = []
     argmin = torch.tensor([-1])
     for i in range(nnz):
-        if resid.norm().item() / normb < tol:
-            break
+        # if resid.norm().item() / normb < tol:
+        #     break
         projections = torch.matmul(AT, resid)  # AT.dot(resid)
         # print("Projections",projections.shape)
         if positive:
             index = torch.argmax(projections)
         else:
             index = torch.argmax(torch.abs(projections))
-        if index not in indices:
-            indices.append(index)
+        if index in indices:
+            break
+        indices.append(index)
             #break
         if len(indices) == 1:
             A_i = A[:, index]
@@ -586,9 +582,7 @@ def OrthogonalMP_REG_NNLS_Parallel(A, b, tol=1E-4, nnz=None, positive=False, lam
             temp = torch.matmul(A_i, torch.transpose(A_i, 0, 1)) + lam * torch.eye(A_i.shape[0], device=device)
             if positive:
                 x_i, _ = nnls(temp.cpu().numpy(), torch.matmul(A_i, b).view(-1).cpu().numpy())
-                x_i = torch.from_numpy(x_i)
-                x_i = x_i.float().to(device=device)
-                x_i = x_i.view(-1, 1)
+                x_i = torch.from_numpy(x_i).float().to(device=device)
             else:
                 x_i, _, _, _ = torch.linalg.lstsq(temp, torch.matmul(A_i, b).view(-1, 1))
         resid = b - torch.matmul(torch.transpose(A_i, 0, 1), x_i).view(-1)  # A_i.T.dot(x_i)

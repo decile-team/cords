@@ -13,12 +13,12 @@ config = dict(setting="supervisedlearning",
               model=dict(architecture='ResNet18',
                          type='pre-defined',
                          numclasses=10),
-              
+
               ckpt=dict(is_load=False,
                         is_save=True,
                         dir='results/',
                         save_every=20),
-              
+
               loss=dict(type='CrossEntropyLoss',
                         use_sigmoid=False),
 
@@ -34,7 +34,7 @@ config = dict(setting="supervisedlearning",
                                 fraction=0.1,
                                 select_every=20,
                                 lam=0.5,
-                                nnls=False,
+                                v1=True,
                                 valid=False),
 
               train_args=dict(num_epochs=300,

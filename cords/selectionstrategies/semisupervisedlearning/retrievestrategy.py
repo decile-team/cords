@@ -8,7 +8,7 @@ from .dataselectionstrategy import DataSelectionStrategy
 
 class RETRIEVEStrategy(DataSelectionStrategy):
     """
-    Implementation of GLISTER-ONLINE Strategy from the paper :footcite:`killamsetty2020glister`  for supervised learning frameworks.
+    Implementation of RETRIEVE Strategy from the paper :footcite:`killamsetty2020glister`  for supervised learning frameworks.
     GLISTER-ONLINE methods tries to solve the  bi-level optimization problem given below:
 
     .. math::
