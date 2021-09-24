@@ -1,30 +1,38 @@
 from abc import abstractmethod
-from torch.utils.data import Subset
+from scipy.linalg.matfuncs import fractional_matrix_power
+from cords.utils.data._utils import WeightedSubset
 from torch.utils.data.dataloader import DataLoader
-import logging
+import torch
 import numpy as np
 
 
 # Base objects
 
 class DSSDataLoader:
-    def __init__(self, full_data, budget, verbose=False, *args, **kwargs):
+    def __init__(self, full_data, dss_args, verbose=False, *args, **kwargs):
         super(DSSDataLoader, self).__init__()
         # TODO: Integrate verbose in logging
         self.len_full = len(full_data)
-        assert budget < self.len_full, "Budget should be smaller than the length of the dataset. Budget: %s / Full length: %s <= 1" % (
-            budget, self.len_full)
+        """
+         Arguments assertion check
+        """
+        assert "fraction" in dss_args.keys(), "'fraction' is a compulsory argument. Include it as a key in dss_args"
+        if (dss_args.fraction > 1) or (dss_args.fraction<0):
+             raise ValueError("'fraction' should lie between 0 and 1")
+
+        self.fraction = dss_args.fraction
+        self.budget = int(self.len_full * self.fraction)
         self.verbose = verbose
         self.dataset = full_data
-        self.budget = budget
         self.loader_args = args
         self.loader_kwargs = kwargs
         self.fullset_loader = DataLoader(self.dataset, *self.loader_args, **self.loader_kwargs)
         self.subset_indices = None
+        self.subset_weights = None
         self.subset_loader = None
         self.batch_wise_indices = None
         self.strategy = None
-        self.cur_epoch = 0
+        self.cur_epoch = 1
         self._init_subset_loader()
 
     def __getattr__(self, item):
@@ -33,17 +41,18 @@ class DSSDataLoader:
     def _init_subset_loader(self):
         # All strategies start with random selection
         self.subset_indices = self._init_subset_indices()
-        self._refresh_subset_loader(self.subset_indices)
+        self.subset_weights = torch.ones(self.budget)
+        self._refresh_subset_loader()
 
     # Default subset indices comes from random selection
     def _init_subset_indices(self):
-        return np.random.choice(len(self.dataset), size=self.budget, replace=False)
+        return np.random.choice(self.len_full, size=self.budget, replace=False)
 
-    def _refresh_subset_loader(self, indices):
+    def _refresh_subset_loader(self):
         # data_sub = Subset(trainset, idxs)
         # subset_trnloader = torch.utils.data.DataLoader(data_sub, batch_size=trn_batch_size, shuffle=False,
         #                                                pin_memory=True)
-        self.subset_loader = DataLoader(Subset(self.dataset, indices), shuffle=False,
+        self.subset_loader = DataLoader(WeightedSubset(self.dataset, self.subset_indices, self.subset_weights), shuffle=True,
                                         *self.loader_args, **self.loader_kwargs)
         self.batch_wise_indices = list(self.subset_loader.batch_sampler)
 

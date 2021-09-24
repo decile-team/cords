@@ -100,7 +100,7 @@ class FixedWeightStrategy(DataSelectionStrategy):
                     self.pcvalloader = DataLoader(val_data_sub, batch_size=self.trainloader.batch_size,
                                                   shuffle=False, pin_memory=True)
 
-                self.compute_gradients(self.valid, batch=False, perClass=True)
+                self.compute_gradients(self.valid, perBatch=False, perClass=True)
                 trn_gradients = self.grads_per_elem
                 if self.valid:
                     sum_val_grad = torch.sum(self.val_grads_per_elem, dim=0)
@@ -113,7 +113,7 @@ class FixedWeightStrategy(DataSelectionStrategy):
                 gammas.extend(gammas_temp)
 
         elif self.selection_type == 'PerBatch':
-            self.compute_gradients(self.valid, batch=True, perClass=False)
+            self.compute_gradients(self.valid, perBatch=True, perClass=False)
             idxs = []
             gammas = []
             trn_gradients = self.grads_per_elem
@@ -144,7 +144,7 @@ class FixedWeightStrategy(DataSelectionStrategy):
                     val_data_sub = Subset(self.valloader.dataset, val_subset_idx)
                     self.pcvalloader = DataLoader(val_data_sub, batch_size=self.trainloader.batch_size,
                                                   shuffle=False, pin_memory=True)
-                self.compute_gradients(self.valid, batch=False, perClass=True)
+                self.compute_gradients(self.valid, perBatch=False, perClass=True)
                 trn_gradients = self.grads_per_elem
                 tmp_gradients = trn_gradients[:, i].view(-1, 1)
                 tmp1_gradients = trn_gradients[:,
@@ -183,5 +183,5 @@ class FixedWeightStrategy(DataSelectionStrategy):
             idxs = list(np.array(idxs)[rand_indices])
             gammas = list(np.array(gammas)[rand_indices])
 
-        print("OMP algorithm Subset Selection time is: ", omp_end_time - omp_start_time)
-        return idxs, gammas
+        print("Fixed Weight algorithm Subset Selection time is: ", omp_end_time - omp_start_time)
+        return idxs, torch.FloatTensor(gammas)

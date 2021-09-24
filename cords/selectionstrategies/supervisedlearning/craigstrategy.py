@@ -53,7 +53,9 @@ class CRAIGStrategy(DataSelectionStrategy):
     selection_type: str
         Type of selection:
          - 'PerClass': PerClass Implementation where the facility location problem is solved for each class seperately for speed ups.
-         - 'Supervised':  Supervised Implementation where the facility location problem is solved using a sparse similarity matrix by assigning the similarity of a point with other points of different class to zero.
+         - 'Supervised':  Supervised Implementation where the facility location problem is solved using a sparse similarity matrix by 
+                          assigning the similarity of a point with other points of different class to zero.
+         - 'PerBatch': PerBatch Implementation where the facility location problem tries to select subset of mini-batches.
     """
 
     def __init__(self, trainloader, valloader, model, loss,
@@ -303,5 +305,5 @@ class CRAIGStrategy(DataSelectionStrategy):
             for i in range(len(temp_list)):
                 tmp = batch_wise_indices[temp_list[i]]
                 total_greedy_list.extend(tmp)
-                gammas.extend(list(gammas_temp[i] * np.ones(len(tmp))))
-        return total_greedy_list, gammas
+                gammas.extend([gammas_temp[i]] * len(tmp))
+        return total_greedy_list, torch.FloatTensor(gammas)

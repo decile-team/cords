@@ -7,11 +7,11 @@ from ..helpers import OrthogonalMP_REG_Parallel, OrthogonalMP_REG, OrthogonalMP_
 from torch.utils.data import Subset, DataLoader
 
 
-class OMPGradMatchStrategy(DataSelectionStrategy):
+class GradMatchStrategy(DataSelectionStrategy):
     """
-    Implementation of OMPGradMatch Strategy from the paper :footcite:`sivasubramanian2020gradmatch` for supervised learning frameworks.
+    Implementation of GradMatch Strategy from the paper :footcite:`sivasubramanian2020gradmatch` for supervised learning frameworks.
 
-    OMPGradMatch strategy tries to solve the optimization problem given below:
+    GradMatch strategy tries to solve the optimization problem given below:
 
     .. math::
         \\min_{\\mathbf{w}, S: |S| \\leq k} \\Vert \\sum_{i \\in S} w_i \\nabla_{\\theta}L_T^i(\\theta) -  \\nabla_{\\theta}L(\\theta)\\Vert
@@ -30,8 +30,8 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
         Loading the validation data using pytorch DataLoader
     model: class
         Model architecture used for training
-    loss_type: class
-        The type of loss criterion
+    loss: class
+        PyTorch loss function for training
     eta: float
         Learning rate. Step size for the one step gradient update
     device: str
@@ -53,11 +53,13 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
         Regularization constant of OMP solver
     eps : float
         Epsilon parameter to which the above optimization problem is solved using OMP algorithm
+    verbose : bool
+        If verbose==True, we print the information of run
     """
 
     def __init__(self, trainloader, valloader, model, loss,
                  eta, device, num_classes, linear_layer,
-                 selection_type, valid=False, v1=True, lam=0, eps=1e-4):
+                 selection_type, valid=False, v1=True, lam=0, eps=1e-4, verbose=True):
         """
         Constructor method
         """
@@ -71,6 +73,7 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
         self.lam = lam
         self.eps = eps
         self.v1 = v1
+        self.verbose = verbose
 
     def ompwrapper(self, X, Y, bud):
 
@@ -125,7 +128,7 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
                     self.pcvalloader = DataLoader(val_data_sub, batch_size=self.trainloader.batch_size,
                                                   shuffle=False, pin_memory=True)
 
-                self.compute_gradients(self.valid, batch=False, perClass=True)
+                self.compute_gradients(self.valid, perBatch=False, perClass=True)
                 trn_gradients = self.grads_per_elem
                 if self.valid:
                     sum_val_grad = torch.sum(self.val_grads_per_elem, dim=0)
@@ -138,7 +141,7 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
                 gammas.extend(gammas_temp)
 
         elif self.selection_type == 'PerBatch':
-            self.compute_gradients(self.valid, batch=True, perClass=False)
+            self.compute_gradients(self.valid, perBatch=True, perClass=False)
             idxs = []
             gammas = []
             trn_gradients = self.grads_per_elem
@@ -169,7 +172,7 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
                     val_data_sub = Subset(self.valloader.dataset, val_subset_idx)
                     self.pcvalloader = DataLoader(val_data_sub, batch_size=self.trainloader.batch_size,
                                                   shuffle=False, pin_memory=True)
-                self.compute_gradients(self.valid, batch=False, perClass=True)
+                self.compute_gradients(self.valid, perBatch=False, perClass=True)
                 trn_gradients = self.grads_per_elem
                 tmp_gradients = trn_gradients[:, i].view(-1, 1)
                 tmp1_gradients = trn_gradients[:,
@@ -191,8 +194,6 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
                                                          math.ceil(budget * len(trn_subset_idx) / self.N_trn))
                 idxs.extend(list(np.array(trn_subset_idx)[idxs_temp]))
                 gammas.extend(gammas_temp)
-
-        omp_end_time = time.time()
         diff = budget - len(idxs)
         print("Random points added: ", diff)
 
@@ -208,6 +209,7 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
             rand_indices = np.random.permutation(len(idxs))
             idxs = list(np.array(idxs)[rand_indices])
             gammas = list(np.array(gammas)[rand_indices])
-
+        
+        omp_end_time = time.time()
         print("OMP algorithm Subset Selection time is: ", omp_end_time - omp_start_time)
-        return idxs, gammas
+        return idxs, torch.FloatTensor(gammas)

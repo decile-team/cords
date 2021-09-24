@@ -11,7 +11,7 @@ from cords.utils.custom_dataset import load_dataset_custom
 from torch.utils.data import Subset
 from cords.utils.config_utils import load_config_data
 import os.path as osp
-from cords.selectionstrategies.supervisedlearning import OMPGradMatchStrategy, GLISTERStrategy, RandomStrategy, \
+from cords.selectionstrategies.supervisedlearning import GradMatchStrategy, GLISTERStrategy, RandomStrategy, \
     CRAIGStrategy
 from ray import tune
 
@@ -20,11 +20,7 @@ class TrainClassifier:
     def __init__(self, config_file):
         self.config_file = config_file
         self.configdata = load_config_data(self.config_file)
-        # if self.configdata['setting'] == 'supervisedlearning':
-        #     from cords.selectionstrategies.supervisedlearning import OMPGradMatchStrategy, GLISTERStrategy, \
-        #         RandomStrategy, CRAIGStrategy
-        # elif self.configdata['setting'] == 'general':
-        #     from cords.selectionstrategies.general import GLISTERStrategy
+        print()
 
     """
     Loss Evaluation
@@ -125,7 +121,7 @@ class TrainClassifier:
 
         N = len(trainset)
         trn_batch_size = 20
-        val_batch_size = 1000
+        val_batch_size = 20
         tst_batch_size = 1000
 
         # Creating the Data Loaders
@@ -193,8 +189,8 @@ class TrainClassifier:
         optimizer, scheduler = self.optimizer_with_scheduler(model)
 
         if self.configdata['dss_strategy']['type'] == 'GradMatch':
-            # OMPGradMatch Selection strategy
-            setf_model = OMPGradMatchStrategy(trainloader, valloader, model1, criterion_nored,
+            # GradMatch Selection strategy
+            setf_model = GradMatchStrategy(trainloader, valloader, model1, criterion_nored,
                                               self.configdata['optimizer']['lr'],
                                               self.configdata['train_args']['device'],
                                               num_cls, True, 'PerClassPerGradient',
@@ -202,7 +198,7 @@ class TrainClassifier:
                                               v1=self.configdata['dss_strategy']['v1'],
                                               lam=self.configdata['dss_strategy']['lam'], eps=1e-100)
         elif self.configdata['dss_strategy']['type'] == 'GradMatchPB':
-            setf_model = OMPGradMatchStrategy(trainloader, valloader, model1, criterion_nored,
+            setf_model = GradMatchStrategy(trainloader, valloader, model1, criterion_nored,
                                               self.configdata['optimizer']['lr'],
                                               self.configdata['train_args']['device'],
                                               num_cls, True, 'PerBatch', valid=self.configdata['dss_strategy']['valid'],
@@ -212,7 +208,7 @@ class TrainClassifier:
             # GLISTER Selection strategy
             setf_model = GLISTERStrategy(trainloader, valloader, model1, criterion_nored,
                                          self.configdata['optimizer']['lr'], self.configdata['train_args']['device'],
-                                         num_cls, False, 'Stochastic', r=int(bud))
+                                         num_cls, False, 'Supervised', 'Stochastic', r=int(bud))
 
         elif self.configdata['dss_strategy']['type'] == 'CRAIG':
             # CRAIG Selection strategy
@@ -262,7 +258,7 @@ class TrainClassifier:
             # GLISTER Selection strategy
             setf_model = GLISTERStrategy(trainloader, valloader, model1, criterion_nored,
                                          self.configdata['optimizer']['lr'], self.configdata['train_args']['device'],
-                                         num_cls, False, 'Stochastic', r=int(bud))
+                                         num_cls, False, 'Supervised', 'Stochastic', r=int(bud))
             # Random-Online Selection strategy
             # rand_setf_model = RandomStrategy(trainloader, online=True)
             if 'kappa' in self.configdata['dss_strategy']:
@@ -273,8 +269,8 @@ class TrainClassifier:
                 raise KeyError("Specify a kappa value in the config file")
 
         elif self.configdata['dss_strategy']['type'] == 'GradMatch-Warm':
-            # OMPGradMatch Selection strategy
-            setf_model = OMPGradMatchStrategy(trainloader, valloader, model1, criterion_nored,
+            # GradMatch Selection strategy
+            setf_model = GradMatchStrategy(trainloader, valloader, model1, criterion_nored,
                                               self.configdata['optimizer']['lr'],
                                               self.configdata['train_args']['device'],
                                               num_cls, True, 'PerClassPerGradient',
@@ -291,8 +287,8 @@ class TrainClassifier:
                 raise KeyError("Specify a kappa value in the config file")
 
         elif self.configdata['dss_strategy']['type'] == 'GradMatchPB-Warm':
-            # OMPGradMatch Selection strategy
-            setf_model = OMPGradMatchStrategy(trainloader, valloader, model1, criterion_nored,
+            # GradMatch Selection strategy
+            setf_model = GradMatchStrategy(trainloader, valloader, model1, criterion_nored,
                                               self.configdata['optimizer']['lr'],
                                               self.configdata['train_args']['device'],
                                               num_cls, True, 'PerBatch', valid=self.configdata['dss_strategy']['valid'],
@@ -367,9 +363,8 @@ class TrainClassifier:
                 subset_idxs, gammas = setf_model.select(int(bud), clone_dict)
                 model.load_state_dict(cached_state_dict)
                 idxs = subset_idxs
-                if self.configdata['dss_strategy']['type'] in ['GradMatch', 'GradMatchPB', 'CRAIG', 'CRAIGPB']:
-                    gammas = torch.from_numpy(np.array(gammas)).to(self.configdata['train_args']['device']).to(
-                        torch.float32)
+                # if self.configdata['dss_strategy']['type'] in ['GradMatch', 'GradMatchPB', 'CRAIG', 'CRAIGPB']:
+                gammas = gammas.to(self.configdata['train_args']['device'])
                 temp = time.time() - start_time
                 # print("\n" + self.configdata['dss_strategy']['type'] + " Selection Time: ", temp)
                 subset_selection_time += (temp)
@@ -384,10 +379,7 @@ class TrainClassifier:
                     subset_idxs, gammas = setf_model.select(int(bud), clone_dict)
                     model.load_state_dict(cached_state_dict)
                     idxs = subset_idxs
-                    if self.configdata['dss_strategy']['type'] in ['GradMatch-Warm', 'GradMatchPB-Warm', 'CRAIG-Warm',
-                                                                   'CRAIGPB-Warm']:
-                        gammas = torch.from_numpy(np.array(gammas)).to(self.configdata['train_args']['device']).to(
-                            torch.float32)
+                    gammas = gammas.to(self.configdata['train_args']['device'])
                 subset_selection_time += (time.time() - start_time)
 
             elif self.configdata['dss_strategy']['type'] in ['Random-Warm']:

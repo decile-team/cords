@@ -6,6 +6,7 @@ import yaml
 import importlib.util
 import copy
 import os
+from dotmap import DotMap
 
 
 def is_str(x):
@@ -67,4 +68,4 @@ def load_config_data(filepath):
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
         configdata = copy.deepcopy(mod.config)
-    return configdata
+    return DotMap(configdata)
