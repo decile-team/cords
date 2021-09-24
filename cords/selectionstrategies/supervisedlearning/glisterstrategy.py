@@ -221,7 +221,7 @@ class GLISTERStrategy(DataSelectionStrategy):
             Element that need to be added to the gradients
         """
         # if isinstance(element, list):
-        grads += (self.grads_per_elem[element].sum(dim=0))/(self.N_trn)
+        grads += (self.grads_per_elem[element].sum(dim=0)) 
 
     def greedy_algo(self, budget):
         greedySet = list()
