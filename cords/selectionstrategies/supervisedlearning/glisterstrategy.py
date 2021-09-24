@@ -223,13 +223,13 @@ class GLISTERStrategy(DataSelectionStrategy):
         # if isinstance(element, list):
         grads += (self.grads_per_elem[element].sum(dim=0))/(self.N_trn)
 
-    def greedy(self, budget):
+    def greedy_algo(self, budget):
         greedySet = list()
         N = self.grads_per_elem.shape[0]
         remainSet = list(range(N))
         t_ng_start = time.time()  # naive greedy start time
         numSelected = 0
-        if self.selection_type == 'RGreedy':
+        if self.greedy == 'RGreedy':
             # subset_size = int((len(self.grads_per_elem) / r))
             selection_size = int(budget / self.r)
             while (numSelected < budget):
@@ -251,7 +251,7 @@ class GLISTERStrategy(DataSelectionStrategy):
             print("R greedy GLISTER total time:", time.time() - t_ng_start)
 
         # Stochastic Greedy Selection Algorithm
-        elif self.selection_type == 'Stochastic':
+        elif self.greedy == 'Stochastic':
             subset_size = int((len(self.grads_per_elem) / budget) * math.log(100))
             while (numSelected < budget):
                 # Try Using a List comprehension here!
@@ -273,7 +273,7 @@ class GLISTERStrategy(DataSelectionStrategy):
                 self._update_grads_val(grads_curr)
             print("Stochastic Greedy GLISTER total time:", time.time() - t_ng_start)
 
-        elif self.selection_type == 'Naive':
+        elif self.greedy == 'Naive':
             while (numSelected < budget):
                 # Try Using a List comprehension here!
                 rem_grads = self.grads_per_elem[remainSet]
@@ -331,7 +331,7 @@ class GLISTERStrategy(DataSelectionStrategy):
                                                 shuffle=False, pin_memory=True)
                 self.compute_gradients(perClass=True)
                 self._update_grads_val(first_init=True, perClass=True)
-                idxs_temp, gammas_temp = self.greedy(math.ceil(budget * len(trn_subset_idx) / self.N_trn))
+                idxs_temp, gammas_temp = self.greedy_algo(math.ceil(budget * len(trn_subset_idx) / self.N_trn))
                 idxs.extend(list(np.array(trn_subset_idx)[idxs_temp]))
                 gammas.extend(gammas_temp)
         elif self.selection_type == 'PerBatch':
@@ -339,7 +339,7 @@ class GLISTERStrategy(DataSelectionStrategy):
             gammas = []
             self.compute_gradients(perBatch=True)
             self._update_grads_val(first_init=True, perBatch=True)
-            idxs_temp, gammas_temp = self.greedy(math.ceil(budget/self.trainloader.batch_size))
+            idxs_temp, gammas_temp = self.greedy_algo(math.ceil(budget/self.trainloader.batch_size))
             batch_wise_indices = list(self.trainloader.batch_sampler)
             for i in range(len(idxs_temp)):
                 tmp = batch_wise_indices[idxs_temp[i]]
@@ -350,7 +350,7 @@ class GLISTERStrategy(DataSelectionStrategy):
             gammas = []
             self.compute_gradients()
             self._update_grads_val(first_init=True)
-            idxs, gammas = self.greedy(budget)
+            idxs, gammas = self.greedy_algo(budget)
             batch_wise_indices = list(self.trainloader.batch_sampler)
         glister_end_time = time.time()
         print("GLISTER algorithm Subset Selection time is: ", glister_end_time - glister_start_time)
