@@ -1300,5 +1300,10 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
             train, valid, test, _, n_classes = pickle.load(handle)
         return train, valid, test, n_classes
 
+    elif dset_name == "ag_news":
+        with open("data/ag_news.pickle", "rb") as handle:
+            train, valid, test, _, n_classes = pickle.load(handle)
+        return train, valid, test, n_classes
+
     else:
         raise Exception("Dataset %s does not exist. " % dset_name)

@@ -4,11 +4,15 @@
 start=$(date +%s)
 log_path="./scripts/BATCH_PROCESS_$start"
 echo "Strating batch $start... "
-script_path="./scripts/run_tabular.py"
+script_path="./scripts/run_tabular_dataloader.py"
 dataset="airline"
 mkdir -p $log_path
 datasets=("airline" "loan" "olympic")
-strategies=("glister" "random-ol" "full" "random" "facloc" "graphcut" "sumredun" "satcov" "CRAIG")
+#strategies=("glister" "random-ol" "full" "random" "facloc" "graphcut" "sumredun" "satcov" "CRAIG")
+#strategies=("glister" "gradmatch" "random-ol" "full" "random" "facloc" "graphcut" "sumredun" "satcov" "CRAIG")
+strategies=("gradmatch")
+#strategies=("glister" "random-ol")
+#device="cuda"
 device="cpu"
 
 pid=()

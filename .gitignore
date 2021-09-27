@@ -7,10 +7,13 @@ dist
 __pycache__
 /results/
 _ARCHIVE
-RESULTS
+_CHECK_SCRIPTS/results
 BATCH_PROCESS_*
 PLOTS_*
 venv
 *.pickle
 .DS_Store
 _CHECK_SCRIPTS
+.ipynb_checkpoints
+_CACHED_RESULTS
+_CACHED_SCRIPTS

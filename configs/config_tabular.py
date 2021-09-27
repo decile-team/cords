@@ -11,11 +11,20 @@ config = dict(setting="supervisedlearning",
                               batch_size=20,
                               pin_memory=True),
 
-              model=dict(architecture='TwoLayerNet',
+              # model=dict(architecture='TwoLayerNet',
+              #            type='pre-defined',
+              #            input_dim=499,
+              #            numclasses=2,
+              #            hidden_units=200
+              #            ),
+
+              model=dict(architecture='FourLayerNet',
                          type='pre-defined',
                          input_dim=499,
                          numclasses=2,
-                         hidden_units=200
+                         hidden_units1=64,
+                         hidden_units2=128,
+                         hidden_units3=64,
                          ),
 
               ckpt=dict(is_load=False,
@@ -41,7 +50,7 @@ config = dict(setting="supervisedlearning",
                                 select_every=20,
                                 kappa=0.6),
 
-              train_args=dict(num_epochs=200,
+              train_args=dict(num_epochs=100,
                               device="cuda:0",
                               # print_every=10,
                               print_every=1,

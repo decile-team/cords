@@ -3,7 +3,7 @@
 import sys
 
 from cords.utils.models.embedding_bag import EmbeddingBagModel
-from cords.utils.models.lstm import LSTMModel
+from cords.utils.models.embedding_lstm import LSTMModel
 
 sys.path.append("../")
 sys.path.append("./")
@@ -20,9 +20,15 @@ filepaths = {"corona": "data/corona.pickle",
              "news": "data/news.pickle",
              "twitter": "data/twitter.pickle"}
 
-_adaptive_methods = ["glister", "random-ol"]
+# _adaptive_methods = ["glister", "random-ol"]
+_adaptive_methods = ["glister", "random-ol",
+                     "F-glister", "R-glister", "D-glister", "glister-warm",
+                     "grad-match", "grad-match-pb", "grad-match-warm"]
 _nonadaptive_methods = ["full", "random", "facloc", "graphcut", "sumredun", "satcov", "CRAIG"]
 # _nonadaptive_methods = ["random", "facloc", "graphcut", "sumredun", "satcov", "CRAIG"]
+_other_methods = ["0.1random-ol", "0.3random-ol", "0.5random-ol", "0.1random", "0.3random", "0.5random"]
+_dss_strategy_options = _adaptive_methods + _nonadaptive_methods + _other_methods
+
 _nlp_models = ["LSTM", "bag"]
 
 parser = argparse.ArgumentParser()
@@ -33,10 +39,10 @@ parser.add_argument("--dataset", type=str, choices=list(filepaths.keys()))
 parser.add_argument("--model", type=str, default="LSTM", choices=_nlp_models)
 
 # Model arguments
-parser.add_argument("--hidden_units", type=int, default=64)
+parser.add_argument("--hidden_units", type=int, default=128)
 parser.add_argument("--num_layers", type=int, default=1)
 parser.add_argument("--batch_size", type=int, default=128)
-parser.add_argument("--embed_dim", type=int, default=16)
+parser.add_argument("--embed_dim", type=int, default=64)
 
 # Training arguments
 parser.add_argument("--n_epochs", type=int, default=80)
@@ -46,7 +52,7 @@ parser.add_argument("--weight_decay", type=float, default=5e-4)
 parser.add_argument("--report_every_batch", type=int, default=50)
 
 # DSS type
-parser.add_argument("--dss_strategy", type=str, choices=_adaptive_methods + _nonadaptive_methods, default="full")
+parser.add_argument("--dss_strategy", type=str, choices=_dss_strategy_options, default="full")
 
 # DSS arguments
 parser.add_argument("--select_ratio", type=float, default=0.2)
@@ -54,8 +60,10 @@ parser.add_argument("--select_every", type=int, default=10)
 parser.add_argument("--device", type=str)
 parser.add_argument("--r_ratio", type=float, default=1)
 
+# Approximator based DSS argument
+parser.add_argument("--linear_layer", type=bool, default=True)
+
 # CRAIG argument
-parser.add_argument("--linear_layer", type=bool, default=False)
 parser.add_argument("--if_convex", type=bool, default=False)
 parser.add_argument("--selection_type", type=str, default="PerClass")
 parser.add_argument("--optimizer", type=str, default="lazy")
@@ -65,6 +73,8 @@ if args.dss_strategy in _adaptive_methods:
     args.is_adaptive = True
 elif args.dss_strategy in _nonadaptive_methods:
     args.is_adaptive = False
+elif args.dss_strategy in _dss_strategy_options:
+    args.is_adaptive = True
 else:
     raise Exception("DSS strategy %s does not exist. " % args.dss_strategy)
 
@@ -82,7 +92,7 @@ def validate(model, queue):
             _valid_loss += criterion(_logits, y).sum().item()
             _valid_tot += X.size(0)
             _valid_correct += _y.eq(y).sum().item()
-
+            # import pdb; pdb.set_trace()
             if i_batch % args.report_every_batch == 0:
                 print(
                     "Epoch: %s, validation batch: %s, loss: %10.5f, accuracy: %10.5f. " % (
@@ -97,6 +107,12 @@ if __name__ == "__main__":
 
     with open(filepath, 'rb') as handle:
         train, valid, test, vocab_size, n_classes = pickle.load(handle)
+    # import pdb; pdb.set_trace()
+    # print("----------------------------------------")
+    # print("train.shape: %s" % train.shape)
+    # print("valid.shape: %s" % valid.shape)
+    # print("test.shape: %s" % test.shape)
+    # print("----------------------------------------")
     print("vocab_size: %s, n_classes: %s. " % (vocab_size, n_classes))
     n_train, n_valid, n_test = len(train), len(valid), len(test)
     n_epochs, batch_size = args.n_epochs, args.batch_size
@@ -119,6 +135,7 @@ if __name__ == "__main__":
     # DSS dataloader
     if args.dss_strategy == "full":
         dss_train_queue = train_queue
+    # Adaptive methods
     elif args.dss_strategy == "glister":
         dss_train_queue = GLISTERDataLoader(train_queue, valid_queue, budget=budget, select_every=args.select_every,
                                             model=model, loss=criterion_nored, eta=lr, device=args.device,
@@ -128,6 +145,31 @@ if __name__ == "__main__":
         dss_train_queue = OnlineRandomDataLoader(train_queue, valid_queue, budget=budget,
                                                  select_every=args.select_every, model=model, loss=criterion_nored,
                                                  device=args.device, batch_size=args.batch_size, verbose=True)
+    elif args.dss_strategy == "glister-warm":
+        dss_train_queue = GLISTERDataLoader(train_queue, valid_queue, budget=budget,
+                                                 select_every=args.select_every, model=model, loss=criterion_nored,
+                                                 device=args.device, batch_size=args.batch_size, verbose=True)
+    elif args.dss_strategy == "grad-match":
+        dss_train_queue = None
+    elif args.dss_strategy == "grad-match-pb":
+        dss_train_queue = None
+    elif args.dss_strategy == "grad-match-warm":
+        dss_train_queue = None
+    # "F-glister", "R-glister", "D-glister", "glister-warm",
+    # "grad-match", "grad-match-pb", "grad-match-warm"
+    elif args.dss_strategy == "0.1random-ol":
+        dss_train_queue = OnlineRandomDataLoader(train_queue, valid_queue, budget=int(0.1 * n_train),
+                                                 select_every=args.select_every, model=model, loss=criterion_nored,
+                                                 device=args.device, batch_size=args.batch_size, verbose=True)
+    elif args.dss_strategy == "0.3random-ol":
+        dss_train_queue = OnlineRandomDataLoader(train_queue, valid_queue, budget=int(0.3 * n_train),
+                                                 select_every=args.select_every, model=model, loss=criterion_nored,
+                                                 device=args.device, batch_size=args.batch_size, verbose=True)
+    elif args.dss_strategy == "0.5random-ol":
+        dss_train_queue = OnlineRandomDataLoader(train_queue, valid_queue, budget=int(0.5 * n_train),
+                                                 select_every=args.select_every, model=model, loss=criterion_nored,
+                                                 device=args.device, batch_size=args.batch_size, verbose=True)
+    # Non-adaptive methods
     elif args.dss_strategy == "random":
         dss_train_queue = RandomDataLoader(train_queue, valid_queue, budget=budget, model=model, loss=criterion_nored,
                                            device=args.device, batch_size=args.batch_size, verbose=True)
@@ -150,6 +192,18 @@ if __name__ == "__main__":
                                           device=args.device, num_cls=n_classes, linear_layer=args.linear_layer,
                                           if_convex=args.if_convex, selection_type=args.selection_type,
                                           optimizer=args.optimizer, batch_size=batch_size, verbose=True)
+    elif args.dss_strategy == "0.1random":
+        dss_train_queue = RandomDataLoader(train_queue, valid_queue, budget=int(0.1 * n_train), model=model,
+                                           loss=criterion_nored,
+                                           device=args.device, batch_size=args.batch_size, verbose=True)
+    elif args.dss_strategy == "0.3random":
+        dss_train_queue = RandomDataLoader(train_queue, valid_queue, budget=int(0.3 * n_train), model=model,
+                                           loss=criterion_nored,
+                                           device=args.device, batch_size=args.batch_size, verbose=True)
+    elif args.dss_strategy == "0.5random":
+        dss_train_queue = RandomDataLoader(train_queue, valid_queue, budget=int(0.5 * n_train), model=model,
+                                           loss=criterion_nored,
+                                           device=args.device, batch_size=args.batch_size, verbose=True)
     else:
         raise Exception("Strategy %s does not exist. " % args.dss_strategy)
 
@@ -167,6 +221,7 @@ if __name__ == "__main__":
             # Optimize step
             optimizer.zero_grad()
             _loss.backward()
+            # import pdb; pdb.set_trace()
             optimizer.step()
             # Record metrics
             _train_loss += _loss.item()

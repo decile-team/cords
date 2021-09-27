@@ -45,7 +45,7 @@ class AdaptiveDSSDataLoader(DSSDataLoader):
         self.cur_epoch += 1
         return loader.__iter__()
 
-    def set_warm(self, select_after, n_full_epoch):
+    def set_warm_(self, select_after, n_full_epoch):
         if self.initialized:
             raise Exception('DataLoader already Initialized. ')
         else:
@@ -100,8 +100,10 @@ class OMPGradMatchDataLoader(AdaptiveDSSDataLoader):
         super(OMPGradMatchDataLoader, self).__init__(train_loader, val_loader, budget, select_every, model, loss,
                                                      device,
                                                      verbose=verbose, *args, **kwargs)
+        # self.strategy = OMPGradMatchStrategy(train_loader, val_loader, copy.deepcopy(model), loss, eta, device,
+        #                                      num_cls, linear_layer, selection_type, valid, lam, eps, verbose=verbose)
         self.strategy = OMPGradMatchStrategy(train_loader, val_loader, copy.deepcopy(model), loss, eta, device,
-                                             num_cls, linear_layer, selection_type, valid, lam, eps, verbose=verbose)
+                                             num_cls, linear_layer, selection_type, valid, lam, eps)
         self.gamma = torch.ones(len(self.subset_loader.dataset)).to(device)
         self.train_model = model
         self.eta = eta

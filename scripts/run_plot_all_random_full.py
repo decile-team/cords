@@ -41,6 +41,9 @@ if __name__ == '__main__':
 
         training_args = vars(save_dict[_metrics_first_k])
 
+        if training_args["dss_strategy"] == "full":
+            training_args["is_adaptive"] = True
+
         _first_k_obj = {_k: _v for (_k, _v) in training_args.items() if _k != _metrics_second_k}
         _first_k = json.dumps(_first_k_obj,
                               sort_keys=True, indent=4)
@@ -83,19 +86,17 @@ if __name__ == '__main__':
                     continue
                 print(_second_k)
                 labels.append(_second_k)
-                x_list.append(exp_metrics[_first_k][_second_k][_x_metric][:100])
-                y_list.append(exp_metrics[_first_k][_second_k][_y_metric][:100])
+                x_list.append(exp_metrics[_first_k][_second_k][_x_metric])
+                y_list.append(exp_metrics[_first_k][_second_k][_y_metric])
             # Disable avg_metric it for the time
             # note_obj = {"args": _first_k_obj, "avg_metric": avg_metric[_first_k]}
             note_obj = {"args": _first_k_obj}
             # plot(x_list, y_list, labels=labels, xlabel=_x_metric, ylabel=_y_metric,
             #      note=json.dumps(note_obj, sort_keys=True, indent=4), legend=True)
             # filename = "%s_%s_%s_%s_%s.png" % (_first_k_obj["dataset"], _x_metric, _y_metric,
-            #                                    "adaptive: %s" % _first_k_obj["is_adaptive"],
-            #                                    _first_k_obj["model"])
-            filename = "%s_%s_%s_%s_%s_%s.png" % (_first_k_obj["dataset"], _x_metric, _y_metric,
-                                               "adaptive: %s" % _first_k_obj["is_adaptive"],
-                                               _first_k_obj["model"], _first_k_obj["select_ratio"])
+            #                                                     "adaptive: %s" % _first_k_obj["is_adaptive"],
+            #                                                     _first_k_obj["model"])
+            filename = "%s_%s_%s_%s.png" % (_first_k_obj["dataset"], _x_metric, _y_metric, _first_k_obj["model"])
             plot(x_list, y_list, labels=labels, xlabel=_x_metric, ylabel=_y_metric,
                  note=json.dumps(note_obj, sort_keys=True, indent=4), legend=True,
                  save_path=os.path.join(save_path, filename))

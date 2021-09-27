@@ -33,7 +33,7 @@ def plot(x_list, y_list, labels=None, title=None, xlabel=None, ylabel=None, note
     if ylabel:
         ax.set_ylabel(ylabel)
     if title:
-        ax.title(title)
+        ax.set_title(title)
     if note:
         props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
         note_ax.set_axis_off()

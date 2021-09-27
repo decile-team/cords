@@ -197,6 +197,7 @@ class DataSelectionStrategy(object):
                             batch_l1_grads = batch_l1_grads.mean(dim=0).view(1, -1)
                     l0_grads = torch.cat((l0_grads, batch_l0_grads), dim=0)
                     if self.linear_layer:
+                        # import pdb; pdb.set_trace()
                         l1_grads = torch.cat((l1_grads, batch_l1_grads), dim=0)
             torch.cuda.empty_cache()
             if self.linear_layer:

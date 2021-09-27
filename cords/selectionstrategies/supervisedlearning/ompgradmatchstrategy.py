@@ -194,11 +194,20 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
             gammas.extend([1 for _ in range(diff)])
             idxs = np.array(idxs)
             gammas = np.array(gammas)
-    
+
         if self.selection_type in ["PerClass", "PerClassPerGradient"]:
             rand_indices = np.random.permutation(len(idxs))
             idxs = list(np.array(idxs)[rand_indices])
             gammas = list(np.array(gammas)[rand_indices])
-    
+
         print("OMP algorithm Subset Selection time is: ", omp_end_time - omp_start_time)
+        from collections import Counter;
+        # print(Counter([self.trainloader.dataset[idx][1] for idx in list(idxs)]))
+        print("Selected subset: ")
+        print(Counter([self.trainloader.dataset[idx][1] for idx in list(idxs)]))
+        print("Train set: ")
+        print(Counter([self.trainloader.dataset[idx][1] for idx in range(len(self.trainloader.dataset))]))
+        print("Validation set: ")
+        print(Counter([self.valloader.dataset[idx][1] for idx in range(len(self.valloader.dataset))]))
+
         return idxs, gammas

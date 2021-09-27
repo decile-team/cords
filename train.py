@@ -11,8 +11,11 @@ from cords.utils.custom_dataset import load_dataset_custom
 from torch.utils.data import Subset
 from cords.utils.config_utils import load_config_data
 import os.path as osp
-from cords.selectionstrategies.supervisedlearning import OMPGradMatchStrategy, GLISTERStrategy, RandomStrategy, CRAIGStrategy
+from cords.selectionstrategies.supervisedlearning import OMPGradMatchStrategy, GLISTERStrategy, RandomStrategy, \
+    CRAIGStrategy
 from ray import tune
+
+from cords.utils.models.simpleNN_net import FourLayerNet
 
 
 class TrainClassifier:
@@ -28,11 +31,13 @@ class TrainClassifier:
     """
     Loss Evaluation
     """
-    def model_eval_loss(self,data_loader, model, criterion):
+
+    def model_eval_loss(self, data_loader, model, criterion):
         total_loss = 0
         with torch.no_grad():
             for batch_idx, (inputs, targets) in enumerate(data_loader):
-                inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(self.configdata['train_args']['device'], non_blocking=True)
+                inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(
+                    self.configdata['train_args']['device'], non_blocking=True)
                 outputs = model(inputs)
                 loss = criterion(outputs, targets)
                 total_loss += loss.item()
@@ -41,6 +46,7 @@ class TrainClassifier:
     """
     #Model Creation
     """
+
     def create_model(self):
 
         if self.configdata['model']['architecture'] == 'ResNet18':
@@ -60,19 +66,36 @@ class TrainClassifier:
             num_classes = self.configdata["model"]["numclasses"]
             hidden_units = self.configdata["model"]["hidden_units"]
             model = TwoLayerNet(input_dim, num_classes, hidden_units)
+        elif self.configdata['model']['architecture'] == 'FourLayerNet':
+            input_dim = self.configdata["model"]["input_dim"]
+            num_classes = self.configdata["model"]["numclasses"]
+            h1 = self.configdata["model"]["hidden_units1"]
+            h2 = self.configdata["model"]["hidden_units2"]
+            h3 = self.configdata["model"]["hidden_units3"]
+            # model = FourLayerNet(input_dim, num_classes, hidden_units)
+            model = FourLayerNet(input_dim, num_classes, h1, h2, h3)
         elif self.configdata['model']['architecture'] == 'LSTM':
-            vocab_size = self.configdata["model"]["vocab_size"]
+            # vocab_size = self.configdata["model"]["vocab_size"]
+            vocab_size = self.configdata["model"]["input_dim"]
             hidden_units = self.configdata["model"]["hidden_units"]
             num_layers = self.configdata["model"]["num_layers"]
             embed_dim = self.configdata["model"]["embed_dim"]
             num_classes = self.configdata["model"]["numclasses"]
-            model = LSTMModel(vocab_size, hidden_units, num_layers, embed_dim, num_classes)
+            # dataset_embedding = {"twitter": "glove_twitter_100", "corona": "glove_twitter_100", "news": "glove.6B.300d"}
+            # dataset_embedding = {"twitter": "glove_twitter_200", "corona": "glove_twitter_200", "news": "glove.6B.300d"}
+            # dataset_embedding = {"twitter": "glove_twitter_200", "corona": "glove_twitter_200", "news": "glove.6B.300d"}
+            dataset_embedding = {"twitter": "glove_twitter_200", "corona": "glove_twitter_200",
+                                 "news": "glove.6B.300d", "ag_news": "glove.6B.200d"}
+            model = LSTMModel(vocab_size, hidden_units, num_layers, embed_dim, num_classes,
+                              pretrained_embedding=dataset_embedding[self.configdata['dataset']['name']],
+                              dataset=self.configdata['dataset']['name'])
         else:
             raise Exception("model %s does not exist. " % self.configdata['model']['architecture'])
         model = model.to(self.configdata['train_args']['device'])
         return model
 
     """#Loss Type, Optimizer and Learning Rate Scheduler"""
+
     def loss_function(self):
         if self.configdata['loss']['type'] == "CrossEntropyLoss":
             criterion = nn.CrossEntropyLoss()
@@ -82,15 +105,20 @@ class TrainClassifier:
     def optimizer_with_scheduler(self, model):
 
         if self.configdata['optimizer']['type'] == 'sgd':
+            # optimizer = optim.SGD(model.parameters(), lr=self.configdata['optimizer']['lr'],
+            #                       momentum=self.configdata['optimizer']['momentum'],
+            #                       weight_decay=self.configdata['optimizer']['weight_decay'])
             optimizer = optim.SGD(model.parameters(), lr=self.configdata['optimizer']['lr'],
-                                  momentum=self.configdata['optimizer']['momentum'], weight_decay=self.configdata['optimizer']['weight_decay'])
+                                  momentum=self.configdata['optimizer']['momentum'],
+                                  weight_decay=self.configdata['optimizer']['weight_decay'], nesterov=True)
         elif self.configdata['optimizer']['type'] == "adam":
             optimizer = optim.Adam(model.parameters(), lr=self.configdata['optimizer']['lr'])
         elif self.configdata['optimizer']['type'] == "rmsprop":
             optimizer = optim.RMSprop(model.parameters(), lr=self.configdata['optimizer']['lr'])
 
         if self.configdata['scheduler']['type'] == 'cosine_annealing':
-            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.configdata['scheduler']['T_max'])
+            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,
+                                                                   T_max=self.configdata['scheduler']['T_max'])
         elif self.configdata['scheduler']['type'] == 'step':
             scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=self.configdata['scheduler']['step_size'])
         else:
@@ -105,7 +133,6 @@ class TrainClassifier:
             mod_cum_timing[i] = tmp
         return mod_cum_timing / 3600
 
-
     def save_ckpt(self, state, ckpt_path):
         torch.save(state, ckpt_path)
 
@@ -118,7 +145,6 @@ class TrainClassifier:
         metrics = checkpoint['metrics']
         return start_epoch, model, optimizer, loss, metrics
 
-
     def train(self):
         """
         #General Training Loop with Data Selection Strategies
@@ -126,16 +152,32 @@ class TrainClassifier:
         # Loading the Dataset
         # breakpoint()
         if self.configdata['dataset']['feature'] == 'classimb':
-            trainset, validset, testset, num_cls = load_dataset_custom(self.configdata['dataset']['datadir'], self.configdata['dataset']['name'], self.configdata['dataset']['feature'], classimb_ratio=self.configdata['dataset']['classimb_ratio'])
+            trainset, validset, testset, num_cls = load_dataset_custom(self.configdata['dataset']['datadir'],
+                                                                       self.configdata['dataset']['name'],
+                                                                       self.configdata['dataset']['feature'],
+                                                                       classimb_ratio=self.configdata['dataset'][
+                                                                           'classimb_ratio'])
         else:
             trainset, validset, testset, num_cls = load_dataset_custom(self.configdata['dataset']['datadir'],
                                                                        self.configdata['dataset']['name'],
                                                                        self.configdata['dataset']['feature'])
 
         N = len(trainset)
-        trn_batch_size = 20
+        # print("--------------------------------------------------------")
+        # print(N)
+        # print("--------------------------------------------------------")
+        # trn_batch_size = 20
+        # trn_batch_size = 128
+        trn_batch_size = self.configdata["dataloader"]["batch_size"]
+
         val_batch_size = 1000
         tst_batch_size = 1000
+
+        train_start_time = round(time.time())
+
+        # print("--------------------------------------------------------")
+        print("trn_batch_size: %s. " % trn_batch_size)
+        # print("--------------------------------------------------------")
 
         # Creating the Data Loaders
         trainloader = torch.utils.data.DataLoader(trainset, batch_size=trn_batch_size,
@@ -162,39 +204,46 @@ class TrainClassifier:
 
         # Variables to store accuracies
         gammas = torch.ones(len(idxs)).to(self.configdata['train_args']['device'])
-        substrn_losses = list() #np.zeros(configdata['train_args']['num_epochs'])
+        substrn_losses = list()  # np.zeros(configdata['train_args']['num_epochs'])
         trn_losses = list()
-        val_losses = list() #np.zeros(configdata['train_args']['num_epochs'])
+        val_losses = list()  # np.zeros(configdata['train_args']['num_epochs'])
         tst_losses = list()
         subtrn_losses = list()
         timing = list()
         trn_acc = list()
-        val_acc = list() #np.zeros(configdata['train_args']['num_epochs'])
-        tst_acc = list() #np.zeros(configdata['train_args']['num_epochs'])
-        subtrn_acc = list() #np.zeros(configdata['train_args']['num_epochs'])
-
+        val_acc = list()  # np.zeros(configdata['train_args']['num_epochs'])
+        tst_acc = list()  # np.zeros(configdata['train_args']['num_epochs'])
+        subtrn_acc = list()  # np.zeros(configdata['train_args']['num_epochs'])
 
         # Results logging file
         print_every = self.configdata['train_args']['print_every']
         results_dir = osp.abspath(osp.expanduser(self.configdata['train_args']['results_dir']))
-        all_logs_dir = os.path.join(results_dir,self.configdata['dss_strategy']['type'], self.configdata['dataset']['name'], str(
-           self.configdata['dss_strategy']['fraction']), str(self.configdata['dss_strategy']['select_every']))
+        # all_logs_dir = os.path.join(results_dir, self.configdata['dss_strategy']['type'],
+        #                             self.configdata['dataset']['name'], str(
+        #         self.configdata['dss_strategy']['fraction']), str(self.configdata['dss_strategy']['select_every']))
+        all_logs_dir = os.path.join(results_dir, self.configdata['dss_strategy']['type'],
+                                    self.configdata['dataset']['name'], str(
+                self.configdata['dss_strategy']['fraction']), str(self.configdata['dss_strategy']['select_every']),
+                                    str(train_start_time))
 
         os.makedirs(all_logs_dir, exist_ok=True)
         path_logfile = os.path.join(all_logs_dir, self.configdata['dataset']['name'] + '.txt')
         logfile = open(path_logfile, 'w')
 
         checkpoint_dir = osp.abspath(osp.expanduser(self.configdata['ckpt']['dir']))
-        ckpt_dir = os.path.join(checkpoint_dir,self.configdata['dss_strategy']['type'], self.configdata['dataset']['name'], str(
-           self.configdata['dss_strategy']['fraction']), str(self.configdata['dss_strategy']['select_every']))
+        ckpt_dir = os.path.join(checkpoint_dir, self.configdata['dss_strategy']['type'],
+                                self.configdata['dataset']['name'], str(
+                self.configdata['dss_strategy']['fraction']), str(self.configdata['dss_strategy']['select_every']),
+                                str(train_start_time))
         checkpoint_path = os.path.join(ckpt_dir, 'model.pt')
         os.makedirs(ckpt_dir, exist_ok=True)
-
 
         # Model Creation
         model = self.create_model()
         model1 = self.create_model()
-        # print(model.linear1.weight.dtype)
+
+        n_params = sum(param.numel() for param in model.parameters() if param.requires_grad)
+        print("Training model: %s, number of parameters: %d" % (self.configdata['model']['architecture'], n_params))
 
         # Loss Functions
         criterion, criterion_nored = self.loss_function()
@@ -202,22 +251,41 @@ class TrainClassifier:
         # Getting the optimizer and scheduler
         optimizer, scheduler = self.optimizer_with_scheduler(model)
 
-
         if self.configdata['dss_strategy']['type'] == 'GradMatch':
             # OMPGradMatch Selection strategy
             setf_model = OMPGradMatchStrategy(trainloader, valloader, model1, criterion_nored,
-                                              self.configdata['optimizer']['lr'], self.configdata['train_args']['device'], num_cls, True, 'PerClassPerGradient',
-                                              valid=self.configdata['dss_strategy']['valid'], lam=self.configdata['dss_strategy']['lam'], eps=1e-100)
+                                              self.configdata['optimizer']['lr'],
+                                              self.configdata['train_args']['device'], num_cls, True,
+                                              'PerClassPerGradient',
+                                              valid=self.configdata['dss_strategy']['valid'],
+                                              lam=self.configdata['dss_strategy']['lam'], eps=1e-100)
         elif self.configdata['dss_strategy']['type'] == 'GradMatchPB':
             setf_model = OMPGradMatchStrategy(trainloader, valloader, model1, criterion_nored,
-                                              self.configdata['optimizer']['lr'], self.configdata['train_args']['device'], num_cls, True, 'PerBatch',
-                                              valid=self.configdata['dss_strategy']['valid'], lam=self.configdata['dss_strategy']['lam'], eps=1e-100)
+                                              self.configdata['optimizer']['lr'],
+                                              self.configdata['train_args']['device'], num_cls, True, 'PerBatch',
+                                              valid=self.configdata['dss_strategy']['valid'],
+                                              lam=self.configdata['dss_strategy']['lam'], eps=1e-100)
         elif self.configdata['dss_strategy']['type'] == 'GLISTER':
             # GLISTER Selection strategy
             setf_model = GLISTERStrategy(trainloader, valloader, model1, criterion_nored,
                                          self.configdata['optimizer']['lr'], self.configdata['train_args']['device'],
-                                         num_cls, True, 'Stochastic', r=int(bud))
-
+                                         num_cls, True, 'Supervised', 'Stochastic', r=int(bud))
+            # GLISTERStrategy(trainloader, valloader, model1, criterion_nored,
+            #                 self.configdata['optimizer']['lr'], self.configdata['train_args']['device'],
+            #                 num_cls, False, 'Supervised', 'Stochastic', r=int(bud))
+        # elif self.configdata['dss_strategy']['type'] == 'R-GLISTER':
+        #     # GLISTER Selection strategy
+        #     setf_model = GLISTERStrategy(trainloader, valloader, model1, criterion_nored,
+        #                                  self.configdata['optimizer']['lr'], self.configdata['train_args']['device'],
+        #                                  num_cls, True, 'RGreedy', r=int(self.configdata["dss_strategy"]["r"]))
+        elif self.configdata['dss_strategy']['type'] == 'GLISTERPB':
+            setf_model = GLISTERStrategy(trainloader, valloader, model1, criterion_nored,
+                                         self.configdata['optimizer']['lr'], self.configdata['train_args']['device'],
+                                         num_cls, True, 'Supervised', 'PerBatch', r=int(bud))
+        elif self.configdata['dss_strategy']['type'] == 'GLISTERPC':
+            setf_model = GLISTERStrategy(trainloader, valloader, model1, criterion_nored,
+                                         self.configdata['optimizer']['lr'], self.configdata['train_args']['device'],
+                                         num_cls, True, 'Supervised', 'PerClass', r=int(bud))
         elif self.configdata['dss_strategy']['type'] == 'CRAIG':
             # CRAIG Selection strategy
             setf_model = CRAIGStrategy(trainloader, valloader, model1, criterion_nored,
@@ -233,9 +301,10 @@ class TrainClassifier:
             setf_model = CRAIGStrategy(trainloader, valloader, model1, criterion_nored,
                                        self.configdata['train_args']['device'], num_cls, False, False, 'PerClass')
             # Random-Online Selection strategy
-            #rand_setf_model = RandomStrategy(trainloader, online=True)
+            # rand_setf_model = RandomStrategy(trainloader, online=True)
             if 'kappa' in self.configdata['dss_strategy']:
-                kappa_epochs = int(self.configdata['dss_strategy']['kappa'] * self.configdata['train_args']['num_epochs'])
+                kappa_epochs = int(
+                    self.configdata['dss_strategy']['kappa'] * self.configdata['train_args']['num_epochs'])
                 full_epochs = round(kappa_epochs * self.configdata['dss_strategy']['fraction'])
             else:
                 raise KeyError("Specify a kappa value in the config file")
@@ -245,9 +314,10 @@ class TrainClassifier:
             setf_model = CRAIGStrategy(trainloader, valloader, model1, criterion_nored,
                                        self.configdata['train_args']['device'], num_cls, False, False, 'PerBatch')
             # Random-Online Selection strategy
-            #rand_setf_model = RandomStrategy(trainloader, online=True)
+            # rand_setf_model = RandomStrategy(trainloader, online=True)
             if 'kappa' in self.configdata['dss_strategy']:
-                kappa_epochs = int(self.configdata['dss_strategy']['kappa'] * self.configdata['train_args']['num_epochs'])
+                kappa_epochs = int(
+                    self.configdata['dss_strategy']['kappa'] * self.configdata['train_args']['num_epochs'])
                 full_epochs = round(kappa_epochs * self.configdata['dss_strategy']['fraction'])
             else:
                 raise KeyError("Specify a kappa value in the config file")
@@ -266,9 +336,10 @@ class TrainClassifier:
                                          self.configdata['optimizer']['lr'], self.configdata['train_args']['device'],
                                          num_cls, False, 'Stochastic', r=int(bud))
             # Random-Online Selection strategy
-            #rand_setf_model = RandomStrategy(trainloader, online=True)
+            # rand_setf_model = RandomStrategy(trainloader, online=True)
             if 'kappa' in self.configdata['dss_strategy']:
-                kappa_epochs = int(self.configdata['dss_strategy']['kappa'] * self.configdata['train_args']['num_epochs'])
+                kappa_epochs = int(
+                    self.configdata['dss_strategy']['kappa'] * self.configdata['train_args']['num_epochs'])
                 full_epochs = round(kappa_epochs * self.configdata['dss_strategy']['fraction'])
             else:
                 raise KeyError("Specify a kappa value in the config file")
@@ -276,13 +347,16 @@ class TrainClassifier:
         elif self.configdata['dss_strategy']['type'] == 'GradMatch-Warm':
             # OMPGradMatch Selection strategy
             setf_model = OMPGradMatchStrategy(trainloader, valloader, model1, criterion_nored,
-                                              self.configdata['optimizer']['lr'], self.configdata['train_args']['device'],
-                                              num_cls, True, 'PerClassPerGradient', valid=self.configdata['dss_strategy']['valid'],
+                                              self.configdata['optimizer']['lr'],
+                                              self.configdata['train_args']['device'],
+                                              num_cls, True, 'PerClassPerGradient',
+                                              valid=self.configdata['dss_strategy']['valid'],
                                               lam=self.configdata['dss_strategy']['lam'], eps=1e-100)
             # Random-Online Selection strategy
-            #rand_setf_model = RandomStrategy(trainloader, online=True)
+            # rand_setf_model = RandomStrategy(trainloader, online=True)
             if 'kappa' in self.configdata['dss_strategy']:
-                kappa_epochs = int(self.configdata['dss_strategy']['kappa'] * self.configdata['train_args']['num_epochs'])
+                kappa_epochs = int(
+                    self.configdata['dss_strategy']['kappa'] * self.configdata['train_args']['num_epochs'])
                 full_epochs = round(kappa_epochs * self.configdata['dss_strategy']['fraction'])
             else:
                 raise KeyError("Specify a kappa value in the config file")
@@ -290,20 +364,23 @@ class TrainClassifier:
         elif self.configdata['dss_strategy']['type'] == 'GradMatchPB-Warm':
             # OMPGradMatch Selection strategy
             setf_model = OMPGradMatchStrategy(trainloader, valloader, model1, criterion_nored,
-                                              self.configdata['optimizer']['lr'], self.configdata['train_args']['device'],
+                                              self.configdata['optimizer']['lr'],
+                                              self.configdata['train_args']['device'],
                                               num_cls, True, 'PerBatch', valid=self.configdata['dss_strategy']['valid'],
                                               lam=self.configdata['dss_strategy']['lam'], eps=1e-100)
             # Random-Online Selection strategy
-            #rand_setf_model = RandomStrategy(trainloader, online=True)
+            # rand_setf_model = RandomStrategy(trainloader, online=True)
             if 'kappa' in self.configdata['dss_strategy']:
-                kappa_epochs = int(self.configdata['dss_strategy']['kappa'] * self.configdata['train_args']['num_epochs'])
+                kappa_epochs = int(
+                    self.configdata['dss_strategy']['kappa'] * self.configdata['train_args']['num_epochs'])
                 full_epochs = round(kappa_epochs * self.configdata['dss_strategy']['fraction'])
             else:
                 raise KeyError("Specify a kappa value in the config file")
 
         elif self.configdata['dss_strategy']['type'] == 'Random-Warm':
             if 'kappa' in self.configdata['dss_strategy']:
-                kappa_epochs = int(self.configdata['dss_strategy']['kappa'] * self.configdata['train_args']['num_epochs'])
+                kappa_epochs = int(
+                    self.configdata['dss_strategy']['kappa'] * self.configdata['train_args']['num_epochs'])
                 full_epochs = round(kappa_epochs * self.configdata['dss_strategy']['fraction'])
             else:
                 raise KeyError("Specify a kappa value in the config file")
@@ -335,7 +412,6 @@ class TrainClassifier:
         else:
             start_epoch = 0
 
-
         for epoch in range(start_epoch, self.configdata['train_args']['num_epochs']):
             subtrn_loss = 0
             subtrn_correct = 0
@@ -352,7 +428,8 @@ class TrainClassifier:
             elif self.configdata['dss_strategy']['type'] in ['Random']:
                 pass
 
-            elif (self.configdata['dss_strategy']['type'] in ['GLISTER', 'GradMatch', 'GradMatchPB', 'CRAIG', 'CRAIGPB']) and (
+            elif (self.configdata['dss_strategy']['type'] in ['GLISTER', 'GLISTERPB', 'GradMatch',
+                                                              'GradMatchPB', 'CRAIG', 'CRAIGPB', 'R-GLISTER']) and (
                     ((epoch + 1) % self.configdata['dss_strategy']['select_every']) == 0):
                 start_time = time.time()
                 cached_state_dict = copy.deepcopy(model.state_dict())
@@ -361,11 +438,13 @@ class TrainClassifier:
                 model.load_state_dict(cached_state_dict)
                 idxs = subset_idxs
                 if self.configdata['dss_strategy']['type'] in ['GradMatch', 'GradMatchPB', 'CRAIG', 'CRAIGPB']:
-                    gammas = torch.from_numpy(np.array(gammas)).to(self.configdata['train_args']['device']).to(torch.float32)
+                    gammas = torch.from_numpy(np.array(gammas)).to(self.configdata['train_args']['device']).to(
+                        torch.float32)
                 subset_selection_time += (time.time() - start_time)
 
-            elif (self.configdata['dss_strategy']['type'] in ['GLISTER-Warm', 'GradMatch-Warm', 'GradMatchPB-Warm', 'CRAIG-Warm',
-                               'CRAIGPB-Warm']):
+            elif (self.configdata['dss_strategy']['type'] in ['GLISTER-Warm', 'Gch-Warm', 'GradMatchPB-Warm',
+                                                              'CRAIG-Warm',
+                                                              'CRAIGPB-Warm']):
                 start_time = time.time()
                 if ((epoch % self.configdata['dss_strategy']['select_every'] == 0) and (epoch >= kappa_epochs)):
                     cached_state_dict = copy.deepcopy(model.state_dict())
@@ -373,14 +452,16 @@ class TrainClassifier:
                     subset_idxs, gammas = setf_model.select(int(bud), clone_dict)
                     model.load_state_dict(cached_state_dict)
                     idxs = subset_idxs
-                    if self.configdata['dss_strategy']['type'] in ['GradMatch-Warm', 'GradMatchPB-Warm', 'CRAIG-Warm', 'CRAIGPB-Warm']:
-                        gammas = torch.from_numpy(np.array(gammas)).to(self.configdata['train_args']['device']).to(torch.float32)
+                    if self.configdata['dss_strategy']['type'] in ['GradMatch-Warm', 'GradMatchPB-Warm', 'CRAIG-Warm',
+                                                                   'CRAIGPB-Warm']:
+                        gammas = torch.from_numpy(np.array(gammas)).to(self.configdata['train_args']['device']).to(
+                            torch.float32)
                 subset_selection_time += (time.time() - start_time)
 
             elif self.configdata['dss_strategy']['type'] in ['Random-Warm']:
                 pass
 
-            #print("selEpoch: %d, Selection Ended at:" % (i), str(datetime.datetime.now()))
+            # print("selEpoch: %d, Selection Ended at:" % (i), str(datetime.datetime.now()))
             data_sub = Subset(trainset, idxs)
             # subset_labels = torch.tensor([data_sub[i][1] for i in range(len(data_sub))])
             # for i in range(self.configdata['model']['numclasses']):
@@ -390,18 +471,31 @@ class TrainClassifier:
                                                            pin_memory=True)
 
             model.train()
+            # print(model)
             batch_wise_indices = list(subset_trnloader.batch_sampler)
             if self.configdata['dss_strategy']['type'] in ['CRAIG', 'CRAIGPB', 'GradMatch', 'GradMatchPB']:
                 start_time = time.time()
                 total_targets = []
                 total_preds = []
                 for batch_idx, (inputs, targets) in enumerate(subset_trnloader):
-                    inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(self.configdata['train_args']['device'],
-                                                                                                   non_blocking=True)  # targets can have non_blocking=True.
+                    inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(
+                        self.configdata['train_args']['device'],
+                        non_blocking=True)  # targets can have non_blocking=True.
                     optimizer.zero_grad()
+                    if batch_idx % 1000 == 0:
+                        print(
+                            "batch_idx: %s, inputs.shape: %s, updating model parameters... " % (
+                                batch_idx, inputs.shape))
+                    # print("inputs.device: %s. " % inputs.device)
+                    # print("targets.device: %s. " % targets.device)
                     outputs = model(inputs)
                     losses = criterion_nored(outputs, targets)
-                    loss = torch.dot(losses, gammas[batch_wise_indices[batch_idx]]) / (gammas[batch_wise_indices[batch_idx]].sum())
+                    loss = torch.dot(losses, gammas[batch_wise_indices[batch_idx]]) / (
+                        gammas[batch_wise_indices[batch_idx]].sum())
+                    ########################################################
+                    # print(model)
+                    # print(loss)
+                    ########################################################
                     loss.backward()
                     subtrn_loss += loss.item()
                     optimizer.step()
@@ -410,12 +504,14 @@ class TrainClassifier:
                     subtrn_correct += predicted.eq(targets).sum().item()
                 train_time = time.time() - start_time
 
-            elif self.configdata['dss_strategy']['type'] in ['CRAIGPB-Warm', 'CRAIG-Warm', 'GradMatch-Warm', 'GradMatchPB-Warm']:
+            elif self.configdata['dss_strategy']['type'] in ['CRAIGPB-Warm', 'CRAIG-Warm', 'GradMatch-Warm',
+                                                             'GradMatchPB-Warm']:
                 start_time = time.time()
                 if epoch < full_epochs:
                     for batch_idx, (inputs, targets) in enumerate(trainloader):
-                        inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(self.configdata['train_args']['device'],
-                                                                                                       non_blocking=True)  # targets can have non_blocking=True.
+                        inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(
+                            self.configdata['train_args']['device'],
+                            non_blocking=True)  # targets can have non_blocking=True.
                         optimizer.zero_grad()
                         outputs = model(inputs)
                         loss = criterion(outputs, targets)
@@ -428,8 +524,9 @@ class TrainClassifier:
 
                 elif epoch >= kappa_epochs:
                     for batch_idx, (inputs, targets) in enumerate(subset_trnloader):
-                        inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(self.configdata['train_args']['device'],
-                                                                                                       non_blocking=True)  # targets can have non_blocking=True.
+                        inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(
+                            self.configdata['train_args']['device'],
+                            non_blocking=True)  # targets can have non_blocking=True.
                         optimizer.zero_grad()
                         outputs = model(inputs)
                         losses = criterion_nored(outputs, targets)
@@ -443,14 +540,21 @@ class TrainClassifier:
                         subtrn_correct += predicted.eq(targets).sum().item()
                 train_time = time.time() - start_time
 
-            elif self.configdata['dss_strategy']['type'] in ['GLISTER', 'Random', 'Random-Online']:
+            elif self.configdata['dss_strategy']['type'] in ['GLISTER', 'GLISTERPB', 'Random', 'Random-Online', 'R-GLISTER']:
                 start_time = time.time()
                 for batch_idx, (inputs, targets) in enumerate(subset_trnloader):
-                    inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(self.configdata['train_args']['device'],
-                                                                                                   non_blocking=True)  # targets can have non_blocking=True.
+                    inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(
+                        self.configdata['train_args']['device'],
+                        non_blocking=True)  # targets can have non_blocking=True.
                     optimizer.zero_grad()
                     outputs = model(inputs)
                     loss = criterion(outputs, targets)
+                    # if batch_idx % 1000 == 0:
+                    #     print(
+                    #         "batch_idx: %s, inputs.shape: %s, updating model parameters... " % (
+                    #         batch_idx, inputs.shape))
+                    #     # print("loss: %s" % loss)
+                    #     # print(model.linear1.weight)
                     loss.backward()
                     optimizer.step()
                     subtrn_loss += loss.item()
@@ -463,8 +567,9 @@ class TrainClassifier:
                 start_time = time.time()
                 if epoch < full_epochs:
                     for batch_idx, (inputs, targets) in enumerate(trainloader):
-                        inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(self.configdata['train_args']['device'],
-                                                                                                       non_blocking=True)  # targets can have non_blocking=True.
+                        inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(
+                            self.configdata['train_args']['device'],
+                            non_blocking=True)  # targets can have non_blocking=True.
                         optimizer.zero_grad()
                         # print(model.linear1.weight.dtype)
                         # print(inputs.dtype)
@@ -478,8 +583,9 @@ class TrainClassifier:
                         subtrn_correct += predicted.eq(targets).sum().item()
                 elif epoch >= kappa_epochs:
                     for batch_idx, (inputs, targets) in enumerate(subset_trnloader):
-                        inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(self.configdata['train_args']['device'],
-                                                                                                       non_blocking=True)  # targets can have non_blocking=True.
+                        inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(
+                            self.configdata['train_args']['device'],
+                            non_blocking=True)  # targets can have non_blocking=True.
                         optimizer.zero_grad()
                         outputs = model(inputs)
                         loss = criterion(outputs, targets)
@@ -494,26 +600,37 @@ class TrainClassifier:
             elif self.configdata['dss_strategy']['type'] in ['Full']:
                 start_time = time.time()
                 for batch_idx, (inputs, targets) in enumerate(trainloader):
-                    inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(self.configdata['train_args']['device'],
-                                                                                                   non_blocking=True)  # targets can have non_blocking=True.
+                    inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(
+                        self.configdata['train_args']['device'],
+                        non_blocking=True)  # targets can have non_blocking=True.
+                    # print('inputs.shape: %s, targets.shape: %s' % (inputs.shape, targets.shape))
                     optimizer.zero_grad()
                     outputs = model(inputs)
                     loss = criterion(outputs, targets)
                     loss.backward()
+                    # ########################################################
+                    # if batch_idx % 1 == 0:
+                    #     print("Training full... ")
+                    #     print(loss)
+                    #     print("Shape of input: ")
+                    #     print(inputs.shape)
+                    # ########################################################
                     subtrn_loss += loss.item()
                     optimizer.step()
                     _, predicted = outputs.max(1)
                     subtrn_total += targets.size(0)
                     subtrn_correct += predicted.eq(targets).sum().item()
                 train_time = time.time() - start_time
-            
+
             scheduler.step()
             timing.append(train_time + subset_selection_time)
-            print("adding timing, length: %s" % len(timing))
+            # print("Adding timing: %5.2f, train_time: %5.2f, subset_selection_time: %5.2f" %
+            #       (train_time + subset_selection_time, train_time, subset_selection_time))
+            # print("adding timing, length: %s" % len(timing))
             print_args = self.configdata['train_args']['print_args']
             # print("Epoch timing is: " + str(timing[-1]))
 
-            if ((epoch+1) % self.configdata['train_args']['print_every'] == 0):
+            if ((epoch + 1) % self.configdata['train_args']['print_every'] == 0):
                 trn_loss = 0
                 trn_correct = 0
                 trn_total = 0
@@ -529,7 +646,8 @@ class TrainClassifier:
                     with torch.no_grad():
                         for batch_idx, (inputs, targets) in enumerate(trainloader):
                             # print(batch_idx)
-                            inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(self.configdata['train_args']['device'], non_blocking=True)
+                            inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(
+                                self.configdata['train_args']['device'], non_blocking=True)
                             outputs = model(inputs)
                             loss = criterion(outputs, targets)
                             trn_loss += loss.item()
@@ -543,15 +661,17 @@ class TrainClassifier:
                         trn_acc.append(trn_correct / trn_total)
 
                 if (("val_loss" in print_args) or ("val_acc" in print_args)):
+                    # print("Validating!!!")
                     with torch.no_grad():
                         total_targets = []
                         total_preds = []
                         for batch_idx, (inputs, targets) in enumerate(valloader):
                             # print(batch_idx)
-                            inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(self.configdata['train_args']['device'], non_blocking=True)
+                            inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(
+                                self.configdata['train_args']['device'], non_blocking=True)
                             outputs = model(inputs)
                             loss = criterion(outputs, targets)
-                            val_loss += loss.item()    
+                            val_loss += loss.item()
                             if "val_acc" in print_args:
                                 _, predicted = outputs.max(1)
                                 val_total += targets.size(0)
@@ -559,6 +679,7 @@ class TrainClassifier:
                             total_targets.extend(targets.cpu().tolist())
                             total_preds.extend(predicted.cpu().tolist())
                         val_losses.append(val_loss)
+                        # print("val_losses: %s" % val_losses)
 
                     targets_array = np.array(total_targets)
                     preds_array = np.array(total_preds)
@@ -578,7 +699,8 @@ class TrainClassifier:
                         total_preds = []
                         for batch_idx, (inputs, targets) in enumerate(testloader):
                             # print(batch_idx)
-                            inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(self.configdata['train_args']['device'], non_blocking=True)
+                            inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(
+                                self.configdata['train_args']['device'], non_blocking=True)
                             outputs = model(inputs)
                             loss = criterion(outputs, targets)
                             tst_loss += loss.item()
@@ -590,7 +712,7 @@ class TrainClassifier:
                             total_preds.extend(predicted.cpu().tolist())
                         tst_losses.append(tst_loss)
                     if "tst_acc" in print_args:
-                        tst_acc.append(tst_correct/tst_total)
+                        tst_acc.append(tst_correct / tst_total)
 
                     # targets_array = np.array(total_targets)
                     # preds_array = np.array(total_preds)
@@ -606,7 +728,7 @@ class TrainClassifier:
                 if "subtrn_losses" in print_args:
                     subtrn_losses.append(subtrn_loss)
 
-                print_str = "Epoch: " + str(epoch+1)
+                print_str = "Epoch: " + str(epoch + 1)
 
                 for arg in print_args:
 
@@ -641,9 +763,12 @@ class TrainClassifier:
                 if 'report_tune' in self.configdata and self.configdata['report_tune']:
                     tune.report(mean_accuracy=val_acc[-1])
 
+                # breakpoint()
+                # import pdb; pdb.set_trace()
                 print(print_str)
 
-            if ((epoch+1) % self.configdata['ckpt']['save_every'] == 0) and self.configdata['ckpt']['is_save'] == True:
+            if ((epoch + 1) % self.configdata['ckpt']['save_every'] == 0) and self.configdata['ckpt'][
+                'is_save'] == True:
 
                 metric_dict = {}
 
@@ -668,17 +793,16 @@ class TrainClassifier:
                         metric_dict['time'] = timing
 
                 ckpt_state = {
-                    'epoch': epoch+1,
+                    'epoch': epoch + 1,
                     'state_dict': model.state_dict(),
                     'optimizer': optimizer.state_dict(),
                     'loss': self.loss_function(),
                     'metrics': metric_dict
                 }
 
-
                 # save checkpoint
                 self.save_ckpt(ckpt_state, checkpoint_path)
-                print("Model checkpoint saved at epoch " + str(epoch+1))
+                print("Model checkpoint saved at epoch " + str(epoch + 1))
 
         print(self.configdata['dss_strategy']['type'] + " Selection Run---------------------------------")
         print("Final SubsetTrn:", subtrn_loss)

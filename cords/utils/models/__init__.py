@@ -40,4 +40,4 @@ from .vgg import VGG
 from .resnet164 import ResNet164
 from .mobilenetv2tf import MobileNet2
 from .embedding_bag import EmbeddingBagModel
-from .lstm import LSTMModel
+from .embedding_lstm import LSTMModel

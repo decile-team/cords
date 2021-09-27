@@ -1,3 +1,4 @@
+# Run tabular data without dataloader
 # Please run this script at the root dir of cords
 
 import sys
@@ -18,7 +19,9 @@ filepaths = {"airline": "data/airline.pickle",
              "olympic": "data/olympic.pickle"}
 
 _adaptive_methods = ["glister", "random-ol"]
-_nonadaptive_methods = ["full", "random", "facloc", "graphcut", "sumredun", "satcov", "CRAIG"]
+_nonadaptive_methods = ["full", "random", "facloc", "graphcut", "sumredun", "satcov", "CRAIG", "gradmatch"]
+_other_methods = ["0.1random-ol", "0.3random-ol", "0.5random-ol", "0.1random", "0.3random", "0.5random"]
+_dss_strategy_options = _adaptive_methods + _nonadaptive_methods + _other_methods
 # _nonadaptive_methods = ["random", "facloc", "graphcut", "sumredun", "satcov", "CRAIG"]
 
 parser = argparse.ArgumentParser()
@@ -26,7 +29,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--dataset", type=str, choices=list(filepaths.keys()))
 
 # Model selection
-parser.add_argument("--model", type=str, default="TwoLayerNet", choices=["TwoLayerNet"])
+parser.add_argument("--model", type=str, default="FourLayerNet", choices=["TwoLayerNet", "FourLayerNet"])
 
 # Model arguments
 parser.add_argument("--hidden_units", type=int, default=128)
@@ -40,27 +43,43 @@ parser.add_argument("--weight_decay", type=float, default=5e-4)
 parser.add_argument("--report_every_batch", type=int, default=50)
 
 # DSS type
-parser.add_argument("--dss_strategy", type=str, choices=_adaptive_methods + _nonadaptive_methods, default="full")
+parser.add_argument("--dss_strategy", type=str, choices=_dss_strategy_options,
+                    default="full")
 
 # DSS arguments
 parser.add_argument("--select_ratio", type=float, default=0.2)
-parser.add_argument("--select_every", type=int, default=10)
+parser.add_argument("--select_every", type=int, default=5)
 parser.add_argument("--device", type=str)
 parser.add_argument("--r_ratio", type=float, default=1)
 
-# CRAIG argument
-parser.add_argument("--linear_layer", type=bool, default=False)
+# Approximator based DSS arguments
+parser.add_argument("--linear_layer", type=bool, default=True)
+
+# CRAIG arguments
 parser.add_argument("--if_convex", type=bool, default=False)
 parser.add_argument("--selection_type", type=str, default="PerClass")
 parser.add_argument("--optimizer", type=str, default="lazy")
+
+# Warm start arguments
+parser.add_argument("--kappa", type=int, default=0.6)
+
+# Grad-match arguments
+parser.add_argument("--lam", type=float, default=0.5)
+parser.add_argument("--eps", type=float, default=1e-100)
+parser.add_argument("--valid", type=bool, default=False)
 
 args = parser.parse_args()
 if args.dss_strategy in _adaptive_methods:
     args.is_adaptive = True
 elif args.dss_strategy in _nonadaptive_methods:
     args.is_adaptive = False
+elif args.dss_strategy in _dss_strategy_options:
+    args.is_adaptive = True
 else:
     raise Exception("DSS strategy %s does not exist. " % args.dss_strategy)
+
+args.kappa_epochs = int(args.kappa * args.n_epochs)
+args.full_epochs = round(args.kappa_epochs * args.select_ratio)
 
 criterion = nn.CrossEntropyLoss()
 criterion_nored = nn.CrossEntropyLoss(reduction="none")
@@ -97,7 +116,6 @@ if __name__ == "__main__":
     # print("Dataset size: %s" % len(n_train))
     valid_queue = DataLoader(valid, batch_size=args.batch_size, shuffle=False, pin_memory=True)
     test_queue = DataLoader(test, batch_size=args.batch_size, shuffle=False, pin_memory=True)
-    # model = TwoLayerNet(input_dim, n_classes, args.hidden_units).double()
     model = TwoLayerNet(input_dim, n_classes, args.hidden_units)
     model = model.to(args.device)
     lr, momentum, weight_decay = args.lr, args.momentum, args.weight_decay
@@ -111,8 +129,42 @@ if __name__ == "__main__":
     elif args.dss_strategy == "glister":
         dss_train_queue = GLISTERDataLoader(train_queue, valid_queue, budget=budget, select_every=args.select_every,
                                             model=model, loss=criterion_nored, eta=lr, device=args.device,
-                                            num_cls=n_classes, linear_layer=False, selection_type="Stochastic",
+                                            num_cls=n_classes, linear_layer=args.linear_layer,
+                                            selection_type="Stochastic",
                                             r=budget * args.r_ratio, batch_size=args.batch_size)
+    elif args.dss_strategy == "glister-warm":
+        dss_train_queue = GLISTERDataLoader(train_queue, valid_queue, budget=budget, select_every=args.select_every,
+                                            model=model, loss=criterion_nored, eta=lr, device=args.device,
+                                            num_cls=n_classes, linear_layer=args.linear_layer,
+                                            selection_type="Stochastic",
+                                            r=budget * args.r_ratio, batch_size=args.batch_size)
+        dss_train_queue.set_warm_(args.kappa_epochs, args.full_epochs)
+    elif args.dss_strategy == "gradmatch":
+        dss_train_queue = OMPGradMatchDataLoader(train_queue, valid_queue, budget=budget,
+                                                 select_every=args.select_every,
+                                                 model=model, loss=criterion_nored, eta=lr, device=args.device,
+                                                 num_cls=n_classes,
+                                                 linear_layer=args.linear_layer, selection_type="PerClassPerGradient",
+                                                 valid=args.valid,
+                                                 lam=args.lam, eps=args.eps, batch_size=args.batch_size)
+    elif args.dss_strategy == "gradmatch-warm":
+        dss_train_queue = OMPGradMatchDataLoader(train_queue, valid_queue, budget=budget,
+                                                 select_every=args.select_every,
+                                                 model=model, loss=criterion_nored, eta=lr, device=args.device,
+                                                 num_cls=n_classes,
+                                                 linear_layer=args.linear_layer, selection_type="PerClassPerGradient",
+                                                 valid=args.valid,
+                                                 lam=args.lam, eps=args.eps, batch_size=args.batch_size)
+        dss_train_queue.set_warm_(args.kappa_epochs, args.full_epochs)
+    elif args.dss_strategy == "gradmatch-pb":
+        dss_train_queue = OMPGradMatchDataLoader(train_queue, valid_queue, budget=budget,
+                                                 select_every=args.select_every,
+                                                 model=model, loss=criterion_nored, eta=lr, device=args.device,
+                                                 num_cls=n_classes,
+                                                 linear_layer=args.linear_layer, selection_type="PerBatch",
+                                                 valid=args.valid,
+                                                 lam=args.lam, eps=args.eps, batch_size=args.batch_size)
+        dss_train_queue.set_warm_(args.kappa_epochs, args.full_epochs)
     elif args.dss_strategy == "random-ol":
         dss_train_queue = OnlineRandomDataLoader(train_queue, valid_queue, budget=budget,
                                                  select_every=args.select_every, model=model, loss=criterion_nored,
@@ -139,6 +191,31 @@ if __name__ == "__main__":
                                           device=args.device, num_cls=n_classes, linear_layer=args.linear_layer,
                                           if_convex=args.if_convex, selection_type=args.selection_type,
                                           optimizer=args.optimizer, batch_size=batch_size, verbose=True)
+        # ("0.1random-ol" "0.3random-ol" "0.5random-ol" "0.1random" "0.3random" "0.5random")
+    elif args.dss_strategy == "0.1random-ol":
+        dss_train_queue = OnlineRandomDataLoader(train_queue, valid_queue, budget=int(0.1 * n_train),
+                                                 select_every=args.select_every, model=model, loss=criterion_nored,
+                                                 device=args.device, batch_size=args.batch_size, verbose=True)
+    elif args.dss_strategy == "0.3random-ol":
+        dss_train_queue = OnlineRandomDataLoader(train_queue, valid_queue, budget=int(0.3 * n_train),
+                                                 select_every=args.select_every, model=model, loss=criterion_nored,
+                                                 device=args.device, batch_size=args.batch_size, verbose=True)
+    elif args.dss_strategy == "0.5random-ol":
+        dss_train_queue = OnlineRandomDataLoader(train_queue, valid_queue, budget=int(0.5 * n_train),
+                                                 select_every=args.select_every, model=model, loss=criterion_nored,
+                                                 device=args.device, batch_size=args.batch_size, verbose=True)
+    elif args.dss_strategy == "0.1random":
+        dss_train_queue = RandomDataLoader(train_queue, valid_queue, budget=int(0.1 * n_train), model=model,
+                                           loss=criterion_nored,
+                                           device=args.device, batch_size=args.batch_size, verbose=True)
+    elif args.dss_strategy == "0.3random":
+        dss_train_queue = RandomDataLoader(train_queue, valid_queue, budget=int(0.3 * n_train), model=model,
+                                           loss=criterion_nored,
+                                           device=args.device, batch_size=args.batch_size, verbose=True)
+    elif args.dss_strategy == "0.5random":
+        dss_train_queue = RandomDataLoader(train_queue, valid_queue, budget=int(0.5 * n_train), model=model,
+                                           loss=criterion_nored,
+                                           device=args.device, batch_size=args.batch_size, verbose=True)
     else:
         raise Exception("Strategy %s does not exist. " % args.dss_strategy)
 
@@ -149,8 +226,6 @@ if __name__ == "__main__":
     for i_epoch in range(n_epochs):
         _train_loss, _train_tot, _train_correct = .0, 0, 0
         for i_batch, (X, y) in enumerate(dss_train_queue):
-            # print(X.dtype)
-            # print(model.linear1.weight.dtype)
             X, y = X.to(args.device), y.to(args.device)
             logits = model(X)
             _y = logits.argmax(1)
