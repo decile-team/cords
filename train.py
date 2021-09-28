@@ -222,8 +222,9 @@ class TrainClassifier:
         #                             self.configdata['dataset']['name'], str(
         #         self.configdata['dss_strategy']['fraction']), str(self.configdata['dss_strategy']['select_every']))
         all_logs_dir = os.path.join(results_dir, self.configdata['dss_strategy']['type'],
-                                    self.configdata['dataset']['name'], str(
-                self.configdata['dss_strategy']['fraction']), str(self.configdata['dss_strategy']['select_every']),
+                                    self.configdata['dataset']['name'],
+                                    str(self.configdata['dss_strategy']['fraction']),
+                                    str(self.configdata['dss_strategy']['select_every']),
                                     str(train_start_time))
 
         os.makedirs(all_logs_dir, exist_ok=True)
@@ -442,7 +443,7 @@ class TrainClassifier:
                         torch.float32)
                 subset_selection_time += (time.time() - start_time)
 
-            elif (self.configdata['dss_strategy']['type'] in ['GLISTER-Warm', 'Gch-Warm', 'GradMatchPB-Warm',
+            elif (self.configdata['dss_strategy']['type'] in ['GLISTER-Warm', 'GradMatch-Warm', 'GradMatchPB-Warm',
                                                               'CRAIG-Warm',
                                                               'CRAIGPB-Warm']):
                 start_time = time.time()
@@ -540,7 +541,8 @@ class TrainClassifier:
                         subtrn_correct += predicted.eq(targets).sum().item()
                 train_time = time.time() - start_time
 
-            elif self.configdata['dss_strategy']['type'] in ['GLISTER', 'GLISTERPB', 'Random', 'Random-Online', 'R-GLISTER']:
+            elif self.configdata['dss_strategy']['type'] in ['GLISTER', 'GLISTERPB', 'Random', 'Random-Online',
+                                                             'R-GLISTER']:
                 start_time = time.time()
                 for batch_idx, (inputs, targets) in enumerate(subset_trnloader):
                     inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(
@@ -801,6 +803,7 @@ class TrainClassifier:
                 }
 
                 # save checkpoint
+                print("Saving at: %s" % checkpoint_path)
                 self.save_ckpt(ckpt_state, checkpoint_path)
                 print("Model checkpoint saved at epoch " + str(epoch + 1))
 

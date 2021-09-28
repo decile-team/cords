@@ -35,6 +35,7 @@ if __name__ == '__main__':
         with open(save_file, 'rb') as handle:
             save_dict = pickle.load(handle)
 
+        print((save_dict["args"].select_ratio, save_dict["args"].dataset, save_dict["args"].dss_strategy))
         # print(f)
         # print(save_dict)
         # print("--------------------------------------------")
@@ -85,6 +86,8 @@ if __name__ == '__main__':
                 labels.append(_second_k)
                 x_list.append(exp_metrics[_first_k][_second_k][_x_metric][:100])
                 y_list.append(exp_metrics[_first_k][_second_k][_y_metric][:100])
+                # x_list.append(exp_metrics[_first_k][_second_k][_x_metric])
+                # y_list.append(exp_metrics[_first_k][_second_k][_y_metric])
             # Disable avg_metric it for the time
             # note_obj = {"args": _first_k_obj, "avg_metric": avg_metric[_first_k]}
             note_obj = {"args": _first_k_obj}
@@ -94,8 +97,8 @@ if __name__ == '__main__':
             #                                    "adaptive: %s" % _first_k_obj["is_adaptive"],
             #                                    _first_k_obj["model"])
             filename = "%s_%s_%s_%s_%s_%s.png" % (_first_k_obj["dataset"], _x_metric, _y_metric,
-                                               "adaptive: %s" % _first_k_obj["is_adaptive"],
-                                               _first_k_obj["model"], _first_k_obj["select_ratio"])
+                                                  "adaptive: %s" % _first_k_obj["is_adaptive"],
+                                                  _first_k_obj["model"], _first_k_obj["select_ratio"])
             plot(x_list, y_list, labels=labels, xlabel=_x_metric, ylabel=_y_metric,
                  note=json.dumps(note_obj, sort_keys=True, indent=4), legend=True,
                  save_path=os.path.join(save_path, filename))

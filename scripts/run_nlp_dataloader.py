@@ -18,7 +18,8 @@ from cords.utils.dataloader import *
 
 filepaths = {"corona": "data/corona.pickle",
              "news": "data/news.pickle",
-             "twitter": "data/twitter.pickle"}
+             "twitter": "data/twitter.pickle",
+             "ag_news": "data/ag_news.pickle"}
 
 # _adaptive_methods = ["glister", "random-ol"]
 _adaptive_methods = ["glister", "random-ol",
@@ -147,8 +148,8 @@ if __name__ == "__main__":
                                                  device=args.device, batch_size=args.batch_size, verbose=True)
     elif args.dss_strategy == "glister-warm":
         dss_train_queue = GLISTERDataLoader(train_queue, valid_queue, budget=budget,
-                                                 select_every=args.select_every, model=model, loss=criterion_nored,
-                                                 device=args.device, batch_size=args.batch_size, verbose=True)
+                                            select_every=args.select_every, model=model, loss=criterion_nored,
+                                            device=args.device, batch_size=args.batch_size, verbose=True)
     elif args.dss_strategy == "grad-match":
         dss_train_queue = None
     elif args.dss_strategy == "grad-match-pb":

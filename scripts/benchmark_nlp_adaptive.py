@@ -1,3 +1,7 @@
+import sys
+
+sys.path.append(".")
+sys.path.append("..")
 from train import TrainClassifier
 
 if __name__ == "__main__":

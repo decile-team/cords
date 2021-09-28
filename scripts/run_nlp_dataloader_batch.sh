@@ -8,9 +8,11 @@ mkdir -p $log_path
 
 #datasets=("corona" "news" "twitter")
 #datasets=("corona")
-datasets=("corona" "twitter")
-strategies=("glister" "random-ol" "full" "random" "facloc" "graphcut" "sumredun" "satcov" "CRAIG")
-select_ratios=("0.1" "0.2" "0.3")
+datasets=("corona" "twitter" "ag_news")
+#strategies=("glister" "random-ol" "full" "random" "facloc" "graphcut" "sumredun" "satcov" "CRAIG")
+#select_ratios=("0.1" "0.2" "0.3")
+strategies=("random" "facloc" "graphcut" "sumredun" "satcov")
+select_ratios=("0.1" "0.3" "0.5")
 models=("LSTM")
 device="cuda"
 
@@ -19,16 +21,16 @@ for select_ratio in "${select_ratios[@]}"; do
   for model in "${models[@]}"; do
     for dataset in "${datasets[@]}"; do
       for strategy in "${strategies[@]}"; do
-        echo "Running dataset: $dataset with strategy: $strategy... "
-  #      python3 $script_path --dataset $dataset --dss_strategy $strategy --device $device --model $model 1>$log_path/${model}_${dataset}_$strategy.log 2>$log_path/${model}_${dataset}_$strategy.err &
+        echo "Running dataset: $dataset with strategy: $strategy and select_ratio: $select_ratio... "
+        #      python3 $script_path --dataset $dataset --dss_strategy $strategy --device $device --model $model 1>$log_path/${model}_${dataset}_$strategy.log 2>$log_path/${model}_${dataset}_$strategy.err &
         python3 $script_path --dataset $dataset --dss_strategy $strategy --device $device \
-            --model $model --select_ratio $select_ratio \
-            1>$log_path/${model}_${dataset}_$strategy.log 2>$log_path/${model}_${dataset}_$strategy.err
-  #      _pid=$!
-  #      pid+=($_pid)
-  #      for _pid in "${pid[@]}"; do
-  #        wait $_pid
-  #      done
+          --model $model --select_ratio $select_ratio \
+          1>$log_path/${model}_${dataset}_$strategy.log 2>$log_path/${model}_${dataset}_$strategy.err
+        #      _pid=$!
+        #      pid+=($_pid)
+        #      for _pid in "${pid[@]}"; do
+        #        wait $_pid
+        #      done
       done
       pid=()
     done

@@ -18,8 +18,8 @@ filepaths = {"airline": "data/airline.pickle",
              "loan": "data/loan.pickle",
              "olympic": "data/olympic.pickle"}
 
-_adaptive_methods = ["glister", "random-ol"]
-_nonadaptive_methods = ["full", "random", "facloc", "graphcut", "sumredun", "satcov", "CRAIG", "gradmatch"]
+_adaptive_methods = ["glister", "random-ol", "CRAIG"]
+_nonadaptive_methods = ["full", "random", "facloc", "graphcut", "sumredun", "satcov", "gradmatch"]
 _other_methods = ["0.1random-ol", "0.3random-ol", "0.5random-ol", "0.1random", "0.3random", "0.5random"]
 _dss_strategy_options = _adaptive_methods + _nonadaptive_methods + _other_methods
 # _nonadaptive_methods = ["random", "facloc", "graphcut", "sumredun", "satcov", "CRAIG"]
@@ -191,7 +191,6 @@ if __name__ == "__main__":
                                           device=args.device, num_cls=n_classes, linear_layer=args.linear_layer,
                                           if_convex=args.if_convex, selection_type=args.selection_type,
                                           optimizer=args.optimizer, batch_size=batch_size, verbose=True)
-        # ("0.1random-ol" "0.3random-ol" "0.5random-ol" "0.1random" "0.3random" "0.5random")
     elif args.dss_strategy == "0.1random-ol":
         dss_train_queue = OnlineRandomDataLoader(train_queue, valid_queue, budget=int(0.1 * n_train),
                                                  select_every=args.select_every, model=model, loss=criterion_nored,
