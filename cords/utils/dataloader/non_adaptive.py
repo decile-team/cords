@@ -1,6 +1,5 @@
 import copy
-from abc import ABC
-
+import torch
 import numpy as np
 import apricot
 import math
@@ -43,6 +42,7 @@ class SubmodDataLoader(NonAdaptiveDSSDataLoader):
                                                **kwargs)
 
     def _init_subset_indices(self):
+        # import pdb; pdb.set_trace()
         X = np.array([x for (x, _y) in self.dataset])
         m = X.shape[0]
         # Chunking dataset to calculate pairwise distance with limited memory
@@ -55,6 +55,7 @@ class SubmodDataLoader(NonAdaptiveDSSDataLoader):
             r_idx = min(m, (i_chunk + 1) * size_chunk)
             n_samples = min(budget_chunk, budget - len(sample_indices))
             chunk = X[l_idx: r_idx, :]
+            chunk = chunk.reshape(chunk.shape[0], np.prod(chunk.shape[1:]))
             _sample_indices = self._chunk_select(chunk, n_samples)
             _sample_indices = [_sample_indice + l_idx for _sample_indice in _sample_indices]
             sample_indices += _sample_indices

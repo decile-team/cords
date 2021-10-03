@@ -44,8 +44,9 @@ class LSTM(nn.Module):
         else:
             h_t, c_t = init_states
 
+        # print("freeze: %s" % freeze)
         with torch.no_grad() if freeze else dummy_context():
-            for t in range(seq_sz - 1):
+            for t in range(seq_sz):
                 x_t = x[:, t, :]
                 i_t = torch.sigmoid(x_t @ self.U_i + h_t @ self.V_i + self.b_i)
                 f_t = torch.sigmoid(x_t @ self.U_f + h_t @ self.V_f + self.b_f)
@@ -55,20 +56,13 @@ class LSTM(nn.Module):
                 h_t = o_t * torch.tanh(c_t)
                 hidden_seq.append(h_t.unsqueeze(0))
 
-        # Last time step
-        x_t = x[:, t, :]
-        i_t = torch.sigmoid(x_t @ self.U_i + h_t @ self.V_i + self.b_i)
-        f_t = torch.sigmoid(x_t @ self.U_f + h_t @ self.V_f + self.b_f)
-        g_t = torch.tanh(x_t @ self.U_c + h_t @ self.V_c + self.b_c)
-        o_t = torch.sigmoid(x_t @ self.U_o + h_t @ self.V_o + self.b_o)
-        c_t = f_t * c_t + i_t * g_t
-        h_t = o_t * torch.tanh(c_t)
+        # # Last time step
+        # x_t = x[:, t, :]
+        # i_t = torch.sigmoid(x_t @ self.U_i + h_t @ self.V_i + self.b_i)
+        # f_t = torch.sigmoid(x_t @ self.U_f + h_t @ self.V_f + self.b_f)
+        # g_t = torch.tanh(x_t @ self.U_c + h_t @ self.V_c + self.b_c)
+        # o_t = torch.sigmoid(x_t @ self.U_o + h_t @ self.V_o + self.b_o)
+        # c_t = f_t * c_t + i_t * g_t
+        # h_t = o_t * torch.tanh(c_t)
 
         return h_t
-
-        # hidden_seq.append(h_t.unsqueeze(0))
-        #
-        # hidden_seq = torch.cat(hidden_seq, dim=0)
-        # hidden_seq = hidden_seq.transpose(0, 1).contiguous()
-
-        # return hidden_seq, (h_t, c_t)

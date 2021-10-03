@@ -98,6 +98,7 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
         gammas: weights tensors
             Tensor containing weights of each instance
         """
+        # import pdb; pdb.set_trace()
         omp_start_time = time.time()
         self.update_model(model_params)
 

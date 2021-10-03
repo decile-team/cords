@@ -924,6 +924,10 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
         num_trn = num_fulltrn - num_val
         trainset, valset = random_split(fullset, [num_trn, num_val])
 
+        if isnumpy:
+            trainset = [(x.numpy(), y) for (x, y) in trainset]
+            valset = [(x.numpy(), y) for (x, y) in valset]
+            testset = [(x.numpy(), y) for (x, y) in testset]
         return trainset, valset, testset, num_cls
 
 
@@ -982,6 +986,10 @@ def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
         num_trn = num_fulltrn - num_val
         trainset, valset = random_split(fullset, [num_trn, num_val])
 
+        if isnumpy:
+            trainset = [(x.numpy(), y) for (x, y) in trainset]
+            valset = [(x.numpy(), y) for (x, y) in valset]
+            testset = [(x.numpy(), y) for (x, y) in testset]
         return trainset, valset, testset, num_cls
 
 

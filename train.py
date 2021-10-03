@@ -174,6 +174,7 @@ class TrainClassifier:
         tst_batch_size = 1000
 
         train_start_time = round(time.time())
+        print("train_start_time: %s" % train_start_time)
 
         # print("--------------------------------------------------------")
         print("trn_batch_size: %s. " % trn_batch_size)
@@ -491,6 +492,8 @@ class TrainClassifier:
                     # print("targets.device: %s. " % targets.device)
                     outputs = model(inputs)
                     losses = criterion_nored(outputs, targets)
+                    # loss = torch.dot(losses, gammas[batch_wise_indices[batch_idx]]) / (
+                    #     gammas[batch_wise_indices[batch_idx]].sum())
                     loss = torch.dot(losses, gammas[batch_wise_indices[batch_idx]]) / (
                         gammas[batch_wise_indices[batch_idx]].sum())
                     ########################################################
