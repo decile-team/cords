@@ -40,3 +40,7 @@ from .simpleNN_net import ThreeLayerNet
 from .vgg import VGG
 from .resnet164 import ResNet164
 from .mobilenetv2tf import MobileNet2
+from .wideresnet import WideResNet
+from .shakenet import ShakeNet
+from .cnn import CNN
+from .cnn13 import CNN13

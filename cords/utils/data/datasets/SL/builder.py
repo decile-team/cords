@@ -266,7 +266,7 @@ def create_noisy(y_trn, num_cls, noise_ratio=0.8):
     return y_trn
 
 
-def load_dataset_custom(datadir, dset_name, feature, isnumpy=False, **kwargs):
+def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
     if feature == 'classimb':
         if 'classimb_ratio' in kwargs:
             pass

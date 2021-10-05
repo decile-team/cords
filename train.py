@@ -208,7 +208,7 @@ class TrainClassifier:
             # GLISTER Selection strategy
             setf_model = GLISTERStrategy(trainloader, valloader, model1, criterion_nored,
                                          self.configdata['optimizer']['lr'], self.configdata['train_args']['device'],
-                                         num_cls, False, 'Supervised', 'Stochastic', r=int(bud))
+                                         num_cls, False, 'PerBatch', 'Stochastic', r=int(bud))
 
         elif self.configdata['dss_strategy']['type'] == 'CRAIG':
             # CRAIG Selection strategy
@@ -538,12 +538,12 @@ class TrainClassifier:
                             outputs = model(inputs)
                             loss = criterion(outputs, targets)
                             trn_loss += loss.item()
-                            trn_losses.append(trn_loss)
                             if "trn_acc" in print_args:
                                 _, predicted = outputs.max(1)
                                 trn_total += targets.size(0)
                                 trn_correct += predicted.eq(targets).sum().item()
-
+                        trn_losses.append(trn_loss)
+                        
                     if "trn_acc" in print_args:
                         trn_acc.append(trn_correct / trn_total)
 
@@ -556,11 +556,11 @@ class TrainClassifier:
                             outputs = model(inputs)
                             loss = criterion(outputs, targets)
                             val_loss += loss.item()
-                            val_losses.append(val_loss)
                             if "val_acc" in print_args:
                                 _, predicted = outputs.max(1)
                                 val_total += targets.size(0)
                                 val_correct += predicted.eq(targets).sum().item()
+                            val_losses.append(val_loss)
 
                     if "val_acc" in print_args:
                         val_acc.append(val_correct / val_total)
@@ -574,12 +574,11 @@ class TrainClassifier:
                             outputs = model(inputs)
                             loss = criterion(outputs, targets)
                             tst_loss += loss.item()
-                            tst_losses.append(tst_loss)
                             if "tst_acc" in print_args:
                                 _, predicted = outputs.max(1)
                                 tst_total += targets.size(0)
                                 tst_correct += predicted.eq(targets).sum().item()
-
+                        tst_losses.append(tst_loss)
                     if "tst_acc" in print_args:
                         tst_acc.append(tst_correct / tst_total)
 

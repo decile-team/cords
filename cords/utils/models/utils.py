@@ -4,57 +4,6 @@ import torch.nn.functional as F
 import torch
 
 
-class BaseModel(nn.Module):
-    def forward(self, x, last=False, freeze=False):
-        if freeze:
-            with torch.no_grad():
-                f = self.feature_extractor(x)
-                f = f.mean((2, 3))
-        else:
-            f = self.feature_extractor(x)
-            f = f.mean((2, 3))
-        if last:
-            return self.classifier(f), f
-        else:
-            return self.classifier(f)
-
-    def logits_with_feature(self, x):
-        f = self.feature_extractor(x)
-        c = self.classifier(f.mean((2, 3)))
-        return c, f
-
-    def update_batch_stats(self, flag):
-        for m in self.modules():
-            if isinstance(m, nn.BatchNorm2d):
-                m.update_batch_stats = flag
-
-
-def conv3x3(i_c, o_c, stride=1, bias=False):
-    return nn.Conv2d(i_c, o_c, 3, stride, 1, bias=bias)
-
-
-class BatchNorm2d(nn.BatchNorm2d):
-    def __init__(self, channels, momentum=1e-3, eps=1e-3):
-        super().__init__(channels)
-        self.update_batch_stats = True
-
-    def forward(self, x):
-        if self.update_batch_stats or not self.training:
-            return super().forward(x)
-        else:
-            return nn.functional.batch_norm(
-                x, None, None, self.weight, self.bias, True, self.momentum, self.eps
-            )
-
-
-def leaky_relu():
-    return nn.LeakyReLU(0.1)
-
-
-"""
-For exponential moving average
-"""
-
 def apply_weight_decay(modules, decay_rate):
     """apply weight decay to weight parameters in nn.Conv2d and nn.Linear"""
     for m in modules:
@@ -72,6 +21,9 @@ def param_init(modules):
             nn.init.constant_(m.bias, 0)
 
 
+"""
+For exponential moving average
+"""
 def __ema(p1, p2, factor):
     return factor * p1 + (1 - factor) * p2
 

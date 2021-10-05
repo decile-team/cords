@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from .utils import param_init
 
 class CNN(nn.Module):
 
@@ -16,6 +17,7 @@ class CNN(nn.Module):
         self.dropout = nn.Dropout(p=0.5)
         self.dense = nn.Linear(32 * 7 * 7, n_out)
         self.embDim = 32*7*7
+        param_init(self.modules())  
 
     def update_batch_stats(self, flag):
         for m in self.modules():

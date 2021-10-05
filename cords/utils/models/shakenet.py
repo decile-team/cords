@@ -2,7 +2,54 @@ import itertools
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .utils import conv3x3, BatchNorm2d, param_init, BaseModel
+from .utils import param_init
+
+
+class BaseModel(nn.Module):
+    def forward(self, x, last=False, freeze=False):
+        if freeze:
+            with torch.no_grad():
+                f = self.feature_extractor(x)
+                f = f.mean((2, 3))
+        else:
+            f = self.feature_extractor(x)
+            f = f.mean((2, 3))
+        if last:
+            return self.classifier(f), f
+        else:
+            return self.classifier(f)
+
+    def logits_with_feature(self, x):
+        f = self.feature_extractor(x)
+        c = self.classifier(f.mean((2, 3)))
+        return c, f
+
+    def update_batch_stats(self, flag):
+        for m in self.modules():
+            if isinstance(m, nn.BatchNorm2d):
+                m.update_batch_stats = flag
+
+
+def conv3x3(i_c, o_c, stride=1, bias=False):
+    return nn.Conv2d(i_c, o_c, 3, stride, 1, bias=bias)
+
+
+class BatchNorm2d(nn.BatchNorm2d):
+    def __init__(self, channels, momentum=1e-3, eps=1e-3):
+        super().__init__(channels)
+        self.update_batch_stats = True
+
+    def forward(self, x):
+        if self.update_batch_stats or not self.training:
+            return super().forward(x)
+        else:
+            return nn.functional.batch_norm(
+                x, None, None, self.weight, self.bias, True, self.momentum, self.eps
+            )
+
+
+def leaky_relu():
+    return nn.LeakyReLU(0.1)
 
 
 class _ShakeShake(nn.Module):
