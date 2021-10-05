@@ -6,5 +6,5 @@ dist
 __pycache__
 /results/
 .gitignore
-data/
-log/
+/data/
+/log/
