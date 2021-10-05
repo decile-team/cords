@@ -4,8 +4,8 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 from . import utils
 from . import dataset_class
-from augmentation.builder import gen_strong_augmentation, gen_weak_augmentation
-from augmentation.augmentation_pool import numpy_batch_gcn, ZCA, GCN
+from .augmentation.builder import gen_strong_augmentation, gen_weak_augmentation
+from .augmentation.augmentation_pool import numpy_batch_gcn, ZCA, GCN
 
 
 def __val_labeled_unlabeled_split(cfg, train_data, test_data, num_classes, ul_data=None):

@@ -258,13 +258,13 @@ def main(cfg, logger):
         kappa_iterations = int(cfg.kappa * cfg.iteration * cfg.fraction)
 
     elif cfg.dss_strategy == 'RETRIEVE':
-        # GLISTER Selection strategy
+        # RETRIEVE Selection strategy
         setf_model = RETRIEVEStrategy(ult_seq_loader, lt_seq_loader, model1, teacher_model1, ssl_alg, consistency_nored,
                  cfg.lr, device, num_classes, False, 'Stochastic', r=int(bud), valid=True)
         kappa_iterations = int(cfg.kappa * cfg.iteration * cfg.fraction)
 
     elif cfg.dss_strategy == 'RETRIEVE_UL':
-        # GLISTER Selection strategy
+        # RETRIEVE Selection strategy
         setf_model = RETRIEVEStrategy(ult_seq_loader, lt_seq_loader, model1, teacher_model1, ssl_alg, consistency_nored,
                  cfg.lr, device, num_classes, False, 'Stochastic', r=int(bud), valid=False)
         kappa_iterations = int(cfg.kappa * cfg.iteration * cfg.fraction)
@@ -307,14 +307,14 @@ def main(cfg, logger):
         kappa_iterations = int(cfg.kappa * cfg.iteration * cfg.fraction)
 
     elif cfg.dss_strategy == 'RETRIEVE-Warm':
-        # GLISTER Selection strategy
+        # RETRIEVE Selection strategy
         setf_model = RETRIEVEStrategy(ult_seq_loader, lt_seq_loader, model1, teacher_model1, ssl_alg, consistency_nored,
                  cfg.lr, device, num_classes, False, 'Stochastic', r=int(bud), valid=True)
 
         kappa_iterations = int(cfg.kappa * cfg.iteration * cfg.fraction)
 
     elif cfg.dss_strategy == 'RETRIEVE_UL-Warm':
-        # GLISTER Selection strategy
+        # RETRIEVE Selection strategy
         setf_model = RETRIEVEStrategy(ult_seq_loader, lt_seq_loader, model1, teacher_model1, ssl_alg, consistency_nored,
                                      cfg.lr, device, num_classes, False, 'Stochastic', r=int(bud), valid=False)
         kappa_iterations = int(cfg.kappa * cfg.iteration * cfg.fraction)
@@ -422,7 +422,7 @@ def main(cfg, logger):
         elif (cfg.dss_strategy in ['Random']) and (iter_count > 1):
             pass
 
-        elif (cfg.dss_strategy in ['GLISTER', 'GLISTER_UL', 'GradMatch', 'GradMatchPB', 'CRAIG', 'CRAIGPB']) and (iter_count > 1):
+        elif (cfg.dss_strategy in ['RETRIEVE', 'RETRIEVE_UL', 'GradMatch', 'GradMatchPB', 'CRAIG', 'CRAIGPB']) and (iter_count > 1):
             start_time = time.time()
             # Perform Subset Selection
             cached_state_dict = copy.deepcopy(model.state_dict())
@@ -454,7 +454,7 @@ def main(cfg, logger):
             elif cfg.classimb:
                 get_ul_classimb_ratio(ult_subset)
 
-        elif (cfg.dss_strategy in ['GLISTER-Warm', 'GLISTER_UL-Warm', 'GradMatch-Warm', 'GradMatchPB-Warm',
+        elif (cfg.dss_strategy in ['RETRIEVE-Warm', 'RETRIEVE_UL-Warm', 'GradMatch-Warm', 'GradMatchPB-Warm',
                                     'CRAIG-Warm', 'CRAIGPB-Warm']) and (iter_count > 1):
             start_time = time.time()
             if iter_count >= kappa_iterations:
@@ -681,7 +681,7 @@ def main(cfg, logger):
                         torch.save(optimizer.state_dict(), os.path.join(cfg.out_dir, "optimizer_checkpoint.pth"))
                     iter_count += 1
 
-        elif cfg.dss_strategy in ['GLISTER', 'GLISTER_UL', 'Random', 'Random-Online']:
+        elif cfg.dss_strategy in ['RETRIEVE', 'RETRIEVE_UL', 'Random', 'Random-Online']:
             lt_loader = DataLoader(
                 lt_data,
                 cfg.l_batch_size,
@@ -727,7 +727,7 @@ def main(cfg, logger):
                     torch.save(optimizer.state_dict(), os.path.join(cfg.out_dir, "optimizer_checkpoint.pth"))
                 iter_count += 1
 
-        elif cfg.dss_strategy in ['GLISTER-Warm', 'GLISTER_UL-Warm', 'Random-Warm']:
+        elif cfg.dss_strategy in ['RETRIEVE-Warm', 'RETRIEVE_UL-Warm', 'Random-Warm']:
             if iter_count > kappa_iterations:
                 lt_loader = DataLoader(
                     lt_data,
@@ -839,7 +839,7 @@ def main(cfg, logger):
 
 if __name__ == "__main__":
     import os, sys
-    from parser import get_args
+    from configs.SSL import get_args
     args = get_args()
     os.makedirs(args.out_dir, exist_ok=True)
     # setup logger

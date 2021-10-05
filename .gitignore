@@ -5,3 +5,6 @@ build
 dist
 __pycache__
 /results/
+.gitignore
+data/
+log/
