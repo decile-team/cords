@@ -1,9 +1,10 @@
 import torch.nn as nn
 import torch.nn.functional as F
+import torch
 
 class HyperParamNet(nn.Module):
     def __init__(self, l1=120, l2=84):
-        super(Net, self).__init__()
+        super(HyperParamNet, self).__init__()
         self.conv1 = nn.Conv2d(3, 6, 5)
         self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(6, 16, 5)

@@ -96,10 +96,9 @@ class GLISTERStrategy(DataSelectionStrategy):
         self.r = r
         self.verbose = verbose
 
-    def _update_grads_val(self, grads_curr=None, first_init=False, perClass=False, perBatch=False):
+    def _update_grads_val(self, grads_curr=None, first_init=False):
         """
         Update the gradient values
-
         Parameters
         ----------
         grad_currX: OrderedDict, optional
@@ -111,12 +110,12 @@ class GLISTERStrategy(DataSelectionStrategy):
         perBatch: bool
             if True, the function computes the validation gradients of each mini-batch
         """
-        if (perBatch and perClass):
-            raise ValueError("perBatch and perClass are mutually exclusive. Only one of them can be true at a time")
+        # if (perBatch and perClass):
+        #     raise ValueError("perBatch and perClass are mutually exclusive. Only one of them can be true at a time")
         self.model.zero_grad()
         embDim = self.model.get_embedding_dim()
         
-        if perClass:
+        if self.selection_type == 'PerClass':
             valloader = self.pcvalloader
         else:
             valloader = self.valloader
@@ -134,7 +133,7 @@ class GLISTERStrategy(DataSelectionStrategy):
                     self.init_out = out
                     self.init_l1 = l1
                     self.y_val = targets.view(-1, 1)
-                    if perBatch:
+                    if self.selection_type == 'PerBatch':
                         l0_grads = l0_grads.mean(dim=0).view(1, -1)
                         if self.linear_layer:
                             l1_grads = l1_grads.mean(dim=0).view(1, -1)
@@ -145,7 +144,7 @@ class GLISTERStrategy(DataSelectionStrategy):
                     if self.linear_layer:
                         batch_l0_expand = torch.repeat_interleave(batch_l0_grads, embDim, dim=1)
                         batch_l1_grads = batch_l0_expand * l1.repeat(1, self.num_classes)
-                    if perBatch:
+                    if self.selection_type == 'PerBatch':
                         batch_l0_grads = batch_l0_grads.mean(dim=0).view(1, -1)
                         if self.linear_layer:
                             batch_l1_grads = batch_l1_grads.mean(dim=0).view(1, -1)
@@ -169,7 +168,7 @@ class GLISTERStrategy(DataSelectionStrategy):
             if self.linear_layer:
                 l0_expand = torch.repeat_interleave(l0_grads, embDim, dim=1)
                 l1_grads = l0_expand * self.init_l1.repeat(1, self.num_classes)
-            if perBatch:
+            if self.selection_type == 'PerBatch':
                 b = int(self.y_val.shape[0]/self.valloader.batch_size)
                 l0_grads = torch.chunk(l0_grads, b, dim=0)
                 new_t = []
@@ -221,7 +220,7 @@ class GLISTERStrategy(DataSelectionStrategy):
             Element that need to be added to the gradients
         """
         # if isinstance(element, list):
-        grads += (self.grads_per_elem[element].sum(dim=0)) 
+        grads += self.grads_per_elem[element].sum(dim=0)
 
     def greedy_algo(self, budget):
         greedySet = list()
@@ -330,7 +329,7 @@ class GLISTERStrategy(DataSelectionStrategy):
                 self.pcvalloader = DataLoader(val_data_sub, batch_size=self.trainloader.batch_size,
                                                 shuffle=False, pin_memory=True)
                 self.compute_gradients(perClass=True)
-                self._update_grads_val(first_init=True, perClass=True)
+                self._update_grads_val(first_init=True)
                 idxs_temp, gammas_temp = self.greedy_algo(math.ceil(budget * len(trn_subset_idx) / self.N_trn))
                 idxs.extend(list(np.array(trn_subset_idx)[idxs_temp]))
                 gammas.extend(gammas_temp)
@@ -338,7 +337,7 @@ class GLISTERStrategy(DataSelectionStrategy):
             idxs = []
             gammas = []
             self.compute_gradients(perBatch=True)
-            self._update_grads_val(first_init=True, perBatch=True)
+            self._update_grads_val(first_init=True)
             idxs_temp, gammas_temp = self.greedy_algo(math.ceil(budget/self.trainloader.batch_size))
             batch_wise_indices = list(self.trainloader.batch_sampler)
             for i in range(len(idxs_temp)):
@@ -351,7 +350,6 @@ class GLISTERStrategy(DataSelectionStrategy):
             self.compute_gradients()
             self._update_grads_val(first_init=True)
             idxs, gammas = self.greedy_algo(budget)
-            batch_wise_indices = list(self.trainloader.batch_sampler)
         glister_end_time = time.time()
         print("GLISTER algorithm Subset Selection time is: ", glister_end_time - glister_start_time)
         return idxs, torch.FloatTensor(gammas)
