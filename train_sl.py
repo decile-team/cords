@@ -12,10 +12,9 @@ from cords.utils.data.datasets.SL import gen_dataset
 from torch.utils.data import Subset
 from cords.utils.config_utils import load_config_data
 import os.path as osp
-from cords.selectionstrategies.SL import GradMatchStrategy, GLISTERStrategy, RandomStrategy, \
-    CRAIGStrategy
-from cords.utils.data.dataloader.SL.adaptive import GLISTERDataLoader, OLRandomDataLoader, CRAIGDataLoader, GradMatchDataLoader
-from cords.utils.data.dataloader.SL.nonadaptive import RandomDataLoader
+from cords.utils.data._utils import WeightedSubset
+from cords.utils.data.dataloader.SL.adaptive import GLISTERDataLoader, OLRandomDataLoader, \
+    CRAIGDataLoader, GradMatchDataLoader, RandomDataLoader
 from ray import tune
 
 
@@ -137,23 +136,6 @@ class TrainClassifier:
         testloader = torch.utils.data.DataLoader(testset, batch_size=tst_batch_size,
                                                  shuffle=False, pin_memory=True)
 
-        # Budget for subset selection
-        bud = int(self.configdata['dss_strategy']['fraction'] * N)
-        print("Budget, fraction and N:", bud, self.configdata['dss_strategy']['fraction'], N)
-
-        # # Subset Selection and creating the subset data loader
-        # start_idxs = np.random.choice(N, size=bud, replace=False)
-        # idxs = start_idxs
-        # data_sub = Subset(trainset, idxs)
-        # subset_trnloader = torch.utils.data.DataLoader(data_sub,
-        #                                                batch_size=self.configdata['dataloader']['batch_size'],
-        #                                                shuffle=self.configdata['dataloader']['shuffle'],
-        #                                                pin_memory=self.configdata['dataloader']['pin_memory'])
-
-        # # Variables to store accuracies
-        # gammas = torch.ones(len(idxs)).to(self.configdata['train_args']['device'])
-
-
         substrn_losses = list()  # np.zeros(configdata['train_args']['num_epochs'])
         trn_losses = list()
         val_losses = list()  # np.zeros(configdata['train_args']['num_epochs'])
@@ -195,7 +177,7 @@ class TrainClassifier:
 
         if self.configdata['dss_strategy']['type'] in ['GradMatch', 'GradMatchPB', 'GradMatch-Warm', 'GradMatchPB-Warm']:
             
-            ####################### GradMatch Dataloader Additional Arguments ##########################
+            ############################## GradMatch Dataloader Additional Arguments ##############################
             self.configdata.dss_args.model = model
             self.configdata.dss_args.loss = criterion_nored
             self.configdata.dss_args.eta = self.configdata.optimizer.lr
@@ -203,12 +185,13 @@ class TrainClassifier:
             self.configdata.dss_args.device = self.configdata.train_args.device
 
             dataloader = GradMatchDataLoader(trainloader, valloader, self.configdata.dss_args, verbose=True, 
-                                             batch_size=self.configdata.dataloader.batch_size, shuffle=self.configdata.dataloader.shuffle,
+                                             batch_size=self.configdata.dataloader.batch_size, 
+                                             shuffle=self.configdata.dataloader.shuffle,
                                              pin_memory=self.configdata.dataloader.pin_memory)
 
         
         elif self.configdata['dss_strategy']['type'] in ['GLISTER', 'GLISTER-Warm', 'GLISTERPB', 'GLISTERPB-Warm']:
-            ####################### GLISTER Dataloader Additional Arguments ##########################
+            ############################## GLISTER Dataloader Additional Arguments ##############################
             self.configdata.dss_args.model = model
             self.configdata.dss_args.loss = criterion_nored
             self.configdata.dss_args.eta = self.configdata.optimizer.lr
@@ -216,110 +199,69 @@ class TrainClassifier:
             self.configdata.dss_args.device = self.configdata.train_args.device
 
             dataloader = GLISTERDataLoader(trainloader, valloader, self.configdata.dss_args, verbose=True, 
-                                             batch_size=self.configdata.dataloader.batch_size, shuffle=self.configdata.dataloader.shuffle,
+                                             batch_size=self.configdata.dataloader.batch_size, 
+                                             shuffle=self.configdata.dataloader.shuffle,
                                              pin_memory=self.configdata.dataloader.pin_memory)
 
         
-        elif self.configdata['dss_strategy']['type'] == 'CRAIG':
-            # CRAIG Selection strategy
-            setf_model = CRAIGStrategy(trainloader, valloader, model1, criterion_nored,
-                                       self.configdata['train_args']['device'], num_cls, False, False, 'PerClass')
+        elif self.configdata['dss_strategy']['type'] in ['CRAIG', 'CRAIG-Warm', 'CRAIGPB', 'CRAIGPB-Warm']:
+            ############################## CRAIG Dataloader Additional Arguments ##############################
+            self.configdata.dss_args.model = model
+            self.configdata.dss_args.loss = criterion_nored
+            self.configdata.dss_args.num_classes = self.configdata.model.numclasses 
+            self.configdata.dss_args.device = self.configdata.train_args.device
 
-        elif self.configdata['dss_strategy']['type'] == 'CRAIGPB':
-            # CRAIG Selection strategy
-            setf_model = CRAIGStrategy(trainloader, valloader, model1, criterion_nored,
-                                       self.configdata['train_args']['device'], num_cls, False, False, 'PerBatch')
+            dataloader = CRAIGDataLoader(trainloader, valloader, self.configdata.dss_args, verbose=True, 
+                                             batch_size=self.configdata.dataloader.batch_size,
+                                             shuffle=self.configdata.dataloader.shuffle,
+                                             pin_memory=self.configdata.dataloader.pin_memory)
 
-        elif self.configdata['dss_strategy']['type'] == 'CRAIG-Warm':
-            # CRAIG Selection strategy
-            setf_model = CRAIGStrategy(trainloader, valloader, model1, criterion_nored,
-                                       self.configdata['train_args']['device'], num_cls, False, False, 'PerClass')
-            # Random-Online Selection strategy
-            # rand_setf_model = RandomStrategy(trainloader, online=True)
-            if 'kappa' in self.configdata['dss_strategy']:
-                kappa_epochs = int(
-                    self.configdata['dss_strategy']['kappa'] * self.configdata['train_args']['num_epochs'])
-                full_epochs = round(kappa_epochs * self.configdata['dss_strategy']['fraction'])
-            else:
-                raise KeyError("Specify a kappa value in the config file")
-
-        elif self.configdata['dss_strategy']['type'] == 'CRAIGPB-Warm':
-            # CRAIG Selection strategy
-            setf_model = CRAIGStrategy(trainloader, valloader, model1, criterion_nored,
-                                       self.configdata['train_args']['device'], num_cls, False, False, 'PerBatch')
-            # Random-Online Selection strategy
-            # rand_setf_model = RandomStrategy(trainloader, online=True)
-            if 'kappa' in self.configdata['dss_strategy']:
-                kappa_epochs = int(
-                    self.configdata['dss_strategy']['kappa'] * self.configdata['train_args']['num_epochs'])
-                full_epochs = round(kappa_epochs * self.configdata['dss_strategy']['fraction'])
-            else:
-                raise KeyError("Specify a kappa value in the config file")
-
+    
         elif self.configdata['dss_strategy']['type'] == 'Random':
-            # Random Selection strategy
-            setf_model = RandomStrategy(trainloader, online=False)
+            ############################## Random Dataloader Additional Arguments ##############################
+            self.configdata.dss_args.device = self.configdata.train_args.device
 
-        elif self.configdata['dss_strategy']['type'] == 'Random-Online':
-            # Random-Online Selection strategy
-            setf_model = RandomStrategy(trainloader, online=True)
+            dataloader = RandomDataLoader(trainloader, self.configdata.dss_args, verbose=True,
+                                         batch_size=self.configdata.dataloader.batch_size,
+                                         shuffle=self.configdata.dataloader.shuffle,
+                                         pin_memory=self.configdata.dataloader.pin_memory)
+           
 
-        elif self.configdata['dss_strategy']['type'] == 'GLISTER-Warm':
-            # GLISTER Selection strategy
-            setf_model = GLISTERStrategy(trainloader, valloader, model1, criterion_nored,
-                                         self.configdata['optimizer']['lr'], self.configdata['train_args']['device'],
-                                         num_cls, False, 'Supervised', 'Stochastic', r=int(bud))
-            # Random-Online Selection strategy
-            # rand_setf_model = RandomStrategy(trainloader, online=True)
-            if 'kappa' in self.configdata['dss_strategy']:
-                kappa_epochs = int(
-                    self.configdata['dss_strategy']['kappa'] * self.configdata['train_args']['num_epochs'])
-                full_epochs = round(kappa_epochs * self.configdata['dss_strategy']['fraction'])
-            else:
-                raise KeyError("Specify a kappa value in the config file")
+        elif self.configdata['dss_strategy']['type'] == 'OLRandom':
+            ############################## OLRandom Dataloader Additional Arguments ##############################
+            self.configdata.dss_args.device = self.configdata.train_args.device
 
-        elif self.configdata['dss_strategy']['type'] == 'GradMatch-Warm':
-            # GradMatch Selection strategy
-            setf_model = GradMatchStrategy(trainloader, valloader, model1, criterion_nored,
-                                              self.configdata['optimizer']['lr'],
-                                              self.configdata['train_args']['device'],
-                                              num_cls, True, 'PerClassPerGradient',
-                                              valid=self.configdata['dss_strategy']['valid'],
-                                              v1=self.configdata['dss_strategy']['v1'],
-                                              lam=self.configdata['dss_strategy']['lam'], eps=1e-100)
-            # Random-Online Selection strategy
-            # rand_setf_model = RandomStrategy(trainloader, online=True)
-            if 'kappa' in self.configdata['dss_strategy']:
-                kappa_epochs = int(
-                    self.configdata['dss_strategy']['kappa'] * self.configdata['train_args']['num_epochs'])
-                full_epochs = round(kappa_epochs * self.configdata['dss_strategy']['fraction'])
-            else:
-                raise KeyError("Specify a kappa value in the config file")
-
-        elif self.configdata['dss_strategy']['type'] == 'GradMatchPB-Warm':
-            # GradMatch Selection strategy
-            setf_model = GradMatchStrategy(trainloader, valloader, model1, criterion_nored,
-                                              self.configdata['optimizer']['lr'],
-                                              self.configdata['train_args']['device'],
-                                              num_cls, True, 'PerBatch', valid=self.configdata['dss_strategy']['valid'],
-                                              v1=self.configdata['dss_strategy']['v1'],
-                                              lam=self.configdata['dss_strategy']['lam'], eps=1e-100)
-            # Random-Online Selection strategy
-            # rand_setf_model = RandomStrategy(trainloader, online=True)
-            if 'kappa' in self.configdata['dss_strategy']:
-                kappa_epochs = int(
-                    self.configdata['dss_strategy']['kappa'] * self.configdata['train_args']['num_epochs'])
-                full_epochs = round(kappa_epochs * self.configdata['dss_strategy']['fraction'])
-            else:
-                raise KeyError("Specify a kappa value in the config file")
-
+            dataloader = OLRandomDataLoader(trainloader, self.configdata.dss_args, verbose=True,
+                                         batch_size=self.configdata.dataloader.batch_size,
+                                         shuffle=self.configdata.dataloader.shuffle,
+                                         pin_memory=self.configdata.dataloader.pin_memory)
+        
         elif self.configdata['dss_strategy']['type'] == 'Random-Warm':
-            if 'kappa' in self.configdata['dss_strategy']:
-                kappa_epochs = int(
-                    self.configdata['dss_strategy']['kappa'] * self.configdata['train_args']['num_epochs'])
-                full_epochs = round(kappa_epochs * self.configdata['dss_strategy']['fraction'])
-            else:
-                raise KeyError("Specify a kappa value in the config file")
+            ############################## Random-Warm Dataloader Additional Arguments ##############################
+            self.configdata.dss_args.device = self.configdata.train_args.device
+
+            dataloader = RandomDataLoader(trainloader, self.configdata.dss_args, verbose=True,
+                                         batch_size=self.configdata.dataloader.batch_size,
+                                         shuffle=self.configdata.dataloader.shuffle,
+                                         pin_memory=self.configdata.dataloader.pin_memory)
+        
+        elif self.configdata['dss_strategy']['type'] == 'OLRandom-Warm':
+            ############################## Random-Warm Dataloader Additional Arguments ##############################
+            self.configdata.dss_args.device = self.configdata.train_args.device
+
+            dataloader = OLRandomDataLoader(trainloader, self.configdata.dss_args, verbose=True,
+                                         batch_size=self.configdata.dataloader.batch_size,
+                                         shuffle=self.configdata.dataloader.shuffle,
+                                         pin_memory=self.configdata.dataloader.pin_memory)
+        
+        elif self.configdata['dss_strategy']['type'] == 'Full':
+            ############################## Full Dataloader Additional Arguments ##############################
+            wt_trainset = WeightedSubset(trainset, list(range(len(trainset))), [1]*len(trainset))
+
+            dataloader = torch.utils.data.DataLoader(wt_trainset,
+                                         batch_size=self.configdata.dataloader.batch_size,
+                                         shuffle=self.configdata.dataloader.shuffle,
+                                         pin_memory=self.configdata.dataloader.pin_memory)
 
         print("=======================================", file=logfile)
 
@@ -353,73 +295,24 @@ class TrainClassifier:
             subtrn_correct = 0
             subtrn_total = 0
             subset_selection_time = 0
-
-            if self.configdata['dss_strategy']['type'] in ['Random-Online']:
-                start_time = time.time()
-                subset_idxs, gammas = setf_model.select(int(bud))
-                idxs = subset_idxs
-                subset_selection_time += (time.time() - start_time)
-                gammas = gammas.to(self.configdata['train_args']['device'])
-
-            elif self.configdata['dss_strategy']['type'] in ['Random']:
-                pass
-
-            elif (self.configdata['dss_strategy']['type'] in ['GLISTER', 'GradMatch', 'GradMatchPB', 'CRAIG',
-                                                              'CRAIGPB']) and (
-                    ((i + 1) % self.configdata['dss_strategy']['select_every']) == 0):
-                start_time = time.time()
-                cached_state_dict = copy.deepcopy(model.state_dict())
-                clone_dict = copy.deepcopy(model.state_dict())
-                subset_idxs, gammas = setf_model.select(int(bud), clone_dict)
-                model.load_state_dict(cached_state_dict)
-                idxs = subset_idxs
-                # if self.configdata['dss_strategy']['type'] in ['GradMatch', 'GradMatchPB', 'CRAIG', 'CRAIGPB']:
-                gammas = gammas.to(self.configdata['train_args']['device'])
-                temp = time.time() - start_time
-                # print("\n" + self.configdata['dss_strategy']['type'] + " Selection Time: ", temp)
-                subset_selection_time += (temp)
-
-            elif (self.configdata['dss_strategy']['type'] in ['GLISTER-Warm', 'GradMatch-Warm', 'GradMatchPB-Warm',
-                                                              'CRAIG-Warm',
-                                                              'CRAIGPB-Warm']):
-                start_time = time.time()
-                if ((i % self.configdata['dss_strategy']['select_every'] == 0) and (i >= kappa_epochs)):
-                    cached_state_dict = copy.deepcopy(model.state_dict())
-                    clone_dict = copy.deepcopy(model.state_dict())
-                    subset_idxs, gammas = setf_model.select(int(bud), clone_dict)
-                    model.load_state_dict(cached_state_dict)
-                    idxs = subset_idxs
-                    gammas = gammas.to(self.configdata['train_args']['device'])
-                subset_selection_time += (time.time() - start_time)
-
-            elif self.configdata['dss_strategy']['type'] in ['Random-Warm']:
-                pass
-
-            # print("selEpoch: %d, Selection Ended at:" % (i), str(datetime.datetime.now()))
-            data_sub = Subset(trainset, idxs)
-            subset_trnloader = torch.utils.data.DataLoader(data_sub, batch_size=trn_batch_size, shuffle=False,
-                                                           pin_memory=True)
-
             model.train()
-            batch_wise_indices = list(subset_trnloader.batch_sampler)
-            if self.configdata['dss_strategy']['type'] in ['CRAIG', 'CRAIGPB', 'GradMatch', 'GradMatchPB']:
-                start_time = time.time()
-                for batch_idx, (inputs, targets) in enumerate(subset_trnloader):
-                    inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(
-                        self.configdata['train_args']['device'],
-                        non_blocking=True)  # targets can have non_blocking=True.
-                    optimizer.zero_grad()
-                    outputs = model(inputs)
-                    losses = criterion_nored(outputs, targets)
-                    loss = torch.dot(losses, gammas[batch_wise_indices[batch_idx]]) / (
-                        gammas[batch_wise_indices[batch_idx]].sum())
-                    loss.backward()
-                    subtrn_loss += loss.item()
-                    optimizer.step()
-                    _, predicted = outputs.max(1)
-                    subtrn_total += targets.size(0)
-                    subtrn_correct += predicted.eq(targets).sum().item()
-                train_time = time.time() - start_time
+            start_time = time.time()
+            for batch_idx, (inputs, targets) in enumerate(subset_trnloader):
+                inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(
+                    self.configdata['train_args']['device'],
+                    non_blocking=True)  # targets can have non_blocking=True.
+                optimizer.zero_grad()
+                outputs = model(inputs)
+                losses = criterion_nored(outputs, targets)
+                loss = torch.dot(losses, gammas[batch_wise_indices[batch_idx]]) / (
+                    gammas[batch_wise_indices[batch_idx]].sum())
+                loss.backward()
+                subtrn_loss += loss.item()
+                optimizer.step()
+                _, predicted = outputs.max(1)
+                subtrn_total += targets.size(0)
+                subtrn_correct += predicted.eq(targets).sum().item()
+            train_time = time.time() - start_time
 
             elif self.configdata['dss_strategy']['type'] in ['CRAIGPB-Warm', 'CRAIG-Warm', 'GradMatch-Warm',
                                                              'GradMatchPB-Warm']:

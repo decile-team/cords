@@ -1,4 +1,7 @@
 # Learning setting
+from torch.optim import optimizer
+
+
 config = dict(setting="supervisedlearning",
 
               dataset=dict(name="cifar10",
@@ -30,10 +33,14 @@ config = dict(setting="supervisedlearning",
               scheduler=dict(type="cosine_annealing",
                              T_max=300),
 
-              dss_strategy=dict(type="CRAIG-Warm",
+              dss_args=dict(type="CRAIG-Warm",
                                 fraction=0.1,
                                 select_every=20,
-                                kappa=0.6),
+                                kappa=0.5,
+                                linear_layer=False,
+                                optimizer='lazy',
+                                selection_type='PerClass'
+                                ),
 
               train_args=dict(num_epochs=300,
                               device="cuda",

@@ -30,9 +30,10 @@ config = dict(setting="supervisedlearning",
               scheduler=dict(type="cosine_annealing",
                              T_max=300),
 
-              dss_strategy=dict(type="Random",
+              dss_args=dict(type="Random",
                                 fraction=0.1,
-                                select_every=20),
+                                select_every=20,
+                                kappa=0),
 
               train_args=dict(num_epochs=300,
                               device="cuda",

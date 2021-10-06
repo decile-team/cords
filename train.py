@@ -213,7 +213,8 @@ class TrainClassifier:
         elif self.configdata['dss_strategy']['type'] == 'CRAIG':
             # CRAIG Selection strategy
             setf_model = CRAIGStrategy(trainloader, valloader, model1, criterion_nored,
-                                       self.configdata['train_args']['device'], num_cls, False, False, 'PerClass')
+                                       self.configdata['train_args']['device'], num_cls, 
+                                       False, False, 'PerClass')
 
         elif self.configdata['dss_strategy']['type'] == 'CRAIGPB':
             # CRAIG Selection strategy

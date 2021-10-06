@@ -30,14 +30,10 @@ config = dict(setting="supervisedlearning",
               scheduler=dict(type="cosine_annealing",
                              T_max=300),
 
-              dss_args=dict(type="CRAIGPB-Warm",
+              dss_args=dict(type="OLRandom-Warm",
                                 fraction=0.1,
                                 select_every=20,
-                                kappa=0.5,
-                                linear_layer=False,
-                                optimizer='lazy',
-                                selection_type='PerBatch'
-                                ),
+                                kappa=0.5),
 
               train_args=dict(num_epochs=300,
                               device="cuda",
