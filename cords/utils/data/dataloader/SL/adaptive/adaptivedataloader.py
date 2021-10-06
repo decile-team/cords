@@ -11,6 +11,7 @@ class AdaptiveDSSDataLoader(DSSDataLoader):
                                                     verbose=verbose, *args, **kwargs)
         self.train_loader = train_loader
         self.val_loader = val_loader
+        
         """
          Arguments assertion check
         """
@@ -40,7 +41,7 @@ class AdaptiveDSSDataLoader(DSSDataLoader):
             if self.verbose:
                 logging.info('Epoch: {0:d}, reading dataloader... '.format(self.cur_epoch+1))
             if self.cur_epoch <=  self.warmup_epochs:
-                loader = self.fullset_loader
+                loader = self.wtdataloader
             else:
                 if self.cur_epoch % self.select_every == 0:
                     self.resample()

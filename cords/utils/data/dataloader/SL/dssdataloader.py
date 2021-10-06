@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from os import F_ULOCK
 from cords.utils.data._utils import WeightedSubset
 from torch.utils.data.dataloader import DataLoader
 import torch
@@ -24,13 +25,14 @@ class DSSDataLoader:
         self.dataset = full_data
         self.loader_args = args
         self.loader_kwargs = kwargs
-        self.fullset_loader = DataLoader(self.dataset, *self.loader_args, **self.loader_kwargs)
         self.subset_indices = None
         self.subset_weights = None
         self.subset_loader = None
         self.batch_wise_indices = None
         self.strategy = None
         self.cur_epoch = 1
+        wt_trainset = WeightedSubset(full_data, list(range(len(full_data))), [1]*len(full_data))
+        self.wtdataloader = torch.utils.data.DataLoader(wt_trainset, *self.loader_args, **self.loader_kwargs)
         self._init_subset_loader()
 
     def __getattr__(self, item):
