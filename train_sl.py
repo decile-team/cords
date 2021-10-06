@@ -3,6 +3,7 @@ import copy
 import numpy as np
 import os
 import torch
+from torch._C import device
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data.sampler import SubsetRandomSampler
@@ -13,6 +14,8 @@ from cords.utils.config_utils import load_config_data
 import os.path as osp
 from cords.selectionstrategies.SL import GradMatchStrategy, GLISTERStrategy, RandomStrategy, \
     CRAIGStrategy
+from cords.utils.data.dataloader.SL.adaptive import GLISTERDataLoader, OLRandomDataLoader, CRAIGDataLoader, GradMatchDataLoader
+from cords.utils.data.dataloader.SL.nonadaptive import RandomDataLoader
 from ray import tune
 
 
@@ -138,17 +141,19 @@ class TrainClassifier:
         bud = int(self.configdata['dss_strategy']['fraction'] * N)
         print("Budget, fraction and N:", bud, self.configdata['dss_strategy']['fraction'], N)
 
-        # Subset Selection and creating the subset data loader
-        start_idxs = np.random.choice(N, size=bud, replace=False)
-        idxs = start_idxs
-        data_sub = Subset(trainset, idxs)
-        subset_trnloader = torch.utils.data.DataLoader(data_sub,
-                                                       batch_size=self.configdata['dataloader']['batch_size'],
-                                                       shuffle=self.configdata['dataloader']['shuffle'],
-                                                       pin_memory=self.configdata['dataloader']['pin_memory'])
+        # # Subset Selection and creating the subset data loader
+        # start_idxs = np.random.choice(N, size=bud, replace=False)
+        # idxs = start_idxs
+        # data_sub = Subset(trainset, idxs)
+        # subset_trnloader = torch.utils.data.DataLoader(data_sub,
+        #                                                batch_size=self.configdata['dataloader']['batch_size'],
+        #                                                shuffle=self.configdata['dataloader']['shuffle'],
+        #                                                pin_memory=self.configdata['dataloader']['pin_memory'])
 
-        # Variables to store accuracies
-        gammas = torch.ones(len(idxs)).to(self.configdata['train_args']['device'])
+        # # Variables to store accuracies
+        # gammas = torch.ones(len(idxs)).to(self.configdata['train_args']['device'])
+
+
         substrn_losses = list()  # np.zeros(configdata['train_args']['num_epochs'])
         trn_losses = list()
         val_losses = list()  # np.zeros(configdata['train_args']['num_epochs'])
@@ -180,7 +185,7 @@ class TrainClassifier:
 
         # Model Creation
         model = self.create_model()
-        model1 = self.create_model()
+        # model1 = self.create_model()
 
         # Loss Functions
         criterion, criterion_nored = self.loss_function()
@@ -188,28 +193,33 @@ class TrainClassifier:
         # Getting the optimizer and scheduler
         optimizer, scheduler = self.optimizer_with_scheduler(model)
 
-        if self.configdata['dss_strategy']['type'] == 'GradMatch':
-            # GradMatch Selection strategy
-            setf_model = GradMatchStrategy(trainloader, valloader, model1, criterion_nored,
-                                              self.configdata['optimizer']['lr'],
-                                              self.configdata['train_args']['device'],
-                                              num_cls, True, 'PerClassPerGradient',
-                                              valid=self.configdata['dss_strategy']['valid'],
-                                              v1=self.configdata['dss_strategy']['v1'],
-                                              lam=self.configdata['dss_strategy']['lam'], eps=1e-100)
-        elif self.configdata['dss_strategy']['type'] == 'GradMatchPB':
-            setf_model = GradMatchStrategy(trainloader, valloader, model1, criterion_nored,
-                                              self.configdata['optimizer']['lr'],
-                                              self.configdata['train_args']['device'],
-                                              num_cls, True, 'PerBatch', valid=self.configdata['dss_strategy']['valid'],
-                                              v1=self.configdata['dss_strategy']['v1'],
-                                              lam=self.configdata['dss_strategy']['lam'], eps=1e-100)
-        elif self.configdata['dss_strategy']['type'] == 'GLISTER':
-            # GLISTER Selection strategy
-            setf_model = GLISTERStrategy(trainloader, valloader, model1, criterion_nored,
-                                         self.configdata['optimizer']['lr'], self.configdata['train_args']['device'],
-                                         num_cls, False, 'PerBatch', 'Stochastic', r=int(bud))
+        if self.configdata['dss_strategy']['type'] in ['GradMatch', 'GradMatchPB', 'GradMatch-Warm', 'GradMatchPB-Warm']:
+            
+            ####################### GradMatch Dataloader Additional Arguments ##########################
+            self.configdata.dss_args.model = model
+            self.configdata.dss_args.loss = criterion_nored
+            self.configdata.dss_args.eta = self.configdata.optimizer.lr
+            self.configdata.dss_args.num_classes = self.configdata.model.numclasses 
+            self.configdata.dss_args.device = self.configdata.train_args.device
 
+            dataloader = GradMatchDataLoader(trainloader, valloader, self.configdata.dss_args, verbose=True, 
+                                             batch_size=self.configdata.dataloader.batch_size, shuffle=self.configdata.dataloader.shuffle,
+                                             pin_memory=self.configdata.dataloader.pin_memory)
+
+        
+        elif self.configdata['dss_strategy']['type'] in ['GLISTER', 'GLISTER-Warm', 'GLISTERPB', 'GLISTERPB-Warm']:
+            ####################### GLISTER Dataloader Additional Arguments ##########################
+            self.configdata.dss_args.model = model
+            self.configdata.dss_args.loss = criterion_nored
+            self.configdata.dss_args.eta = self.configdata.optimizer.lr
+            self.configdata.dss_args.num_classes = self.configdata.model.numclasses 
+            self.configdata.dss_args.device = self.configdata.train_args.device
+
+            dataloader = GLISTERDataLoader(trainloader, valloader, self.configdata.dss_args, verbose=True, 
+                                             batch_size=self.configdata.dataloader.batch_size, shuffle=self.configdata.dataloader.shuffle,
+                                             pin_memory=self.configdata.dataloader.pin_memory)
+
+        
         elif self.configdata['dss_strategy']['type'] == 'CRAIG':
             # CRAIG Selection strategy
             setf_model = CRAIGStrategy(trainloader, valloader, model1, criterion_nored,

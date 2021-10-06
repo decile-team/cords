@@ -1,45 +1,24 @@
-import copy
-from abc import ABC
 import numpy as np
 import apricot
 import math
-import time
-from cords.selectionstrategies.supervisedlearning import CRAIGStrategy
-from .dssdataloader import DSSDataLoader
-
-
-class NonAdaptiveDSSDataLoader(DSSDataLoader):
-    def __init__(self, train_loader, val_loader, budget, model, loss, device, verbose=False, *args,
-                 **kwargs):
-        super(NonAdaptiveDSSDataLoader, self).__init__(train_loader.dataset, budget,
-                                                       verbose=verbose, *args, **kwargs)
-        self.train_loader = train_loader
-        self.val_loader = val_loader
-        self.model = model
-        self.loss = copy.deepcopy(loss)
-        self.device = device
-        self.initialized = False
-
-    def __iter__(self):
-        return self.subset_loader.__iter__()
-
-
-class RandomDataLoader(NonAdaptiveDSSDataLoader):
-    pass
+from .nonadaptivedataloader import NonAdaptiveDSSDataLoader
 
 
 class SubmodDataLoader(NonAdaptiveDSSDataLoader):
     # Currently split dataset with size of |max_chunk| then proportionably select samples in every chunk
     # Otherwise distance matrix will be too large
-    def __init__(self, train_loader, val_loader, budget, model, loss, device, size_chunk=2000, verbose=False, *args,
+    def __init__(self, train_loader, val_loader, dss_args, verbose=False, *args,
                  **kwargs):
-        if size_chunk:
-            print("You are using max_chunk: %s" % size_chunk)
-        self.size_chunk = size_chunk
-        super(SubmodDataLoader, self).__init__(train_loader, val_loader, budget, model, loss, device, verbose=verbose,
+        
+        super(SubmodDataLoader, self).__init__(train_loader, val_loader, dss_args, verbose=verbose,
                                                *args,
                                                **kwargs)
 
+        assert "size_chunk" in dss_args.keys(), "'size_chunk' is a compulsory agument for submodular dataloader"
+        if dss_args.size_chunk:
+            print("You are using max_chunk: %s" % dss_args.size_chunk)
+        self.size_chunk = dss_args.size_chunk
+        
     def _init_subset_indices(self):
         X = np.array([x for (x, _y) in self.dataset])
         m = X.shape[0]

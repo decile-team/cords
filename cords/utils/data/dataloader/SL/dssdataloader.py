@@ -1,5 +1,4 @@
 from abc import abstractmethod
-from scipy.linalg.matfuncs import fractional_matrix_power
 from cords.utils.data._utils import WeightedSubset
 from torch.utils.data.dataloader import DataLoader
 import torch
@@ -7,7 +6,6 @@ import numpy as np
 
 
 # Base objects
-
 class DSSDataLoader:
     def __init__(self, full_data, dss_args, verbose=False, *args, **kwargs):
         super(DSSDataLoader, self).__init__()
@@ -49,18 +47,7 @@ class DSSDataLoader:
         return np.random.choice(self.len_full, size=self.budget, replace=False)
 
     def _refresh_subset_loader(self):
-        # data_sub = Subset(trainset, idxs)
-        # subset_trnloader = torch.utils.data.DataLoader(data_sub, batch_size=trn_batch_size, shuffle=False,
-        #                                                pin_memory=True)
         self.subset_loader = DataLoader(WeightedSubset(self.dataset, self.subset_indices, self.subset_weights), shuffle=True,
                                         *self.loader_args, **self.loader_kwargs)
         self.batch_wise_indices = list(self.subset_loader.batch_sampler)
 
-    # TODO: checkpoints
-    @abstractmethod
-    def state_dict(self):
-        pass
-
-    @abstractmethod
-    def load_state_dict(self):
-        pass

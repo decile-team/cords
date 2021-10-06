@@ -41,7 +41,7 @@ class CRAIGStrategy(DataSelectionStrategy):
     model: class
         Model architecture used for training
     loss_type: class
-        The type of loss criterion
+        PyTorch Loss Function
     device: str
         The device being utilized - cpu | cuda
     num_classes: int
@@ -56,6 +56,8 @@ class CRAIGStrategy(DataSelectionStrategy):
          - 'Supervised':  Supervised Implementation where the facility location problem is solved using a sparse similarity matrix by 
                           assigning the similarity of a point with other points of different class to zero.
          - 'PerBatch': PerBatch Implementation where the facility location problem tries to select subset of mini-batches.
+    optimizer: str
+        Type of Greedy Algorithm
     """
 
     def __init__(self, trainloader, valloader, model, loss,

@@ -82,11 +82,11 @@ class GLISTERStrategy(DataSelectionStrategy):
 
     def __init__(self, trainloader, valloader, model, 
                 loss_func, eta, device, num_classes, 
-                linear_layer, selection_type, greedy, r=15, verbose=True):
+                linear_layer, selection_type, greedy, r=15, 
+                verbose=True):
         """
         Constructor method
         """
-
         super().__init__(trainloader, valloader, model, num_classes, linear_layer, loss_func, device)
         self.eta = eta  # step size for the one step gradient update
         self.init_out = list()
@@ -345,8 +345,6 @@ class GLISTERStrategy(DataSelectionStrategy):
                 idxs.extend(tmp)
                 gammas.extend([gammas_temp[i]] * len(tmp))
         else:
-            idxs = []
-            gammas = []
             self.compute_gradients()
             self._update_grads_val(first_init=True)
             idxs, gammas = self.greedy_algo(budget)

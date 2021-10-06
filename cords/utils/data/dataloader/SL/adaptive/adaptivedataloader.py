@@ -1,7 +1,7 @@
 import logging
 from abc import abstractmethod
 from torch.utils.data import DataLoader
-from .dssdataloader import DSSDataLoader
+from ..dssdataloader import DSSDataLoader
 
 
 class AdaptiveDSSDataLoader(DSSDataLoader):
@@ -61,9 +61,3 @@ class AdaptiveDSSDataLoader(DSSDataLoader):
     @abstractmethod
     def _resample_subset_indices(self):
         raise Exception('Not implemented. ')
-
-    def state_dict(self):
-        pass
-
-    def load_state_dict(self):
-        pass

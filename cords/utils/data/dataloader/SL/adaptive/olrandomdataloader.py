@@ -1,10 +1,10 @@
 from .adaptivedataloader import AdaptiveDSSDataLoader
-from cords.selectionstrategies.supervisedlearning import RandomStrategy
+from cords.selectionstrategies.SL import RandomStrategy
 import time, copy, logging
 
-class OnlineRandomDataLoader(AdaptiveDSSDataLoader):
-    def __init__(self, train_loader, val_loader, dss_args, verbose=True, *args, **kwargs):
-        super(OnlineRandomDataLoader, self).__init__(train_loader, val_loader, dss_args, 
+class OLRandomDataLoader(AdaptiveDSSDataLoader):
+    def __init__(self, train_loader, dss_args, verbose=True, *args, **kwargs):
+        super(OLRandomDataLoader, self).__init__(train_loader, train_loader, dss_args, 
                                                     verbose=verbose, *args, **kwargs)
         self.strategy = RandomStrategy(train_loader, online=True)
 

@@ -1,6 +1,5 @@
 import argparse
 from cords.utils.config_utils import load_config_data
-
 from ray.tune.suggest.hyperopt import HyperOptSearch
 from ray.tune.suggest.bayesopt import BayesOptSearch
 from ray.tune.suggest.skopt import SkOptSearch
@@ -12,11 +11,9 @@ from ray.tune.suggest.optuna import OptunaSearch
 from ray.tune.suggest.zoopt import ZOOptSearch
 from ray.tune.suggest.sigopt import SigOptSearch
 from ray.tune.suggest.hebo import HEBOSearch
-
 from ray.tune.schedulers import AsyncHyperBandScheduler
 from ray.tune.schedulers import HyperBandScheduler
 from ray.tune.schedulers.hb_bohb import HyperBandForBOHB
-
 from ray import tune
 import sys
 from train import TrainClassifier

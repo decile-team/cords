@@ -1,5 +1,5 @@
 from .adaptivedataloader import AdaptiveDSSDataLoader
-from cords.selectionstrategies.supervisedlearning import GLISTERStrategy
+from cords.selectionstrategies.SL import GLISTERStrategy
 import time, copy
 
 
