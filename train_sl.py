@@ -116,8 +116,8 @@ class TrainClassifier:
                                                                self.configdata.dataset.feature)
 
         N = len(trainset)
-        trn_batch_size = 20
-        val_batch_size = 20
+        trn_batch_size = self.configdata.dataloader.batch_size
+        val_batch_size = self.configdata.dataloader.batch_size
         tst_batch_size = 1000
 
         # Creating the Data Loaders

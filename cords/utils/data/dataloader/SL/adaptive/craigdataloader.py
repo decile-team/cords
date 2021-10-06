@@ -22,8 +22,8 @@ class CRAIGDataLoader(AdaptiveDSSDataLoader):
         super(CRAIGDataLoader, self).__init__(train_loader, val_loader, dss_args,
                                                 verbose=verbose, *args, **kwargs)
         
-        self.strategy = CRAIGStrategy(train_loader, val_loader, copy.deepcopy(dss_args.model), dss_args.num_classes, 
-                                     dss_args.linear_layer, dss_args.loss, dss_args.device, 
+        self.strategy = CRAIGStrategy(train_loader, val_loader, copy.deepcopy(dss_args.model), dss_args.loss, 
+                                     dss_args.device, dss_args.num_classes, dss_args.linear_layer,  
                                      True, dss_args.selection_type, dss_args.optimizer)
         self.train_model = dss_args.model
         self.eta = dss_args.eta
