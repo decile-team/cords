@@ -294,7 +294,7 @@ class TrainClassifier:
         ################################################# Training Loop #################################################
         """
 
-        for i in range(start_epoch, self.configdata.train_args.num_epochs):
+        for epoch in range(start_epoch, self.configdata.train_args.num_epochs):
             subtrn_loss = 0
             subtrn_correct = 0
             subtrn_total = 0
@@ -323,7 +323,7 @@ class TrainClassifier:
             ################################################# Evaluation Loop #################################################
             """
 
-            if ((i + 1) % self.configdata.train_args.print_every == 0):
+            if ((epoch + 1) % self.configdata.train_args.print_every == 0):
                 trn_loss = 0
                 trn_correct = 0
                 trn_total = 0
@@ -392,7 +392,7 @@ class TrainClassifier:
                 if "subtrn_losses" in print_args:
                     subtrn_losses.append(subtrn_loss)
 
-                print_str = "Epoch: " + str(i + 1)
+                print_str = "Epoch: " + str(epoch + 1)
 
                 """
                 ################################################# Results Printing #################################################
@@ -434,7 +434,7 @@ class TrainClassifier:
                 print(print_str)
 
             ################################################# Checkpoint Saving #################################################
-            if ((i + 1) % self.configdata.ckpt.save_every == 0) and self.configdata.ckpt.is_save == True:
+            if ((epoch + 1) % self.configdata.ckpt.save_every == 0) and self.configdata.ckpt.is_save == True:
 
                 metric_dict = {}
 
@@ -459,7 +459,7 @@ class TrainClassifier:
                         metric_dict['time'] = timing
 
                 ckpt_state = {
-                    'epoch': i + 1,
+                    'epoch': epoch + 1,
                     'state_dict': model.state_dict(),
                     'optimizer': optimizer.state_dict(),
                     'loss': self.loss_function(),
@@ -468,7 +468,7 @@ class TrainClassifier:
 
                 # save checkpoint
                 self.save_ckpt(ckpt_state, checkpoint_path)
-                print("Model checkpoint saved at epoch " + str(i + 1))
+                print("Model checkpoint saved at epoch " + str(epoch + 1))
 
         """
         ################################################# Results Summary #################################################
