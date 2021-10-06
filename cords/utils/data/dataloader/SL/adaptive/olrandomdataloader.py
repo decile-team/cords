@@ -13,10 +13,10 @@ class OLRandomDataLoader(AdaptiveDSSDataLoader):
     def _resample_subset_indices(self):
         if self.verbose:
             start = time.time()
-            print("Epoch: {0:d}, requires subset selection. ".format(self.cur_epoch+1))
+            print("Epoch: {0:d}, requires subset selection. ".format(self.cur_epoch))
         logging.debug("Random budget: %d", self.budget)
         subset_indices, _ = self.strategy.select(self.budget)
         if self.verbose:
             end = time.time()
-            print("Epoch: {0:d}, subset selection finished, takes {1:.2f}. ".format(self.cur_epoch+1, (end - start)))
+            print("Epoch: {0:d}, subset selection finished, takes {1:.2f}. ".format(self.cur_epoch, (end - start)))
         return subset_indices

@@ -35,19 +35,19 @@ class AdaptiveDSSDataLoader(DSSDataLoader):
         self.initialized = True
         if self.warmup_epochs < self.cur_epoch <= self.select_after:
             logging.info(
-                "Skipping epoch {0:d} due to warm-start option. ".format(self.cur_epoch+1, self.warmup_epochs+1))
+                "Skipping epoch {0:d} due to warm-start option. ".format(self.cur_epoch, self.warmup_epochs))
             loader = DataLoader([])
         else:
             if self.verbose:
-                logging.info('Epoch: {0:d}, reading dataloader... '.format(self.cur_epoch+1))
+                logging.info('Epoch: {0:d}, reading dataloader... '.format(self.cur_epoch))
             if self.cur_epoch <=  self.warmup_epochs:
                 loader = self.wtdataloader
             else:
-                if self.cur_epoch % self.select_every == 0:
+                if (self.cur_epoch + 1) % self.select_every == 0:
                     self.resample()
                 loader = self.subset_loader
             if self.verbose:
-                logging.info('Epoch: {0:d}, finished reading dataloader. '.format(self.cur_epoch+1))
+                logging.info('Epoch: {0:d}, finished reading dataloader. '.format(self.cur_epoch))
         self.cur_epoch += 1
         return loader.__iter__()
 
