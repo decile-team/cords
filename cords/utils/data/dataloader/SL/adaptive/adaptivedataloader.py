@@ -43,7 +43,7 @@ class AdaptiveDSSDataLoader(DSSDataLoader):
             if self.cur_epoch <=  self.warmup_epochs:
                 loader = self.wtdataloader
             else:
-                if (self.cur_epoch - 1) % self.select_every == 0:
+                if ((self.cur_epoch - 1) % self.select_every == 0) and (self.cur_epoch > 1):
                     self.resample()
                 loader = self.subset_loader
             if self.verbose:
