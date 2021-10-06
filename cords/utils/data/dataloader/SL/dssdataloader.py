@@ -47,7 +47,7 @@ class DSSDataLoader:
         return np.random.choice(self.len_full, size=self.budget, replace=False)
 
     def _refresh_subset_loader(self):
-        self.subset_loader = DataLoader(WeightedSubset(self.dataset, self.subset_indices, self.subset_weights), shuffle=True,
+        self.subset_loader = DataLoader(WeightedSubset(self.dataset, self.subset_indices, self.subset_weights), 
                                         *self.loader_args, **self.loader_kwargs)
         self.batch_wise_indices = list(self.subset_loader.batch_sampler)
 

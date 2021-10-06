@@ -32,7 +32,7 @@ class GradMatchDataLoader(AdaptiveDSSDataLoader):
         self.eta = dss_args.eta
         self.num_cls = dss_args.num_classes
         if self.verbose:
-            print('Grad-match dataloader loader initialized. ')
+            print('Grad-match dataloader initialized. ')
 
     def _resample_subset_indices(self):
         if self.verbose:

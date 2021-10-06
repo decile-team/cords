@@ -36,7 +36,7 @@ class GLISTERDataLoader(AdaptiveDSSDataLoader):
         self.loss = copy.deepcopy(dss_args.loss)
         
         if self.verbose:
-            print('Glister dataloader loader initialized. ')
+            print('Glister dataloader initialized. ')
 
     def _resample_subset_indices(self):
         if self.verbose:

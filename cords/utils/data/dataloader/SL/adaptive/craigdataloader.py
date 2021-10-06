@@ -32,7 +32,7 @@ class CRAIGDataLoader(AdaptiveDSSDataLoader):
         self.loss = copy.deepcopy(dss_args.loss)
         
         if self.verbose:
-            print('CRAIG dataloader loader initialized. ')
+            print('CRAIG dataloader initialized. ')
 
     def _resample_subset_indices(self):
         if self.verbose:
