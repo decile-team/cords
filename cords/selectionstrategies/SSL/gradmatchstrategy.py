@@ -3,11 +3,11 @@ import time
 import torch
 import numpy as np
 from .dataselectionstrategy import DataSelectionStrategy
-from ..helpers import OrthogonalMP_REG_Parallel, OrthogonalMP_REG
+from ..helpers import OrthogonalMP_REG_Parallel, OrthogonalMP_REG, OrthogonalMP_REG_Parallel_V1
 from torch.utils.data import Subset, DataLoader
 
 
-class OMPGradMatchStrategy(DataSelectionStrategy):
+class GradMatchStrategy(DataSelectionStrategy):
     """
     Implementation of OMPGradMatch Strategy from the paper :footcite:`sivasubramanian2020gradmatch` for supervised learning frameworks.
 
@@ -47,6 +47,8 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
         - 'PerClassPerGradient': PerClassPerGradient method is same as PerClass but we use the gradient corresponding to classification layer of that class only.
     valid : bool, optional
         If valid==True we use validation dataset gradient sum in OMP otherwise we use training dataset (default: False)
+    v1 : bool
+        If v1==True, we use newer version of OMP solver that is more accurate
     lam : float
         Regularization constant of OMP solver
     eps : float
@@ -54,7 +56,8 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
     """
 
     def __init__(self, trainloader, valloader, model, tea_model, ssl_alg, loss,
-                 eta, device, num_classes, linear_layer, selection_type, valid=True, lam=0, eps=1e-4):
+                 eta, device, num_classes, linear_layer, selection_type, valid=False,
+                 v1=True, lam=0, eps=1e-4):
         """
         Constructor method
         """
@@ -68,13 +71,19 @@ class OMPGradMatchStrategy(DataSelectionStrategy):
         self.eps = eps
 
     def ompwrapper(self, X, Y, bud):
+
         if self.device == "cpu":
-            reg = OrthogonalMP_REG(X.cpu().numpy(), Y.cpu().numpy(), nnz=bud, positive=True, lam=0)
+            reg = OrthogonalMP_REG(X.numpy(), Y.numpy(), nnz=bud, positive=True, lam=0)
             ind = np.nonzero(reg)[0]
         else:
-            reg = OrthogonalMP_REG_Parallel(X, Y, nnz=bud,
-                                          positive=True, lam=self.lam,
-                                          tol=self.eps, device=self.device)
+            if self.v1:
+                reg = OrthogonalMP_REG_Parallel_V1(X, Y, nnz=bud,
+                                                 positive=True, lam=self.lam,
+                                                 tol=self.eps, device=self.device)
+            else:
+                reg = OrthogonalMP_REG_Parallel(X, Y, nnz=bud,
+                                                positive=True, lam=self.lam,
+                                                tol=self.eps, device=self.device)
             ind = torch.nonzero(reg).view(-1)
         return ind.tolist(), reg[ind].tolist()
 

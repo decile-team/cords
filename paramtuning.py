@@ -16,7 +16,8 @@ from ray.tune.schedulers import HyperBandScheduler
 from ray.tune.schedulers.hb_bohb import HyperBandForBOHB
 from ray import tune
 import sys
-from train import TrainClassifier
+from train_sl import TrainClassifier
+
 
 class HyperParamTuning:
     def __init__(self, config_file):

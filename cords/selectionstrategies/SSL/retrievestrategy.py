@@ -4,6 +4,8 @@ import time
 import torch
 import torch.nn.functional as F
 from .dataselectionstrategy import DataSelectionStrategy
+from torch.utils.data import Subset, DataLoader
+import numpy as np
 
 
 class RETRIEVEStrategy(DataSelectionStrategy):
@@ -63,7 +65,12 @@ class RETRIEVEStrategy(DataSelectionStrategy):
         If True, we use the last fc layer weights and biases gradients
         If False, we use the last fc layer biases gradients
     selection_type: str
-        Type of selection -
+        Type of selection algorithm -
+        - 'PerBatch' : PerBatch method is where GLISTER algorithm is applied on each minibatch data points.
+        - 'PerClass' : PerClass method is where GLISTER algorithm is applied on each class data points seperately.
+        - 'Supervised' : Supervised method is where GLISTER algorithm is applied on entire training data.
+    greedy: str
+        Type of greedy selection algorithm -
         - 'RGreedy' : RGreedy Selection method is a variant of naive greedy where we just perform r rounds of greedy selection by choosing k/r points in each round.
         - 'Stochastic' : Stochastic greedy selection method is based on the algorithm presented in this paper :footcite:`mirzasoleiman2014lazier`
         - 'Naive' : Normal naive greedy selection method that selects a single best element every step until the budget is fulfilled
@@ -72,7 +79,7 @@ class RETRIEVEStrategy(DataSelectionStrategy):
     """
 
     def __init__(self, trainloader, valloader, model, tea_model, ssl_alg, loss,
-                 eta, device, num_classes, linear_layer, selection_type, r=15, valid=True):
+                 eta, device, num_classes, linear_layer, selection_type, greedy, r=15, valid=True):
         """
         Constructor method
         """
@@ -96,18 +103,20 @@ class RETRIEVEStrategy(DataSelectionStrategy):
             Gradient initialization (default: False)
         """
         self.model.zero_grad()
+        if self.selection_type == 'PerClass':
+            valloader = self.pcvalloader
+        else:
+            valloader = self.valloader
         embDim = self.model.get_embedding_dim()
         loss_name = self.loss.__class__.__name__
         if self.valid:
             if first_init:
-                for batch_idx, (inputs, targets) in enumerate(self.valloader):
+                for batch_idx, (inputs, targets) in enumerate(valloader):
                     inputs, targets = inputs.to(self.device), targets.to(self.device, non_blocking=True)
-
                     if loss_name == 'MeanSquared':
                         tmp_targets = torch.zeros(len(inputs), self.num_classes, device=self.device)
                         tmp_targets[torch.arange(len(inputs)), targets] = 1
                         targets = tmp_targets
-
                     if batch_idx == 0:
                         out, l1 = self.model(inputs, last=True, freeze=True)
                         if loss_name == 'MeanSquared':
@@ -120,22 +129,34 @@ class RETRIEVEStrategy(DataSelectionStrategy):
                             l0_expand = torch.repeat_interleave(l0_grads, embDim, dim=1)
                             l1_grads = l0_expand * l1.repeat(1, self.num_classes)
                         self.init_out = out
-                        self.init_l1 = l1
+                        self.init_l1 = l1                        
+                        if self.selection_type == 'PerBatch':
+                            l0_grads = l0_grads.mean(dim=0).view(1, -1)
+                            if self.linear_layer:
+                                l1_grads = l1_grads.mean(dim=0).view(1, -1)                        
                         if loss_name == 'MeanSquared':
                             self.y_val = targets
                         else:
                             self.y_val = targets.view(-1, 1)
                     else:
                         out, l1 = self.model(inputs, last=True, freeze=True)
+                        
                         if loss_name == 'MeanSquared':
                             temp_out = F.softmax(out, dim=1)
                             loss = F.mse_loss(temp_out, targets, reduction='none').sum()
                         else:
                             loss = F.cross_entropy(out, targets, reduction='none').sum()
+                        
                         batch_l0_grads = torch.autograd.grad(loss, out)[0]
                         if self.linear_layer:
                             batch_l0_expand = torch.repeat_interleave(batch_l0_grads, embDim, dim=1)
                             batch_l1_grads = batch_l0_expand * l1.repeat(1, self.num_classes)
+                        
+                        if self.selection_type == 'PerBatch':
+                            batch_l0_grads = batch_l0_grads.mean(dim=0).view(1, -1)
+                            if self.linear_layer:
+                                batch_l1_grads = batch_l1_grads.mean(dim=0).view(1, -1)
+                        
                         l0_grads = torch.cat((l0_grads, batch_l0_grads), dim=0)
                         if self.linear_layer:
                             l1_grads = torch.cat((l1_grads, batch_l1_grads), dim=0)
@@ -160,6 +181,19 @@ class RETRIEVEStrategy(DataSelectionStrategy):
                 if self.linear_layer:
                     l0_expand = torch.repeat_interleave(l0_grads, embDim, dim=1)
                     l1_grads = l0_expand * self.init_l1.repeat(1, self.num_classes)
+                if self.selection_type == 'PerBatch':
+                    b = int(l0_grads.shape[0]/self.valloader.batch_size)
+                    l0_grads = torch.chunk(l0_grads, b, dim=0)
+                    new_t = []
+                    for i in range(len(l0_grads)):
+                        new_t.append(torch.mean(l0_grads[i], dim=0).view(1, -1))
+                    l0_grads = torch.cat(new_t, dim=0)
+                    if self.linear_layer:
+                        l1_grads = torch.chunk(l1_grads, b, dim=0)
+                        new_t = []
+                        for i in range(len(l1_grads)):
+                            new_t.append(torch.mean(l1_grads[i], dim=0).view(1, -1))
+                        l1_grads = torch.cat(new_t, dim=0)
             torch.cuda.empty_cache()
             if self.linear_layer:
                 self.grads_val_curr = torch.mean(torch.cat((l0_grads, l1_grads), dim=1), dim=0).view(-1, 1)
@@ -167,6 +201,7 @@ class RETRIEVEStrategy(DataSelectionStrategy):
                 self.grads_val_curr = torch.mean(l0_grads, dim=0).view(-1, 1)
         else:
             if first_init:
+                self.y_val = torch.cat(self.weak_targets, dim=0)
                 for batch_idx, (ul_weak_aug, ul_strong_aug, _) in enumerate(self.trainloader):
                     ul_weak_aug, ul_strong_aug = ul_weak_aug.to(self.device), ul_strong_aug.to(self.device)
                     if batch_idx == 0:
@@ -182,6 +217,11 @@ class RETRIEVEStrategy(DataSelectionStrategy):
                             l1_grads = l0_expand * l1.repeat(1, self.num_classes)
                         self.init_out = out
                         self.init_l1 = l1
+                        if self.selection_type == 'PerBatch':
+                            l0_grads = l0_grads.mean(dim=0).view(1, -1)
+                            if self.linear_layer:
+                                l1_grads = l1_grads.mean(dim=0).view(1, -1)                        
+                        
                     else:
                         out, l1 = self.model(ul_strong_aug, last=True, freeze=True)
                         if loss_name == 'MeanSquared':
@@ -193,6 +233,12 @@ class RETRIEVEStrategy(DataSelectionStrategy):
                         if self.linear_layer:
                             batch_l0_expand = torch.repeat_interleave(batch_l0_grads, embDim, dim=1)
                             batch_l1_grads = batch_l0_expand * l1.repeat(1, self.num_classes)
+                        
+                        if self.selection_type == 'PerBatch':
+                            batch_l0_grads = batch_l0_grads.mean(dim=0).view(1, -1)
+                            if self.linear_layer:
+                                batch_l1_grads = batch_l1_grads.mean(dim=0).view(1, -1)
+
                         l0_grads = torch.cat((l0_grads, batch_l0_grads), dim=0)
                         if self.linear_layer:
                             l1_grads = torch.cat((l1_grads, batch_l1_grads), dim=0)
@@ -216,6 +262,20 @@ class RETRIEVEStrategy(DataSelectionStrategy):
                 if self.linear_layer:
                     l0_expand = torch.repeat_interleave(l0_grads, embDim, dim=1)
                     l1_grads = l0_expand * self.init_l1.repeat(1, self.num_classes)
+                
+                if self.selection_type == 'PerBatch':
+                    b = int(l0_grads.shape[0]/self.valloader.batch_size)
+                    l0_grads = torch.chunk(l0_grads, b, dim=0)
+                    new_t = []
+                    for i in range(len(l0_grads)):
+                        new_t.append(torch.mean(l0_grads[i], dim=0).view(1, -1))
+                    l0_grads = torch.cat(new_t, dim=0)
+                    if self.linear_layer:
+                        l1_grads = torch.chunk(l1_grads, b, dim=0)
+                        new_t = []
+                        for i in range(len(l1_grads)):
+                            new_t.append(torch.mean(l1_grads[i], dim=0).view(1, -1))
+                        l1_grads = torch.cat(new_t, dim=0)
             torch.cuda.empty_cache()
             if self.linear_layer:
                 self.grads_val_curr = torch.mean(torch.cat((l0_grads, l1_grads), dim=1), dim=0).view(-1, 1)
@@ -257,6 +317,78 @@ class RETRIEVEStrategy(DataSelectionStrategy):
         # if isinstance(element, list):
         grads_X += self.grads_per_elem[element].sum(dim=0)
 
+    def greedy_algo(self, budget):
+        greedySet = list()
+        N = self.grads_per_elem.shape[0]
+        remainSet = list(range(N))
+        t_ng_start = time.time()  # naive greedy start time
+        numSelected = 0
+        if self.greedy == 'RGreedy':
+            # subset_size = int((len(self.grads_per_elem) / r))
+            selection_size = int(budget / self.r)
+            while (numSelected < budget):
+                # Try Using a List comprehension here!
+                rem_grads = self.grads_per_elem[remainSet]
+                gains = self.eval_taylor_modular(rem_grads)
+                # Update the greedy set and remaining set
+                sorted_gains, indices = torch.sort(gains.view(-1), descending=True)
+                selected_indices = [remainSet[index.item()] for index in indices[0:selection_size]]
+                greedySet.extend(selected_indices)
+                [remainSet.remove(idx) for idx in selected_indices]
+                if numSelected == 0:
+                    grads_curr = self.grads_per_elem[selected_indices].sum(dim=0).view(1, -1)
+                else:  # If 1st selection, then just set it to bestId grads
+                    self._update_gradients_subset(grads_curr, selected_indices)
+                # Update the grads_val_current using current greedySet grads
+                self._update_grads_val(grads_curr)
+                numSelected += selection_size
+            print("R greedy GLISTER total time:", time.time() - t_ng_start)
+
+        # Stochastic Greedy Selection Algorithm
+        elif self.greedy == 'Stochastic':
+            subset_size = int((len(self.grads_per_elem) / budget) * math.log(100))
+            while (numSelected < budget):
+                # Try Using a List comprehension here!
+                subset_selected = random.sample(remainSet, k=subset_size)
+                rem_grads = self.grads_per_elem[subset_selected]
+                gains = self.eval_taylor_modular(rem_grads)
+                # Update the greedy set and remaining set
+                _, indices = torch.sort(gains.view(-1), descending=True)
+                bestId = [subset_selected[indices[0].item()]]
+                greedySet.append(bestId[0])
+                remainSet.remove(bestId[0])
+                numSelected += 1
+                # Update info in grads_currX using element=bestId
+                if numSelected > 1:
+                    self._update_gradients_subset(grads_curr, bestId)
+                else:  # If 1st selection, then just set it to bestId grads
+                    grads_curr = self.grads_per_elem[bestId].view(1, -1)  # Making it a list so that is mutable!
+                # Update the grads_val_current using current greedySet grads
+                self._update_grads_val(grads_curr)
+            print("Stochastic Greedy GLISTER total time:", time.time() - t_ng_start)
+
+        elif self.greedy == 'Naive':
+            while (numSelected < budget):
+                # Try Using a List comprehension here!
+                rem_grads = self.grads_per_elem[remainSet]
+                gains = self.eval_taylor_modular(rem_grads)
+                # Update the greedy set and remaining set
+                # _, maxid = torch.max(gains, dim=0)
+                _, indices = torch.sort(gains.view(-1), descending=True)
+                bestId = [remainSet[indices[0].item()]]
+                greedySet.append(bestId[0])
+                remainSet.remove(bestId[0])
+                numSelected += 1
+                # Update info in grads_currX using element=bestId
+                if numSelected == 1:
+                    grads_curr = self.grads_per_elem[bestId[0]].view(1, -1)
+                else:  # If 1st selection, then just set it to bestId grads
+                    self._update_gradients_subset(grads_curr, bestId)
+                # Update the grads_val_current using current greedySet grads
+                self._update_grads_val(grads_curr)
+            print("Naive Greedy GLISTER total time:", time.time() - t_ng_start)
+        return list(greedySet), [1] * budget
+
     def select(self, budget, model_params, tea_model_params):
         """
         Apply naive greedy method for data selection
@@ -277,80 +409,47 @@ class RETRIEVEStrategy(DataSelectionStrategy):
         budget: Tensor
             Tensor containing gradients of datapoints present in greedySet
         """
-        t_ng_start = time.time()  # naive greedy start time
+        glister_start_time = time.time() # naive greedy start time
         self.update_model(model_params, tea_model_params)
-        if self.valid:
-            self.compute_gradients(store_t=False)
+        if self.selection_type == 'PerClass':
+            self.get_labels(valid=True)
+            idxs = []
+            gammas = []
+            for i in range(self.num_classes):
+                trn_subset_idx = torch.where(self.trn_lbls == i)[0].tolist()
+                trn_data_sub = Subset(self.trainloader.dataset, trn_subset_idx)
+                self.pctrainloader = DataLoader(trn_data_sub, batch_size=self.trainloader.batch_size,
+                                                shuffle=False, pin_memory=True)
+                
+                val_subset_idx = torch.where(self.val_lbls == i)[0].tolist()
+                val_data_sub = Subset(self.valloader.dataset, val_subset_idx)
+                self.pcvalloader = DataLoader(val_data_sub, batch_size=self.trainloader.batch_size,
+                                            shuffle=False, pin_memory=True)
+                if self.valid:
+                    self.compute_gradients(store_t=False)
+                else:
+                    self.compute_gradients(store_t=True)
+                
+                self._update_grads_val(first_init=True)
+                idxs_temp, gammas_temp = self.greedy_algo(math.ceil(budget * len(trn_subset_idx) / self.N_trn))
+                idxs.extend(list(np.array(trn_subset_idx)[idxs_temp]))
+                gammas.extend(gammas_temp)
+        elif self.selection_type == 'PerBatch':
+            idxs = []
+            gammas = []
+            self.compute_gradients(perBatch=True)
+            self._update_grads_val(first_init=True)
+            idxs_temp, gammas_temp = self.greedy_algo(math.ceil(budget/self.trainloader.batch_size))
+            batch_wise_indices = list(self.trainloader.batch_sampler)
+            for i in range(len(idxs_temp)):
+                tmp = batch_wise_indices[idxs_temp[i]]
+                idxs.extend(tmp)
+                gammas.extend([gammas_temp[i]] * len(tmp))
         else:
-            self.compute_gradients(store_t=True)
-        print("Gradient computation time: ", time.time()- t_ng_start)
-        self._update_grads_val(first_init=True)
-        # Dont need the trainloader here!! Same as full batch version!
-        self.numSelected = 0
-        greedySet = list()
-        remainSet = list(range(self.N_trn))
-        # RModular Greedy Selection Algorithm
-        if self.selection_type == 'RGreedy':
-            # subset_size = int((len(self.grads_per_elem) / r))
-            selection_size = int(budget / self.r)
-            while (self.numSelected < budget):
-                # Try Using a List comprehension here!
-                rem_grads = self.grads_per_elem[remainSet]
-                gains = self.eval_taylor_modular(rem_grads)
-                # Update the greedy set and remaining set
-                sorted_gains, indices = torch.sort(gains.view(-1), descending=True)
-                selected_indices = [remainSet[index.item()] for index in indices[0:selection_size]]
-                greedySet.extend(selected_indices)
-                [remainSet.remove(idx) for idx in selected_indices]
-                if self.numSelected == 0:
-                    grads_currX = self.grads_per_elem[selected_indices].sum(dim=0).view(1, -1)
-                else:  # If 1st selection, then just set it to bestId grads
-                    self._update_gradients_subset(grads_currX, selected_indices)
-                # Update the grads_val_current using current greedySet grads
-                self._update_grads_val(grads_currX)
-                self.numSelected += selection_size
-            print("R greedy GLISTER total time:", time.time() - t_ng_start)
+            self.compute_gradients()
+            self._update_grads_val(first_init=True)
+            idxs, gammas = self.greedy_algo(budget)
+        glister_end_time = time.time()
+        print("GLISTER algorithm Subset Selection time is: ", glister_end_time - glister_start_time)
+        return idxs, torch.FloatTensor(gammas)
 
-        # Stochastic Greedy Selection Algorithm
-        elif self.selection_type == 'Stochastic':
-            subset_size = int((len(self.grads_per_elem) / budget) * math.log(100))
-            while (self.numSelected < budget):
-                # Try Using a List comprehension here!
-                subset_selected = random.sample(remainSet, k=subset_size)
-                rem_grads = self.grads_per_elem[subset_selected]
-                gains = self.eval_taylor_modular(rem_grads)
-                # Update the greedy set and remaining set
-                _, indices = torch.sort(gains.view(-1), descending=True)
-                bestId = [subset_selected[indices[0].item()]]
-                greedySet.append(bestId[0])
-                remainSet.remove(bestId[0])
-                self.numSelected += 1
-                # Update info in grads_currX using element=bestId
-                if self.numSelected > 1:
-                    self._update_gradients_subset(grads_currX, bestId)
-                else:  # If 1st selection, then just set it to bestId grads
-                    grads_currX = self.grads_per_elem[bestId].view(1, -1)  # Making it a list so that is mutable!
-                # Update the grads_val_current using current greedySet grads
-                self._update_grads_val(grads_currX)
-            print("Stochastic Greedy GLISTER total time:", time.time() - t_ng_start)
-        elif self.selection_type == 'Naive':
-            while (self.numSelected < budget):
-                # Try Using a List comprehension here!
-                rem_grads = self.grads_per_elem[remainSet]
-                gains = self.eval_taylor_modular(rem_grads)
-                # Update the greedy set and remaining set
-                # _, maxid = torch.max(gains, dim=0)
-                _, indices = torch.sort(gains.view(-1), descending=True)
-                bestId = [remainSet[indices[0].item()]]
-                greedySet.append(bestId[0])
-                remainSet.remove(bestId[0])
-                self.numSelected += 1
-                # Update info in grads_currX using element=bestId
-                if self.numSelected == 1:
-                    grads_currX = self.grads_per_elem[bestId[0]].view(1, -1)
-                else:  # If 1st selection, then just set it to bestId grads
-                    self._update_gradients_subset(grads_currX, bestId)
-                # Update the grads_val_current using current greedySet grads
-                self._update_grads_val(grads_currX)
-            print("Naive Greedy GLISTER total time:", time.time() - t_ng_start)
-        return list(greedySet), torch.ones(budget)

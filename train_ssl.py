@@ -248,12 +248,12 @@ def main(cfg, logger):
 
     if cfg.dss_strategy == 'GradMatch':
         # OMPGradMatch Selection strategy
-        setf_model = OMPGradMatchStrategy(ult_seq_loader, lt_seq_loader, model1, teacher_model, ssl_alg, consistency_nored,
+        setf_model = GradMatchStrategy(ult_seq_loader, lt_seq_loader, model1, teacher_model, ssl_alg, consistency_nored,
         cfg.lr, device, num_classes, True, 'PerClassPerGradient', valid=cfg.valid, lam=0.25, eps=1e-10)
         kappa_iterations = int(cfg.kappa * cfg.iteration * cfg.fraction)
 
     elif cfg.dss_strategy == 'GradMatchPB':
-        setf_model = OMPGradMatchStrategy(ult_seq_loader, lt_seq_loader, model1, teacher_model, ssl_alg, consistency_nored,
+        setf_model = GradMatchStrategy(ult_seq_loader, lt_seq_loader, model1, teacher_model, ssl_alg, consistency_nored,
         cfg.lr, device, num_classes, True, 'PerBatch', valid=cfg.valid, lam=0.25, eps=1e-10)
         kappa_iterations = int(cfg.kappa * cfg.iteration * cfg.fraction)
 
