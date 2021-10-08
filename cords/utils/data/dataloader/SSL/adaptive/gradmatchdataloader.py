@@ -39,7 +39,7 @@ class GradMatchDataLoader(AdaptiveDSSDataLoader):
     def _resample_subset_indices(self):
         if self.verbose:
             start = time.time()
-            print('Epoch: {0:d}, requires subset selection. '.format(self.cur_epoch))
+            print('Iteration: {0:d}, requires subset selection. '.format(self.cur_iter))
         cached_state_dict = copy.deepcopy(self.train_model.state_dict())
         clone_dict = copy.deepcopy(self.train_model.state_dict())
         tea_cached_state_dict = copy.deepcopy(self.teacher_model.state_dict())
@@ -49,5 +49,5 @@ class GradMatchDataLoader(AdaptiveDSSDataLoader):
         self.teacher_model.load_state_dict(tea_cached_state_dict)
         if self.verbose:
             end = time.time()
-            print('Epoch: {0:d}, subset selection finished, takes {1:.2f}. '.format(self.cur_epoch, (end - start)))
+            print('Iteration: {0:d}, subset selection finished, takes {1:.2f}. '.format(self.cur_iter, (end - start)))
         return subset_indices, subset_weights

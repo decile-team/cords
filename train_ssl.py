@@ -261,6 +261,96 @@ def main(cfg, logger):
         num_workers=cfg.num_workers
     )
 
+    """
+    ############################## Custom Dataloader Creation ##############################
+    """
+
+    if self.configdata.dss_args.type in ['GradMatch', 'GradMatchPB', 'GradMatch-Warm', 'GradMatchPB-Warm']:
+        """
+        ############################## GradMatch Dataloader Additional Arguments ##############################
+        """
+        self.configdata.dss_args.model = model
+        self.configdata.dss_args.loss = criterion_nored
+        self.configdata.dss_args.eta = self.configdata.optimizer.lr
+        self.configdata.dss_args.num_classes = self.configdata.model.numclasses 
+        self.configdata.dss_args.num_epochs = self.configdata.train_args.num_epochs
+        self.configdata.dss_args.device = self.configdata.train_args.device
+
+        dataloader = GradMatchDataLoader(trainloader, valloader, self.configdata.dss_args, verbose=True, 
+                                            batch_size=self.configdata.dataloader.batch_size, 
+                                            shuffle=self.configdata.dataloader.shuffle,
+                                            pin_memory=self.configdata.dataloader.pin_memory)
+
+    
+    elif self.configdata.dss_args.type in ['RETRIEVE', 'RETRIEVE-Warm', 'RETRIEVEPB', 'RETRIEVEPB-Warm']:
+        """
+        ############################## RETRIEVE Dataloader Additional Arguments ##############################
+        """
+        self.configdata.dss_args.model = model
+        self.configdata.dss_args.loss = criterion_nored
+        self.configdata.dss_args.eta = self.configdata.optimizer.lr
+        self.configdata.dss_args.num_classes = self.configdata.model.numclasses 
+        self.configdata.dss_args.num_epochs = self.configdata.train_args.num_epochs
+        self.configdata.dss_args.device = self.configdata.train_args.device
+
+        dataloader = RETRIEVEDataLoader(trainloader, valloader, self.configdata.dss_args, verbose=True, 
+                                            batch_size=self.configdata.dataloader.batch_size, 
+                                            shuffle=self.configdata.dataloader.shuffle,
+                                            pin_memory=self.configdata.dataloader.pin_memory)
+
+    
+    elif self.configdata.dss_args.type in ['CRAIG', 'CRAIG-Warm', 'CRAIGPB', 'CRAIGPB-Warm']:
+        """
+        ############################## CRAIG Dataloader Additional Arguments ##############################
+        """
+        self.configdata.dss_args.model = model
+        self.configdata.dss_args.loss = criterion_nored
+        self.configdata.dss_args.num_classes = self.configdata.model.numclasses 
+        self.configdata.dss_args.num_epochs = self.configdata.train_args.num_epochs
+        self.configdata.dss_args.device = self.configdata.train_args.device
+
+        dataloader = CRAIGDataLoader(trainloader, valloader, self.configdata.dss_args, verbose=True, 
+                                            batch_size=self.configdata.dataloader.batch_size,
+                                            shuffle=self.configdata.dataloader.shuffle,
+                                            pin_memory=self.configdata.dataloader.pin_memory)
+
+
+    elif self.configdata.dss_args.type in ['Random', 'Random-Warm']:
+        """
+        ############################## Random Dataloader Additional Arguments ##############################
+        """
+        self.configdata.dss_args.device = self.configdata.train_args.device
+        self.configdata.dss_args.num_epochs = self.configdata.train_args.num_epochs
+
+        dataloader = RandomDataLoader(trainloader, self.configdata.dss_args, verbose=True,
+                                        batch_size=self.configdata.dataloader.batch_size,
+                                        shuffle=self.configdata.dataloader.shuffle,
+                                        pin_memory=self.configdata.dataloader.pin_memory)
+        
+
+    elif self.configdata.dss_args.type == ['OLRandom', 'OLRandom-Warm']:
+        """
+        ############################## OLRandom Dataloader Additional Arguments ##############################
+        """
+        self.configdata.dss_args.device = self.configdata.train_args.device
+        self.configdata.dss_args.num_epochs = self.configdata.train_args.num_epochs
+
+        dataloader = OLRandomDataLoader(trainloader, self.configdata.dss_args, verbose=True,
+                                        batch_size=self.configdata.dataloader.batch_size,
+                                        shuffle=self.configdata.dataloader.shuffle,
+                                        pin_memory=self.configdata.dataloader.pin_memory)
+    
+    elif self.configdata.dss_args.type == 'Full':
+        ############################## Full Dataloader Additional Arguments ##############################
+        wt_trainset = WeightedSubset(trainset, list(range(len(trainset))), [1]*len(trainset))
+
+        dataloader = torch.utils.data.DataLoader(wt_trainset,
+                                        batch_size=self.configdata.dataloader.batch_size,
+                                        shuffle=self.configdata.dataloader.shuffle,
+                                        pin_memory=self.configdata.dataloader.pin_memory)
+
+    print("=======================================", file=logfile)
+
     if cfg.dss_strategy == 'GradMatch':
         # OMPGradMatch Selection strategy
         setf_model = GradMatchStrategy(ult_seq_loader, lt_seq_loader, model1, teacher_model, ssl_alg, consistency_nored,
