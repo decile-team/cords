@@ -28,9 +28,8 @@ class DSSDataLoader:
         self.subset_loader = None
         self.batch_wise_indices = None
         self.strategy = None
-        self.cur_epoch = 1
-        wt_trainset = WeightedSubset(full_data, list(range(len(full_data))), [1]*len(full_data))
-        self.wtdataloader = torch.utils.data.DataLoader(wt_trainset, *self.loader_args, **self.loader_kwargs)
+        self.cur_iter = 1
+        self.wt_trainset = WeightedSubset(full_data, list(range(len(full_data))), [1]*len(full_data))
         self._init_subset_loader()
 
     def __getattr__(self, item):

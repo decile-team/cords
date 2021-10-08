@@ -12,7 +12,7 @@ parser.add_argument("--out_dir", default='./log/', type=str, help='Ouput logs di
 args1 = parser.parse_args()
 
 args = ['python3']
-args.append('train_ssl.py')
+args.append('old_train_ssl.py')
 
 if args1.dataset == 'cifar10':
     args.append('--dataset')

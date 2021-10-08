@@ -14,13 +14,9 @@ from cords.selectionstrategies.helpers.ssl_lib.consistency.builder import gen_co
 from cords.utils.data.datasets.SSL import gen_dataset
 from cords.selectionstrategies.helpers.ssl_lib.param_scheduler import scheduler
 from cords.selectionstrategies.helpers.ssl_lib.misc.meter import Meter
-from cords.utils.data.dataloader.SSL.adaptive import *
+from cords.selectionstrategies.SSL import *
 import time
 
-
-"""
-############################## Model Creation ##############################
-"""
 
 def gen_model(name, num_classes, img_size):
     scale =  int(np.ceil(np.log2(img_size)))
@@ -36,9 +32,6 @@ def gen_model(name, num_classes, img_size):
         raise NotImplementedError
 
 
-"""
-############################## Model Evaluation ##############################
-"""
 def evaluation(raw_model, eval_model, loader, device):
     raw_model.eval()
     eval_model.eval()
@@ -62,9 +55,6 @@ def evaluation(raw_model, eval_model, loader, device):
     return mean_raw_acc, mean_acc, mean_loss
 
 
-"""
-############################## Model Parameters Update ##############################
-"""
 def param_update(
     cfg,
     cur_iteration,
@@ -173,27 +163,18 @@ def param_update(
     }
 
 
-"""
-############################## Calculate selected ID points percentage  ##############################
-"""
 def get_ul_ood_ratio(ul_dataset):
     actual_lbls = ul_dataset.dataset.dataset['labels'][ul_dataset.indices]
     bincnt = numpy.bincount(actual_lbls, minlength=10)
     print("ID points selected", (bincnt[:6].sum()/bincnt.sum()).item())
 
 
-"""
-############################## Calculate selected ID points percentage  ##############################
-"""
 def get_ul_classimb_ratio(ul_dataset):
     actual_lbls = ul_dataset.dataset.dataset['labels'][ul_dataset.indices]
     bincnt = numpy.bincount(actual_lbls, minlength=10)
     print("ClassImbalance points selected", (bincnt[:5].sum()/bincnt.sum()).item())
 
 
-"""
-############################## Main File ##############################
-"""
 def main(cfg, logger):
     # set seed
     torch.manual_seed(cfg.seed)
@@ -217,12 +198,16 @@ def main(cfg, logger):
     ssl_alg = gen_ssl_alg(cfg.alg, cfg)
     # build student model
     model = gen_model(cfg.model, num_classes, img_size).to(device)
+    model1 = gen_model(cfg.model, num_classes, img_size).to(device)
     # build teacher model
     if cfg.ema_teacher:
         teacher_model = gen_model(cfg.model, num_classes, img_size).to(device)
         teacher_model.load_state_dict(model.state_dict())
+        teacher_model1 = gen_model(cfg.model, num_classes, img_size).to(device)
+        teacher_model1.load_state_dict(model.state_dict())
     else:
         teacher_model = None
+        teacher_model1 = None
     # for evaluation
     if cfg.weight_average:
         average_model = gen_model(cfg.model, num_classes, img_size).to(device)
@@ -241,7 +226,7 @@ def main(cfg, logger):
         else:
             max_iteration = int(cfg.iteration * cfg.fraction)
 
-    # build optimizer
+    sel_iteration = int((cfg.select_every * len(ult_data) * cfg.fraction) // (cfg.ul_batch_size))  # build optimizer
     N = len(ult_data)
     bud = int(cfg.fraction * N)
     start_idxs = numpy.random.choice(N, size=bud, replace=False)
