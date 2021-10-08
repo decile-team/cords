@@ -90,6 +90,7 @@ class RETRIEVEStrategy(DataSelectionStrategy):
         self.selection_type = selection_type
         self.r = r
         self.valid = valid
+        self.greedy = greedy
 
     def _update_grads_val(self, grads_currX=None, first_init=False):
         """
@@ -107,6 +108,12 @@ class RETRIEVEStrategy(DataSelectionStrategy):
             valloader = self.pcvalloader
         else:
             valloader = self.valloader
+
+        if self.selection_type == 'PerClass':
+            trainloader = self.pctrainloader
+        else:
+            trainloader = self.trainloader
+            
         embDim = self.model.get_embedding_dim()
         loss_name = self.loss.__class__.__name__
         if self.valid:
@@ -202,7 +209,7 @@ class RETRIEVEStrategy(DataSelectionStrategy):
         else:
             if first_init:
                 self.y_val = torch.cat(self.weak_targets, dim=0)
-                for batch_idx, (ul_weak_aug, ul_strong_aug, _) in enumerate(self.trainloader):
+                for batch_idx, (ul_weak_aug, ul_strong_aug, _) in enumerate(trainloader):
                     ul_weak_aug, ul_strong_aug = ul_weak_aug.to(self.device), ul_strong_aug.to(self.device)
                     if batch_idx == 0:
                         out, l1 = self.model(ul_strong_aug, last=True, freeze=True)
@@ -426,9 +433,9 @@ class RETRIEVEStrategy(DataSelectionStrategy):
                 self.pcvalloader = DataLoader(val_data_sub, batch_size=self.trainloader.batch_size,
                                             shuffle=False, pin_memory=True)
                 if self.valid:
-                    self.compute_gradients(store_t=False)
+                    self.compute_gradients(store_t=False, perClass=True)
                 else:
-                    self.compute_gradients(store_t=True)
+                    self.compute_gradients(store_t=True, perClass=True)
                 
                 self._update_grads_val(first_init=True)
                 idxs_temp, gammas_temp = self.greedy_algo(math.ceil(budget * len(trn_subset_idx) / self.N_trn))
@@ -437,7 +444,10 @@ class RETRIEVEStrategy(DataSelectionStrategy):
         elif self.selection_type == 'PerBatch':
             idxs = []
             gammas = []
-            self.compute_gradients(perBatch=True)
+            if self.valid:
+                self.compute_gradients(store_t=False, perBatch=True)
+            else:
+                self.compute_gradients(store_t=True, perBatch=True)
             self._update_grads_val(first_init=True)
             idxs_temp, gammas_temp = self.greedy_algo(math.ceil(budget/self.trainloader.batch_size))
             batch_wise_indices = list(self.trainloader.batch_sampler)
@@ -446,7 +456,10 @@ class RETRIEVEStrategy(DataSelectionStrategy):
                 idxs.extend(tmp)
                 gammas.extend([gammas_temp[i]] * len(tmp))
         else:
-            self.compute_gradients()
+            if self.valid:
+                self.compute_gradients(store_t=False)
+            else:
+                self.compute_gradients(store_t=True)
             self._update_grads_val(first_init=True)
             idxs, gammas = self.greedy_algo(budget)
         glister_end_time = time.time()

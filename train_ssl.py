@@ -182,7 +182,7 @@ def main(cfg, logger):
     random.seed(cfg.seed)
     # select device
     if torch.cuda.is_available():
-        device = "cuda"
+        device = "cuda:6"
         torch.backends.cudnn.benchmark = True
     else:
         logger.info("CUDA is NOT available")
@@ -260,13 +260,13 @@ def main(cfg, logger):
     elif cfg.dss_strategy == 'RETRIEVE':
         # RETRIEVE Selection strategy
         setf_model = RETRIEVEStrategy(ult_seq_loader, lt_seq_loader, model1, teacher_model1, ssl_alg, consistency_nored,
-                 cfg.lr, device, num_classes, False, 'Stochastic', r=int(bud), valid=True)
+                 cfg.lr, device, num_classes, False, 'PerClass', 'Stochastic', r=int(bud), valid=True)
         kappa_iterations = int(cfg.kappa * cfg.iteration * cfg.fraction)
 
     elif cfg.dss_strategy == 'RETRIEVE_UL':
         # RETRIEVE Selection strategy
         setf_model = RETRIEVEStrategy(ult_seq_loader, lt_seq_loader, model1, teacher_model1, ssl_alg, consistency_nored,
-                 cfg.lr, device, num_classes, False, 'Stochastic', r=int(bud), valid=False)
+                 cfg.lr, device, num_classes, False, 'PerBatch', 'Stochastic', r=int(bud), valid=False)
         kappa_iterations = int(cfg.kappa * cfg.iteration * cfg.fraction)
 
     elif cfg.dss_strategy == 'CRAIG':
@@ -309,26 +309,26 @@ def main(cfg, logger):
     elif cfg.dss_strategy == 'RETRIEVE-Warm':
         # RETRIEVE Selection strategy
         setf_model = RETRIEVEStrategy(ult_seq_loader, lt_seq_loader, model1, teacher_model1, ssl_alg, consistency_nored,
-                 cfg.lr, device, num_classes, False, 'Stochastic', r=int(bud), valid=True)
+                 cfg.lr, device, num_classes, False, 'Supervised', 'Stochastic', r=int(bud), valid=True)
 
         kappa_iterations = int(cfg.kappa * cfg.iteration * cfg.fraction)
 
     elif cfg.dss_strategy == 'RETRIEVE_UL-Warm':
         # RETRIEVE Selection strategy
         setf_model = RETRIEVEStrategy(ult_seq_loader, lt_seq_loader, model1, teacher_model1, ssl_alg, consistency_nored,
-                                     cfg.lr, device, num_classes, False, 'Stochastic', r=int(bud), valid=False)
+                                     cfg.lr, device, num_classes, False, 'Supervised', 'Stochastic', r=int(bud), valid=False)
         kappa_iterations = int(cfg.kappa * cfg.iteration * cfg.fraction)
 
     elif cfg.dss_strategy == 'GradMatch-Warm':
         # OMPGradMatch Selection strategy
-        setf_model = OMPGradMatchStrategy(ult_seq_loader, lt_seq_loader, model1, teacher_model, ssl_alg, consistency_nored,
+        setf_model = GradMatchStrategy(ult_seq_loader, lt_seq_loader, model1, teacher_model, ssl_alg, consistency_nored,
         cfg.lr, device, num_classes, True, 'PerBatch', valid=args.valid, lam=0.25, eps=1e-10)
         kappa_iterations = int(cfg.kappa * cfg.iteration * cfg.fraction)
         #full_epochs = round(kappa_epochs * self.configdata['dss_strategy']['fraction'])
 
     elif cfg.dss_strategy == 'GradMatchPB-Warm':
         # OMPGradMatch Selection strategy
-        setf_model = OMPGradMatchStrategy(ult_seq_loader, lt_seq_loader, model1, teacher_model, ssl_alg, consistency_nored,
+        setf_model = GradMatchStrategy(ult_seq_loader, lt_seq_loader, model1, teacher_model, ssl_alg, consistency_nored,
         cfg.lr, device, num_classes, True, 'PerBatch', valid=args.valid, lam=0.25, eps=1e-10)
         kappa_iterations = int(cfg.kappa * cfg.iteration * cfg.fraction)
 

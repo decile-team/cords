@@ -197,50 +197,50 @@ class DataSelectionStrategy(object):
                 if self.linear_layer:
                     l1_grads = torch.cat((l1_grads, batch_l1_grads), dim=0)
 
-            torch.cuda.empty_cache()
-            if store_t:
-                self.weak_targets = targets
-                self.weak_masks = masks
+        torch.cuda.empty_cache()
+        if store_t:
+            self.weak_targets = targets
+            self.weak_masks = masks
+        
+        if self.linear_layer:
+            self.grads_per_elem = torch.cat((l0_grads, l1_grads), dim=1)
+        else:
+            self.grads_per_elem = l0_grads
             
-            if self.linear_layer:
-                self.grads_per_elem = torch.cat((l0_grads, l1_grads), dim=1)
-            else:
-                self.grads_per_elem = l0_grads
-            
-            if valid:
-                for batch_idx, (inputs, targets) in enumerate(valloader):
-                    inputs, targets = inputs.to(self.device), targets.to(self.device, non_blocking=True)
-                    if batch_idx == 0:
-                        out, l1 = self.model(inputs, last=True, freeze=True)
-                        loss = cross_entropy(out, targets, reduction='none').sum()
-                        l0_grads = torch.autograd.grad(loss, out)[0]
+        if valid:
+            for batch_idx, (inputs, targets) in enumerate(valloader):
+                inputs, targets = inputs.to(self.device), targets.to(self.device, non_blocking=True)
+                if batch_idx == 0:
+                    out, l1 = self.model(inputs, last=True, freeze=True)
+                    loss = cross_entropy(out, targets, reduction='none').sum()
+                    l0_grads = torch.autograd.grad(loss, out)[0]
+                    if self.linear_layer:
+                        l0_expand = torch.repeat_interleave(l0_grads, embDim, dim=1)
+                        l1_grads = l0_expand * l1.repeat(1, self.num_classes)
+                    if perBatch:
+                        l0_grads = l0_grads.mean(dim=0).view(1, -1)
                         if self.linear_layer:
-                            l0_expand = torch.repeat_interleave(l0_grads, embDim, dim=1)
-                            l1_grads = l0_expand * l1.repeat(1, self.num_classes)
-                        if perBatch:
-                            l0_grads = l0_grads.mean(dim=0).view(1, -1)
-                            if self.linear_layer:
-                                l1_grads = l1_grads.mean(dim=0).view(1, -1)
-                    else:
-                        out, l1 = self.model(inputs, last=True, freeze=True)
-                        loss = cross_entropy(out, targets, reduction='none').sum()
-                        batch_l0_grads = torch.autograd.grad(loss, out)[0]
-                        if self.linear_layer:
-                            batch_l0_expand = torch.repeat_interleave(batch_l0_grads, embDim, dim=1)
-                            batch_l1_grads = batch_l0_expand * l1.repeat(1, self.num_classes)
-
-                        if perBatch:
-                            batch_l0_grads = batch_l0_grads.mean(dim=0).view(1, -1)
-                            if self.linear_layer:
-                                batch_l1_grads = batch_l1_grads.mean(dim=0).view(1, -1)
-                        l0_grads = torch.cat((l0_grads, batch_l0_grads), dim=0)
-                        if self.linear_layer:
-                            l1_grads = torch.cat((l1_grads, batch_l1_grads), dim=0)
-                torch.cuda.empty_cache()
-                if self.linear_layer:
-                    self.val_grads_per_elem = torch.cat((l0_grads, l1_grads), dim=1)
+                            l1_grads = l1_grads.mean(dim=0).view(1, -1)
                 else:
-                    self.val_grads_per_elem = l0_grads
+                    out, l1 = self.model(inputs, last=True, freeze=True)
+                    loss = cross_entropy(out, targets, reduction='none').sum()
+                    batch_l0_grads = torch.autograd.grad(loss, out)[0]
+                    if self.linear_layer:
+                        batch_l0_expand = torch.repeat_interleave(batch_l0_grads, embDim, dim=1)
+                        batch_l1_grads = batch_l0_expand * l1.repeat(1, self.num_classes)
+
+                    if perBatch:
+                        batch_l0_grads = batch_l0_grads.mean(dim=0).view(1, -1)
+                        if self.linear_layer:
+                            batch_l1_grads = batch_l1_grads.mean(dim=0).view(1, -1)
+                    l0_grads = torch.cat((l0_grads, batch_l0_grads), dim=0)
+                    if self.linear_layer:
+                        l1_grads = torch.cat((l1_grads, batch_l1_grads), dim=0)
+            torch.cuda.empty_cache()
+            if self.linear_layer:
+                self.val_grads_per_elem = torch.cat((l0_grads, l1_grads), dim=1)
+            else:
+                self.val_grads_per_elem = l0_grads
 
         
     def update_model(self, model_params, tea_model_params):
