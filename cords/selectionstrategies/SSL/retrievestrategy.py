@@ -53,8 +53,12 @@ class RETRIEVEStrategy(DataSelectionStrategy):
         Loading the validation data using pytorch DataLoader
     model: class
         Model architecture used for training
-    loss_type: class
-        The type of loss criterion
+    tea_model: class
+        Teacher model architecture used for training
+    ssl_alg: class
+        SSL algorithm class
+    loss: class
+        Consistency loss function for unlabeled data with no reduction
     eta: float
         Learning rate. Step size for the one step gradient update
     device: str
@@ -76,6 +80,9 @@ class RETRIEVEStrategy(DataSelectionStrategy):
         - 'Naive' : Normal naive greedy selection method that selects a single best element every step until the budget is fulfilled
     r : int, optional
         Number of greedy selection rounds when selection method is RGreedy (default: 15)
+    valid: bool
+        - If True, we select subset that maximizes the performance on the labeled set.
+        - If False, we select subset that maximizes the performance on the unlabeled set.
     """
 
     def __init__(self, trainloader, valloader, model, tea_model, ssl_alg, loss,

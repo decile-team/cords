@@ -23,8 +23,9 @@ class WeightedSubset(Dataset[T_co]):
         self.weights = weights
 
     def __getitem__(self, idx):
-        sample, label = self.dataset[self.indices[idx]]
-        return sample, label, self.weights[idx]
+        tmp_list = list(self.dataset[self.indices[idx]])
+        tmp_list.append(self.weights[idx])
+        return tuple(tmp_list)
 
     def __len__(self):
         return len(self.indices)

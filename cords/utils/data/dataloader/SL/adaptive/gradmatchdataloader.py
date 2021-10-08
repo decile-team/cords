@@ -29,8 +29,6 @@ class GradMatchDataLoader(AdaptiveDSSDataLoader):
                                              dss_args.num_classes, dss_args.linear_layer, dss_args.selection_type, dss_args.valid, dss_args.v1,
                                              dss_args.lam, dss_args.eps, verbose=verbose)
         self.train_model = dss_args.model
-        self.eta = dss_args.eta
-        self.num_cls = dss_args.num_classes
         if self.verbose:
             print('Grad-match dataloader initialized. ')
 

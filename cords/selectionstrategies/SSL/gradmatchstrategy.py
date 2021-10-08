@@ -30,8 +30,12 @@ class GradMatchStrategy(DataSelectionStrategy):
         Loading the validation data using pytorch DataLoader
     model: class
         Model architecture used for training
-    loss_type: class
-        The type of loss criterion
+    tea_model: class
+        Teacher model architecture used for training
+    ssl_alg: class
+        SSL algorithm class
+    loss: class
+        Consistency loss function for unlabeled data with no reduction
     eta: float
         Learning rate. Step size for the one step gradient update
     device: str
@@ -69,6 +73,7 @@ class GradMatchStrategy(DataSelectionStrategy):
         self.valid = valid
         self.lam = lam
         self.eps = eps
+        self.v1 = v1
 
     def ompwrapper(self, X, Y, bud):
 

@@ -20,7 +20,7 @@ class SubmodDataLoader(NonAdaptiveDSSDataLoader):
         self.size_chunk = dss_args.size_chunk
         
     def _init_subset_indices(self):
-        X = np.array([x for (x, _y) in self.dataset])
+        X = np.array([x for (w_x, x, _y) in self.dataset])
         m = X.shape[0]
         # Chunking dataset to calculate pairwise distance with limited memory
         sample_indices = []

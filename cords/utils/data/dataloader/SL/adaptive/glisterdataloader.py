@@ -29,12 +29,7 @@ class GLISTERDataLoader(AdaptiveDSSDataLoader):
         
         self.strategy = GLISTERStrategy(train_loader, val_loader, copy.deepcopy(dss_args.model), dss_args.loss, dss_args.eta, dss_args.device,
                                         dss_args.num_classes, dss_args.linear_layer, dss_args.selection_type, dss_args.greedy, r = dss_args.r)
-        self.train_model = dss_args.model
-        self.eta = dss_args.eta
-        self.num_cls = dss_args.num_classes
-        self.model = dss_args.model
-        self.loss = copy.deepcopy(dss_args.loss)
-        
+        self.train_model = dss_args.model    
         if self.verbose:
             print('Glister dataloader initialized. ')
 

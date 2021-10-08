@@ -39,6 +39,10 @@ class CRAIGStrategy(DataSelectionStrategy):
         Loading the validation data using pytorch DataLoader
     model: class
         Model architecture used for training
+    tea_model: class
+        Teacher model architecture used for training
+    ssl_alg: class
+        SSL algorithm class
     loss: class
         Consistency loss function for unlabeled data with no reduction
     device: str
@@ -52,7 +56,10 @@ class CRAIGStrategy(DataSelectionStrategy):
     selection_type: str
         Type of selection:
          - 'PerClass': PerClass Implementation where the facility location problem is solved for each class seperately for speed ups.
-         - 'Supervised':  Supervised Implementation where the facility location problem is solved using a sparse similarity matrix by assigning the similarity of a point with other points of different class to zero.
+         - 'Supervised': Supervised Implementation where the facility location problem is solved using a sparse similarity matrix by assigning the similarity of a point with other points of different class to zero.
+         - 'PerBatch': PerBatch Implementation where the facility location problem tries to select subset of mini-batches.
+    optimizer: str
+        Type of Greedy Algorithm
     """
 
     def __init__(self, trainloader, valloader, model, tea_model, ssl_alg, loss,
