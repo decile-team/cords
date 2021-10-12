@@ -22,6 +22,7 @@ from train_sl import TrainClassifier
 class HyperParamTuning:
     def __init__(self, config_file):
         self.config_data = load_config_data(config_file)
+        self.train_class.configdata['dss_strategy']['print_every'] = 1
         self.train_class = TrainClassifier(self.config_data['subset_config'])
         self.search_algo = self.get_search_algo(self.config_data['search_algo'], self.config_data['space'], self.config_data['metric'], self.config_data['mode'])
         self.scheduler = self.get_scheduler(self.config_data['scheduler'], self.config_data['metric'], self.config_data['mode'])
