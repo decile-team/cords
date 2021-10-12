@@ -11,7 +11,7 @@ import numpy as np
 class RETRIEVEStrategy(DataSelectionStrategy):
     """
     Implementation of RETRIEVE Strategy from the paper :footcite:`killamsetty2020glister`  for supervised learning frameworks.
-    GLISTER-ONLINE methods tries to solve the  bi-level optimization problem given below:
+    RETRIEVE methods tries to solve the  bi-level optimization problem given below:
 
     .. math::
         \\overbrace{\\underset{{S \\subseteq {\\mathcal U}, |S| \\leq k}}{\\operatorname{argmin\\hspace{0.7mm}}} L_V(\\underbrace{\\underset{\\theta}{\\operatorname{argmin\\hspace{0.7mm}}} L_T( \\theta, S)}_{inner-level}, {\\mathcal V})}^{outer-level}
@@ -19,7 +19,7 @@ class RETRIEVEStrategy(DataSelectionStrategy):
     In the above equation, :math:`\\mathcal{U}` denotes the training set, :math:`\\mathcal{V}` denotes the validation set that guides the subset selection process, :math:`L_T` denotes the
     training loss, :math:`L_V` denotes the validation loss, :math:`S` denotes the data subset selected at each round,  and :math:`k` is the budget for the subset.
 
-    Since, solving the complete inner-optimization is expensive, GLISTER-ONLINE adopts a online one-step meta approximation where we approximate the solution to inner problem
+    Since, solving the complete inner-optimization is expensive, RETRIEVE adopts a online one-step meta approximation where we approximate the solution to inner problem
     by taking a single gradient step.
 
     The optimization problem after the approximation is as follows:
@@ -29,7 +29,7 @@ class RETRIEVEStrategy(DataSelectionStrategy):
 
     In the above equation, :math:`\\eta` denotes the step-size used for one-step gradient update.
 
-    GLISTER-ONLINE also makes an additional approximation called Taylor-Series approximation to easily solve the outer problem using a greedy selection algorithm.
+    RETRIEVE-ONLINE also makes an additional approximation called Taylor-Series approximation to easily solve the outer problem using a greedy selection algorithm.
     The Taylor series approximation is as follows:
 
     .. math::
@@ -43,7 +43,7 @@ class RETRIEVEStrategy(DataSelectionStrategy):
     Taylor's series approximation reduces the time complexity by reducing the need of calculating the validation loss for each element during greedy selection step which
     means reducing the number of forward passes required.
 
-    GLISTER-ONLINE is an adaptive subset selection algorithm that tries to select a subset every :math:`L` epochs and the parameter `L` can be set in the original training loop.
+    RETRIEVE-ONLINE is an adaptive subset selection algorithm that tries to select a subset every :math:`L` epochs and the parameter `L` can be set in the original training loop.
 
     Parameters
 	----------
@@ -70,9 +70,9 @@ class RETRIEVEStrategy(DataSelectionStrategy):
         If False, we use the last fc layer biases gradients
     selection_type: str
         Type of selection algorithm -
-        - 'PerBatch' : PerBatch method is where GLISTER algorithm is applied on each minibatch data points.
-        - 'PerClass' : PerClass method is where GLISTER algorithm is applied on each class data points seperately.
-        - 'Supervised' : Supervised method is where GLISTER algorithm is applied on entire training data.
+        - 'PerBatch' : PerBatch method is where RETRIEVE algorithm is applied on each minibatch data points.
+        - 'PerClass' : PerClass method is where RETRIEVE algorithm is applied on each class data points seperately.
+        - 'Supervised' : Supervised method is where RETRIEVE algorithm is applied on entire training data.
     greedy: str
         Type of greedy selection algorithm -
         - 'RGreedy' : RGreedy Selection method is a variant of naive greedy where we just perform r rounds of greedy selection by choosing k/r points in each round.
@@ -356,7 +356,7 @@ class RETRIEVEStrategy(DataSelectionStrategy):
                 # Update the grads_val_current using current greedySet grads
                 self._update_grads_val(grads_curr)
                 numSelected += selection_size
-            print("R greedy GLISTER total time:", time.time() - t_ng_start)
+            print("R greedy RETRIEVE total time:", time.time() - t_ng_start)
 
         # Stochastic Greedy Selection Algorithm
         elif self.greedy == 'Stochastic':
@@ -379,7 +379,7 @@ class RETRIEVEStrategy(DataSelectionStrategy):
                     grads_curr = self.grads_per_elem[bestId].view(1, -1)  # Making it a list so that is mutable!
                 # Update the grads_val_current using current greedySet grads
                 self._update_grads_val(grads_curr)
-            print("Stochastic Greedy GLISTER total time:", time.time() - t_ng_start)
+            print("Stochastic Greedy RETRIEVE total time:", time.time() - t_ng_start)
 
         elif self.greedy == 'Naive':
             while (numSelected < budget):
@@ -400,7 +400,7 @@ class RETRIEVEStrategy(DataSelectionStrategy):
                     self._update_gradients_subset(grads_curr, bestId)
                 # Update the grads_val_current using current greedySet grads
                 self._update_grads_val(grads_curr)
-            print("Naive Greedy GLISTER total time:", time.time() - t_ng_start)
+            print("Naive Greedy RETRIEVE total time:", time.time() - t_ng_start)
         return list(greedySet), [1] * budget
 
     def select(self, budget, model_params, tea_model_params):
@@ -470,6 +470,6 @@ class RETRIEVEStrategy(DataSelectionStrategy):
             self._update_grads_val(first_init=True)
             idxs, gammas = self.greedy_algo(budget)
         glister_end_time = time.time()
-        print("GLISTER algorithm Subset Selection time is: ", glister_end_time - glister_start_time)
+        print("RETRIEVE algorithm Subset Selection time is: ", glister_end_time - glister_start_time)
         return idxs, torch.FloatTensor(gammas)
 

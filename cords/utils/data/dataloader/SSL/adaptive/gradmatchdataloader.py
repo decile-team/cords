@@ -42,11 +42,15 @@ class GradMatchDataLoader(AdaptiveDSSDataLoader):
             print('Iteration: {0:d}, requires subset selection. '.format(self.cur_iter))
         cached_state_dict = copy.deepcopy(self.train_model.state_dict())
         clone_dict = copy.deepcopy(self.train_model.state_dict())
-        tea_cached_state_dict = copy.deepcopy(self.teacher_model.state_dict())
-        tea_clone_dict = copy.deepcopy(self.teacher_model.state_dict())
+        if self.teacher_model is not None:
+            tea_cached_state_dict = copy.deepcopy(self.teacher_model.state_dict())
+            tea_clone_dict = copy.deepcopy(self.teacher_model.state_dict())
+        else:
+            tea_clone_dict = None
         subset_indices, subset_weights = self.strategy.select(self.budget, clone_dict, tea_clone_dict)
         self.train_model.load_state_dict(cached_state_dict)
-        self.teacher_model.load_state_dict(tea_cached_state_dict)
+        if self.teacher_model is not None:
+            self.teacher_model.load_state_dict(tea_cached_state_dict)
         if self.verbose:
             end = time.time()
             print('Iteration: {0:d}, subset selection finished, takes {1:.2f}. '.format(self.cur_iter, (end - start)))

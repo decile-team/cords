@@ -46,7 +46,7 @@ class TrainClassifier:
     ############################## Model Creation ##############################
     """
 
-    def gen_model(name, num_classes, img_size):
+    def gen_model(self, name, num_classes, img_size):
         scale =  int(np.ceil(np.log2(img_size)))
         if name == "wrn":
             return WideResNet(num_classes, 32, scale, 4)
@@ -63,7 +63,7 @@ class TrainClassifier:
     """
     ############################## Model Evaluation ##############################
     """
-    def evaluation(raw_model, eval_model, loader, device):
+    def evaluation(self, raw_model, eval_model, loader, device):
         raw_model.eval()
         eval_model.eval()
         sum_raw_acc = sum_acc = sum_loss = 0
@@ -89,8 +89,7 @@ class TrainClassifier:
     """
     ############################## Model Parameters Update ##############################
     """
-    def param_update(
-        cfg,
+    def param_update(self, 
         cur_iteration,
         model,
         teacher_model,
@@ -115,15 +114,15 @@ class TrainClassifier:
 
         stu_unlabeled_weak_logits, stu_unlabeled_strong_logits = torch.chunk(stu_logits[labels.shape[0]:], 2, dim=0)
 
-        if cfg.optimizer.tsa:
+        if self.cfg.optimizer.tsa:
             none_reduced_loss = F.cross_entropy(labeled_preds, labels, reduction="none")
             L_supervised = alg_utils.anneal_loss(
                 labeled_preds, labels, none_reduced_loss, cur_iteration+1,
-                cfg.train_args.iteration, labeled_preds.shape[1], cfg.optimizer.tsa_schedule)
+                self.cfg.train_args.iteration, labeled_preds.shape[1], self.cfg.optimizer.tsa_schedule)
         else:
             L_supervised = F.cross_entropy(labeled_preds, labels)
 
-        if cfg.ssl_args.coef > 0:
+        if self.cfg.ssl_args.coef > 0:
             # get target values
             if teacher_model is not None: # get target values from teacher model
                 t_forward_func = teacher_model.forward
@@ -155,32 +154,32 @@ class TrainClassifier:
             mask = None
 
         # calc total loss
-        coef = scheduler.exp_warmup(cfg.ssl_args.coef, int(cfg.scheduler.warmup_iter), cur_iteration + 1)
+        coef = scheduler.exp_warmup(self.cfg.ssl_args.coef, int(self.cfg.scheduler.warmup_iter), cur_iteration + 1)
         loss = L_supervised + coef * L_consistency
-        if cfg.ssl_args.em > 0:
-            loss -= cfg.ssl_args.em * \
+        if self.cfg.ssl_args.em > 0:
+            loss -= self.cfg.ssl_args.em * \
                 (stu_unlabeled_weak_logits.softmax(1) * F.log_softmax(stu_unlabeled_weak_logits, 1)).sum(1).mean()
 
         # update parameters
         cur_lr = optimizer.param_groups[0]["lr"]
         optimizer.zero_grad()
         loss.backward()
-        if cfg.optimizer.weight_decay > 0:
-            decay_coeff = cfg.optimizer.weight_decay * cur_lr
+        if self.cfg.optimizer.weight_decay > 0:
+            decay_coeff = self.cfg.optimizer.weight_decay * cur_lr
             model_utils.apply_weight_decay(model.modules(), decay_coeff)
         optimizer.step()
 
         # update teacher parameters by exponential moving average
-        if cfg.ssl_args.ema_teacher:
+        if self.cfg.ssl_args.ema_teacher:
             model_utils.ema_update(
-                teacher_model, model, cfg.ssl_args.ema_teacher_factor,
-                cfg.optimizer.weight_decay * cur_lr if cfg.ssl_args.ema_apply_wd else None,
-                cur_iteration if cfg.ssl_args.ema_teacher_warmup else None)
+                teacher_model, model, self.cfg.ssl_args.ema_teacher_factor,
+                self.cfg.optimizer.weight_decay * cur_lr if self.cfg.ssl_args.ema_apply_wd else None,
+                cur_iteration if self.cfg.ssl_args.ema_teacher_warmup else None)
         # update evaluation model's parameters by exponential moving average
-        if cfg.ssl_eval_args.weight_average:
+        if self.cfg.ssl_eval_args.weight_average:
             model_utils.ema_update(
-                average_model, model, cfg.ssl_eval_args.wa_ema_factor,
-                cfg.optimizer.weight_decay * cur_lr if cfg.ssl_eval_args.wa_apply_wd else None)
+                average_model, model, self.cfg.ssl_eval_args.wa_ema_factor,
+                self.cfg.optimizer.weight_decay * cur_lr if self.cfg.ssl_eval_args.wa_apply_wd else None)
 
         # calculate accuracy for labeled data
         acc = (labeled_preds.max(1)[1] == labels).float().mean()
@@ -199,7 +198,7 @@ class TrainClassifier:
     """
     ############################## Calculate selected ID points percentage  ##############################
     """
-    def get_ul_ood_ratio(ul_dataset):
+    def get_ul_ood_ratio(self, ul_dataset):
         actual_lbls = ul_dataset.dataset.dataset['labels'][ul_dataset.indices]
         bincnt = numpy.bincount(actual_lbls, minlength=10)
         print("ID points selected", (bincnt[:6].sum()/bincnt.sum()).item())
@@ -208,7 +207,7 @@ class TrainClassifier:
     """
     ############################## Calculate selected ID points percentage  ##############################
     """
-    def get_ul_classimb_ratio(ul_dataset):
+    def get_ul_classimb_ratio(self, ul_dataset):
         actual_lbls = ul_dataset.dataset.dataset['labels'][ul_dataset.indices]
         bincnt = numpy.bincount(actual_lbls, minlength=10)
         print("ClassImbalance points selected", (bincnt[:5].sum()/bincnt.sum()).item())
@@ -289,7 +288,7 @@ class TrainClassifier:
             """
             self.cfg.dss_args.model = model
             self.cfg.dss_args.tea_model = teacher_model
-            self.cfg.dss_args.ssl_alg = self.cfg.ssl_args.alg
+            self.cfg.dss_args.ssl_alg = ssl_alg
             self.cfg.dss_args.loss = consistency_nored
             self.cfg.dss_args.num_classes = num_classes
             self.cfg.dss_args.num_iters = self.cfg.train_args.iteration
@@ -298,7 +297,6 @@ class TrainClassifier:
 
             ult_loader = GradMatchDataLoader(ult_seq_loader, lt_seq_loader, self.cfg.dss_args, verbose=True, 
                                                 batch_size=self.cfg.dataloader.ul_batch_size, 
-                                                shuffle=self.cfg.dataloader.shuffle,
                                                 pin_memory=self.cfg.dataloader.pin_memory)
 
         
@@ -308,7 +306,7 @@ class TrainClassifier:
             """
             self.cfg.dss_args.model = model
             self.cfg.dss_args.tea_model = teacher_model
-            self.cfg.dss_args.ssl_alg = self.cfg.ssl_args.alg
+            self.cfg.dss_args.ssl_alg = ssl_alg
             self.cfg.dss_args.loss = consistency_nored
             self.cfg.dss_args.num_classes = num_classes
             self.cfg.dss_args.num_iters = self.cfg.train_args.iteration
@@ -317,7 +315,6 @@ class TrainClassifier:
 
             ult_loader = RETRIEVEDataLoader(ult_seq_loader, lt_seq_loader, self.cfg.dss_args, verbose=True, 
                                                 batch_size=self.cfg.dataloader.ul_batch_size, 
-                                                shuffle=self.cfg.dataloader.shuffle,
                                                 pin_memory=self.cfg.dataloader.pin_memory)
 
         
@@ -327,14 +324,13 @@ class TrainClassifier:
             """
             self.cfg.dss_args.model = model
             self.cfg.dss_args.tea_model = teacher_model
-            self.cfg.dss_args.ssl_alg = self.cfg.ssl_args.alg
+            self.cfg.dss_args.ssl_alg = ssl_alg
             self.cfg.dss_args.loss = consistency_nored
             self.cfg.dss_args.num_classes = num_classes
             self.cfg.dss_args.num_iters = self.cfg.train_args.iteration
             self.cfg.dss_args.device = self.cfg.train_args.device
             ult_loader = CRAIGDataLoader(ult_seq_loader, lt_seq_loader, self.cfg.dss_args, verbose=True, 
                                                 batch_size=self.cfg.dataloader.ul_batch_size, 
-                                                shuffle=self.cfg.dataloader.shuffle,
                                                 pin_memory=self.cfg.dataloader.pin_memory)
 
 
@@ -348,7 +344,6 @@ class TrainClassifier:
             self.cfg.dss_args.device = self.cfg.train_args.device
             ult_loader = RandomDataLoader(ult_seq_loader, self.cfg.dss_args, verbose=True,
                                             batch_size=self.cfg.dataloader.ul_batch_size, 
-                                            shuffle=self.cfg.dataloader.shuffle,
                                             pin_memory=self.cfg.dataloader.pin_memory)
             
 
@@ -362,7 +357,6 @@ class TrainClassifier:
             self.cfg.dss_args.device = self.cfg.train_args.device
             ult_loader = OLRandomDataLoader(ult_seq_loader, self.cfg.dss_args, verbose=True,
                                             batch_size=self.cfg.dataloader.ul_batch_size, 
-                                            shuffle=self.cfg.dataloader.shuffle,
                                             pin_memory=self.cfg.dataloader.pin_memory)
         
         elif self.cfg.dss_args.type == 'Full':
@@ -371,7 +365,6 @@ class TrainClassifier:
 
             ult_loader = torch.utils.data.DataLoader(wt_trainset,
                                             batch_size=self.cfg.dataloader.ul_batch_size, 
-                                            shuffle=self.cfg.dataloader.shuffle,
                                             pin_memory=self.cfg.dataloader.pin_memory)
 
         model.train()
@@ -418,7 +411,7 @@ class TrainClassifier:
             lt_loader = DataLoader(
                 lt_data,
                 self.cfg.dataloader.l_batch_size,
-                sampler=dataset_utils.InfiniteSampler(len(lt_data), kappa_iterations * self.cfg.dataloader.l_batch_size),
+                sampler=dataset_utils.InfiniteSampler(len(lt_data), len(list(ult_loader.batch_sampler)) * self.cfg.dataloader.l_batch_size),
                 num_workers=self.cfg.dataloader.num_workers
             )
             for batch_idx, (l_data, ul_data) in enumerate(zip(lt_loader, ult_loader)):
@@ -435,7 +428,7 @@ class TrainClassifier:
                     iter_count, model, teacher_model, optimizer, ssl_alg,
                     consistency, l_aug.to(device), ul_w_aug.to(device),
                     ul_s_aug.to(device), labels.to(device),
-                    average_model, weights=weights, ood=ood)
+                    average_model, weights=weights.to(device), ood=ood)
                 training_time += (time.time() - batch_start_time)
                 # moving average for reporting losses and accuracy
                 metric_meter.add(params, ignores=["coef"])
@@ -477,24 +470,3 @@ class TrainClassifier:
         with open(os.path.join(self.cfg.train_args.out_dir, "results.json"), "w") as f:
             json.dump(accuracies, f, sort_keys=True)
 
-
-# if __name__ == "__main__":
-#     import os, sys
-#     from configs.SSL import get_args
-#     args = get_args()
-#     os.makedirs(args.out_dir, exist_ok=True)
-#     # setup logger
-#     plain_formatter = logging.Formatter("[%(asctime)s] %(name)s %(levelname)s: %(message)s", datefmt="%m/%d %H:%M:%S")
-#     logger = logging.getLogger(__name__)
-#     logger.setLevel(logging.DEBUG)
-#     s_handler = logging.StreamHandler(stream=sys.stdout)
-#     s_handler.setFormatter(plain_formatter)
-#     s_handler.setLevel(logging.DEBUG)
-#     logger.addHandler(s_handler)
-#     f_handler = logging.FileHandler(os.path.join(args.out_dir, "console.log"))
-#     f_handler.setFormatter(plain_formatter)
-#     f_handler.setLevel(logging.DEBUG)
-#     logger.addHandler(f_handler)
-#     logger.propagate = False
-#     logger.info(args)
-#     main(args, logger)

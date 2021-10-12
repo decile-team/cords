@@ -1,4 +1,4 @@
-import logging
+import logging, torch
 from abc import abstractmethod
 from torch.utils.data import DataLoader
 from ..dssdataloader import DSSDataLoader
@@ -8,10 +8,6 @@ from cords.utils.data._utils import WeightedSubset
 class AdaptiveDSSDataLoader(DSSDataLoader):
     def __init__(self, train_loader, val_loader, dss_args, verbose=False, *args,
                  **kwargs):
-        super(AdaptiveDSSDataLoader, self).__init__(train_loader.dataset, dss_args,
-                                                    verbose=verbose, *args, **kwargs)
-        self.train_loader = train_loader
-        self.val_loader = val_loader
         """
          Arguments assertion check
         """
@@ -20,10 +16,16 @@ class AdaptiveDSSDataLoader(DSSDataLoader):
         assert "kappa" in dss_args.keys(), "'kappa' is a compulsory argument. Include it as a key in dss_args"
         assert "batch_size" in kwargs.keys(), "'batch_size' is a compulsory argument. Include it as a key in kwargs"
         assert "sampler" not in kwargs.keys(), "'sampler' is a prohibited argument. Do not include it as a key in kwargs"
+        assert "shuffle" not in kwargs.keys(), "'shuffle' is a prohibited argument. Do not include it as a key in kwargs"
         self.select_every = dss_args.select_every
-        self.sel_iteration = int((self.select_every * len(self.dataset) * dss_args.fraction) // (kwargs.batch_size))  
+        self.sel_iteration = int((self.select_every * len(train_loader.dataset) * dss_args.fraction) // (kwargs['batch_size']))  
         self.device = dss_args.device
         self.kappa = dss_args.kappa
+        
+        super(AdaptiveDSSDataLoader, self).__init__(train_loader.dataset, dss_args,
+                                                    verbose=verbose, *args, **kwargs)
+        self.train_loader = train_loader
+        self.val_loader = val_loader
         # kappa_iterations = int()
         if dss_args.kappa > 0:
             assert "num_iters" in dss_args.keys(), "'num_iters' is a compulsory argument when warm starting the model(i.e., kappa > 0). Include it as a key in dss_args"
@@ -31,14 +33,21 @@ class AdaptiveDSSDataLoader(DSSDataLoader):
         else:
             self.select_after = 0
         self.wtdataloader = DataLoader(self.wt_trainset,
-                                       sampler=InfiniteSampler(len(self.wt_trainset), self.select_after * kwargs.batch_size),
+                                       sampler=InfiniteSampler(len(self.wt_trainset), self.select_after * kwargs['batch_size']),
                                        *self.loader_args, **self.loader_kwargs)
         self.initialized = False
-        
+    
+    def _init_subset_loader(self):
+        # All strategies start with random selection
+        self.subset_indices = self._init_subset_indices()
+        self.subset_weights = torch.ones(self.budget)
+        self._refresh_subset_loader()
+
     def _refresh_subset_loader(self):
         data_sub = WeightedSubset(self.dataset, self.subset_indices, self.subset_weights)
-        self.subset_loader = DataLoader(data_sub, sampler=InfiniteSampler(len(self.data_sub), 
-                                        self.select_after * self.loader_kwargs.batch_size), *self.loader_args, **self.loader_kwargs)
+        self.subset_loader = DataLoader(data_sub, sampler=InfiniteSampler(len(data_sub), 
+                                        self.sel_iteration * self.loader_kwargs['batch_size']),
+                                         *self.loader_args, **self.loader_kwargs)
         self.batch_wise_indices = list(self.subset_loader.batch_sampler)
 
     def __iter__(self):
