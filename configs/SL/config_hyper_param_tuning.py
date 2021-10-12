@@ -1,50 +1,57 @@
 from hyperopt import hp
 
-config = dict(setting= "hyperparamtuning",
+config = dict(setting="hyperparamtuning",
 
-# parameter for subset selection
-# all settings for subset selection will be fetched from here
-subset_config = "configs/config_gradmatchpb-warm_cifar10.py",
+              # parameter for subset selection
+              # all settings for subset selection will be fetched from here
+              subset_config="configs/config_gradmatchpb-warm_cifar10.py",
 
-# parameters for hyper-parameter tuning
+              # parameters for hyper-parameter tuning
 
+<<<<<<< Updated upstream:configs/SL/config_hyper_param_tuning.py
 # search space for hyper-parameter tuning
 space = dict(learning_rate=hp.uniform('lr', 0.001, 0.01), 
         optimizer= hp.choice('optimizer', ['sgd', 'adam']),
         trn_batch_size= hp.choice('trn_batch_size', [20, 32, 64]),        
         ),
+=======
+              # search space for hyper-parameter tuning
+              space=dict(learning_rate=hp.uniform('lr', 0.001, 0.01),
+                         optimizer=hp.choice('optimizer', ['sgd', 'adam']),
+                         trn_batch_size=hp.choice('trn_batch_size', [20, 32, 64])),
+>>>>>>> Stashed changes:configs/config_hyper_param_tuning.py
 
-# tuning algorithm 
-search_algo = "TPE",
+              # tuning algorithm
+              search_algo="TPE",
 
-# number of hyper-parameter set to try
-num_evals = 20,
+              # number of hyper-parameter set to try
+              num_evals=20,
 
-# metric to be optimized, for 'mean_loss' metric mode should be 'min'
-metric = "mean_accuracy",
-mode = "max",
+              # metric to be optimized, for 'mean_loss' metric mode should be 'min'
+              metric="mean_accuracy",
+              mode="max",
 
-# scheduler to be used (i.e ASHAScheduler)
-# scheduler terminates trials that perform poorly
-# learn more here: https://docs.ray.io/en/releases-0.7.1/tune-schedulers.html
-scheduler = None,
+              # scheduler to be used (i.e ASHAScheduler)
+              # scheduler terminates trials that perform poorly
+              # learn more here: https://docs.ray.io/en/releases-0.7.1/tune-schedulers.html
+              scheduler=None,
 
-# where to store logs
-log_dir = "/content/drive/MyDrive/RayLogs/",
+              # where to store logs
+              log_dir="/content/drive/MyDrive/RayLogs/",
 
-# resume hyper-parameter tuning from previous log
-# specify 'name' (i.e main_2021-03-09_18-33-56) below
-resume = False,
+              # resume hyper-parameter tuning from previous log
+              # specify 'name' (i.e main_2021-03-09_18-33-56) below
+              resume=False,
 
-# only required if you want to resume from previous checkpoint
-# it can also be specified if you don't want to resume
-name = None,
+              # only required if you want to resume from previous checkpoint
+              # it can also be specified if you don't want to resume
+              name=None,
 
-# specify resources to be used per trial
-# i.e {'gpu':1, 'cpu':2}
-resources = {'gpu' : 1},
+              # specify resources to be used per trial
+              # i.e {'gpu':1, 'cpu':2}
+              resources={'gpu': 1},
 
-# if True, trains model on Full dataset with the best parameter selected.
-final_train = True
+              # if True, trains model on Full dataset with the best parameter selected.
+              final_train=True
 
-)
+              )

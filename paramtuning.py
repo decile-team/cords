@@ -29,7 +29,7 @@ class HyperParamTuning:
         self.subset_method = self.train_class.configdata['dss_strategy']['type']
 
     def param_tune(self, config):
-        #update parameters in config dict
+        # update parameters in config dict
         new_config = self.update_parameters(self.train_class.configdata, config)
         self.train_class.configdata = new_config
         # turn on reporting to ray every time
@@ -48,7 +48,7 @@ class HyperParamTuning:
             log_to_file=True,
             name=self.config_data['name'],
             resume=self.config_data['resume'])
-    
+
         best_config = analysis.get_best_config(metric=self.config_data['metric'], mode=self.config_data['mode'])
         print("Best Config: ", best_config)
 
@@ -56,7 +56,6 @@ class HyperParamTuning:
             self.final_train(best_config)
 
     def get_search_algo(self, method, space, metric, mode):
-        
         # HyperOptSearch 
         if method == "hyperopt" or method == "TPE":
             search = HyperOptSearch(space, metric = metric, mode = mode)
@@ -98,16 +97,16 @@ class HyperParamTuning:
     def get_scheduler(self, method, metric, mode):
 
         if method == "ASHA":
-            scheduler = AsyncHyperBandScheduler(metric = metric, mode = mode)
+            scheduler = AsyncHyperBandScheduler(metric=metric, mode=mode)
         elif method == "hyperband" or method == "HB":
-            scheduler = HyperBandScheduler(metric = metric, mode = mode)
+            scheduler = HyperBandScheduler(metric=metric, mode=mode)
         elif method == "BOHB":
-            scheduler = HyperBandForBOHB(metric = metric, mode = mode)
+            scheduler = HyperBandForBOHB(metric=metric, mode=mode)
         else:
             return None
-        
+
         return scheduler
-    
+
     def final_train(self, best_params):
         # change strategy to Full (i.e use whole dataset)
         # update (optimized) parameters
@@ -118,7 +117,7 @@ class HyperParamTuning:
         self.train_class.configdata['dss_strategy']['fraction'] = 0.3
         self.train_class.configdata['dss_strategy']['lam'] = 0
         self.train_class.train()
-    
+
     def update_parameters(self, config, new_config):
         # a generic function to update parameters
         if 'learning_rate' in new_config:
@@ -127,16 +126,14 @@ class HyperParamTuning:
             config['optimizer']['type'] = new_config['optimizer']
         if 'trn_batch_size' in new_config:
             config['dataloader']['batch_size'] = new_config['trn_batch_size']
-        
-        return config
-        
 
+        return config
 
 
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser()
-    argparser.add_argument("--config_file", default="configs/config_hyper_param_tuning.py")    
+    argparser.add_argument("--config_file", default="configs/config_hyper_param_tuning.py")
     args = argparser.parse_args()
 
-    hyperparam_tuning = HyperParamTuning(args.config_file) 
+    hyperparam_tuning = HyperParamTuning(args.config_file)
     hyperparam_tuning.start_eval()

@@ -78,7 +78,7 @@ class GradMatchStrategy(DataSelectionStrategy):
     def ompwrapper(self, X, Y, bud):
 
         if self.device == "cpu":
-            reg = OrthogonalMP_REG(X.numpy(), Y.numpy(), nnz=bud, positive=True, lam=0)
+            reg = OrthogonalMP_REG(X.cpu().numpy(), Y.cpu().numpy(), nnz=bud, positive=True, lam=self.lam, tol=self.eps)
             ind = np.nonzero(reg)[0]
         else:
             if self.v1:
@@ -212,4 +212,14 @@ class GradMatchStrategy(DataSelectionStrategy):
         
         omp_end_time = time.time()
         print("OMP algorithm Subset Selection time is: ", omp_end_time - omp_start_time)
+        from collections import Counter;
+        # print(Counter([self.trainloader.dataset[idx][1] for idx in list(idxs)]))
+        print("Selected subset: ")
+        print(Counter([self.trainloader.dataset[idx][1] for idx in list(idxs)]))
+        print("Train set: ")
+        print(Counter([self.trainloader.dataset[idx][1] for idx in range(len(self.trainloader.dataset))]))
+        print("Validation set: ")
+        print(Counter([self.valloader.dataset[idx][1] for idx in range(len(self.valloader.dataset))]))
+
+        print("sorted gammas: %s" % (np.sort(gammas)[::-1][:100]))
         return idxs, torch.FloatTensor(gammas)
