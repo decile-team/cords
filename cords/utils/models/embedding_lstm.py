@@ -81,10 +81,7 @@ class LSTMModel(nn.Module):
     def forward(self, text, last=False, freeze=False):
         with torch.no_grad() if freeze else dummy_context():
             embedded = self.embedding(text)
-        # h = self.lstm(embedded)[0]
-        #     h = self.lstm(embedded, freeze=freeze)
-            h = self.lstm(embedded, freeze=True)
-        # h = h[:, -1, :]
+            h = self.lstm(embedded, freeze=freeze)
         scores = self.fc(h)
         if last:
             return scores, h

@@ -8,7 +8,6 @@ from scipy import sparse as sp
 from scipy.linalg import lstsq
 from scipy.linalg import solve
 from scipy.optimize import nnls
-
 import torch
 
 
@@ -290,7 +289,7 @@ def OrthogonalMP(A, b, tol=1E-4, nnz=None, positive=False):
 
 
 # NOTE: Standard Algorithm, e.g. Tropp, ``Greed is Good: Algorithmic Results for Sparse Approximation," IEEE Trans. Info. Theory, 2004.
-def OrthogonalMP_REG(A, b, tol=1E-4, nnz=None, positive=False, lam=1):
+def OrthogonalMP_REG_NNLS(A, b, tol=1E-4, nnz=None, positive=False, lam=1):
     '''approximately solves min_x |x|_0 s.t. Ax=b using Orthogonal Matching Pursuit
     Args:
       A: design matrix of size (d, n)
@@ -327,15 +326,10 @@ def OrthogonalMP_REG(A, b, tol=1E-4, nnz=None, positive=False, lam=1):
             x_i = projections[index] / A_i.T.dot(A_i)
         else:
             A_i = np.vstack([A_i, A[:, index]])
-            x_i = lstsq(A_i.dot(A_i.T) + lam * np.identity(A_i.shape[0]), A_i.dot(b))[0]
-            # print(x_i.shape)
             if positive:
-                while min(x_i) < 0.0:
-                    # print("Negative",b.shape,A_i.T.shape,x_i.shape)
-                    argmin = np.argmin(x_i)
-                    indices = indices[:argmin] + indices[argmin + 1:]
-                    A_i = np.vstack([A_i[:argmin], A_i[argmin + 1:]])
-                    x_i = lstsq(A_i.dot(A_i.T) + lam * np.identity(A_i.shape[0]), A_i.dot(b))[0]
+                x_i = nnls(A_i.dot(A_i.T) + lam * np.identity(A_i.shape[0]), A_i.dot(b))[0]
+            else:
+                x_i = lstsq(A_i.dot(A_i.T) + lam * np.identity(A_i.shape[0]), A_i.dot(b))[0]
                 # print(x_i)
         # print(b.shape,A_i.T.shape,x_i.shape)
         resid = b - A_i.T.dot(x_i)
@@ -349,7 +343,62 @@ def OrthogonalMP_REG(A, b, tol=1E-4, nnz=None, positive=False, lam=1):
 
 
 # NOTE: Standard Algorithm, e.g. Tropp, ``Greed is Good: Algorithmic Results for Sparse Approximation," IEEE Trans. Info. Theory, 2004.
-def OrthogonalMP_REG_Parallel(A, b, tol=1E-4, nnz=None, positive=False, lam=1, device="cpu"):
+def OrthogonalMP_REG(A, b, tol=1E-4, nnz=None, positive=False, lam=1):
+    '''approximately solves min_x |x|_0 s.t. Ax=b using Orthogonal Matching Pursuit
+    Args:
+      A: design matrix of size (d, n)
+      b: measurement vector of length d
+      tol: solver tolerance
+      nnz = maximum number of nonzero coefficients (if None set to n)
+      positive: only allow positive nonzero coefficients
+    Returns:
+       vector of length n
+    '''
+    AT = A.T
+    d, n = A.shape
+    if nnz is None:
+        nnz = n
+    x = np.zeros(n)
+    resid = np.copy(b)
+    normb = norm(b)
+    indices = []
+
+    for i in range(nnz):
+        if norm(resid) / normb < tol:
+            break
+        projections = AT.dot(resid)
+        if positive:
+            index = np.argmax(projections)
+        else:
+            index = np.argmax(abs(projections))
+        if index in indices:
+            break
+        indices.append(index)
+        if len(indices) == 1:
+            A_i = A[:, index]
+            x_i = projections[index] / A_i.T.dot(A_i)
+        else:
+            A_i = np.vstack([A_i, A[:, index]])
+            x_i = lstsq(A_i.dot(A_i.T) + lam * np.identity(A_i.shape[0]), A_i.dot(b))[0]
+            # print(x_i.shape)
+            if positive:
+                while min(x_i) < 0.0:
+                    # print("Negative",b.shape,A_i.T.shape,x_i.shape)
+                    argmin = np.argmin(x_i)
+                    indices = indices[:argmin] + indices[argmin + 1:]
+                    A_i = np.vstack([A_i[:argmin], A_i[argmin + 1:]])
+                    x_i = lstsq(A_i.dot(A_i.T) + lam * np.identity(A_i.shape[0]), A_i.dot(b))[0]
+        resid = b - A_i.T.dot(x_i)
+    for i, index in enumerate(indices):
+        try:
+            x[index] += x_i[i]
+        except IndexError:
+            x[index] += x_i
+    return x
+
+
+# NOTE: Standard Algorithm, e.g. Tropp, ``Greed is Good: Algorithmic Results for Sparse Approximation," IEEE Trans. Info. Theory, 2004.
+def OrthogonalMP_REG_Parallel_V1(A, b, tol=1E-4, nnz=None, positive=False, lam=1, device="cpu"):
     '''approximately solves min_x |x|_0 s.t. Ax=b using Orthogonal Matching Pursuit
     Args:
       A: design matrix of size (d, n)
@@ -381,9 +430,70 @@ def OrthogonalMP_REG_Parallel(A, b, tol=1E-4, nnz=None, positive=False, lam=1, d
         else:
             index = torch.argmax(torch.abs(projections))
 
+        if index not in indices:
+            indices.append(index)
+
+        if len(indices) == 1:
+            A_i = A[:, index]
+            x_i = projections[index] / torch.dot(A_i, A_i).view(-1)  # A_i.T.dot(A_i)
+            A_i = A[:, index].view(1, -1)
+        else:
+            # print(indices)
+            A_i = torch.cat((A_i, A[:, index].view(1, -1)), dim=0)  # np.vstack([A_i, A[:,index]])
+            temp = torch.matmul(A_i, torch.transpose(A_i, 0, 1)) + lam * torch.eye(A_i.shape[0], device=device)
+            x_i, _, _, _ = torch.linalg.lstsq(temp, torch.matmul(A_i, b).view(-1, 1))
+            # print(x_i.shape)
+            if positive:
+                while min(x_i) < 0.0:
+                    # print("Negative",b.shape,torch.transpose(A_i, 0, 1).shape,x_i.shape)
+                    argmin = torch.argmin(x_i)
+                    indices = indices[:argmin] + indices[argmin + 1:]
+                    A_i = torch.cat((A_i[:argmin], A_i[argmin + 1:]),
+                                    dim=0)  # np.vstack([A_i[:argmin], A_i[argmin+1:]])
+                    temp = torch.matmul(A_i, torch.transpose(A_i, 0, 1)) + lam * torch.eye(A_i.shape[0], device=device)
+                    x_i, _, _, _ = torch.linalg.lstsq(temp, torch.matmul(A_i, b).view(-1, 1))
+        resid = b - torch.matmul(torch.transpose(A_i, 0, 1), x_i).view(-1)  # A_i.T.dot(x_i)
+    x_i = x_i.view(-1)
+    for i, index in enumerate(indices):
+        try:
+            x[index] += x_i[i]
+        except IndexError:
+            x[index] += x_i
+    return x
+
+
+# NOTE: Standard Algorithm, e.g. Tropp, ``Greed is Good: Algorithmic Results for Sparse Approximation," IEEE Trans. Info. Theory, 2004.
+def OrthogonalMP_REG_Parallel(A, b, tol=1E-4, nnz=None, positive=False, lam=1, device="cpu"):
+    '''approximately solves min_x |x|_0 s.t. Ax=b using Orthogonal Matching Pursuit
+    Args:
+      A: design matrix of size (d, n)
+      b: measurement vector of length d
+      tol: solver tolerance
+      nnz = maximum number of nonzero coefficients (if None set to n)
+      positive: only allow positive nonzero coefficients
+    Returns:
+       vector of length n
+    '''
+    AT = torch.transpose(A, 0, 1)
+    d, n = A.shape
+    if nnz is None:
+        nnz = n
+    x = torch.zeros(n, device=device)  # ,dtype=torch.float64)
+    resid = b.detach().clone()
+    normb = b.norm().item()
+    indices = []
+    argmin = torch.tensor([-1])
+    for i in range(nnz):
+        if resid.norm().item() / normb < tol:
+            break
+        projections = torch.matmul(AT, resid)  # AT.dot(resid)
+        # print("Projections",projections.shape)
+        if positive:
+            index = torch.argmax(projections)
+        else:
+            index = torch.argmax(torch.abs(projections))
         if index in indices:
             break
-
         indices.append(index)
         if len(indices) == 1:
             A_i = A[:, index]
@@ -393,9 +503,8 @@ def OrthogonalMP_REG_Parallel(A, b, tol=1E-4, nnz=None, positive=False, lam=1, d
             # print(indices)
             A_i = torch.cat((A_i, A[:, index].view(1, -1)), dim=0)  # np.vstack([A_i, A[:,index]])
             temp = torch.matmul(A_i, torch.transpose(A_i, 0, 1)) + lam * torch.eye(A_i.shape[0], device=device)
-            x_i, _ = torch.lstsq(torch.matmul(A_i, b).view(-1, 1), temp)
+            x_i, _, _, _ = torch.linalg.lstsq(temp, torch.matmul(A_i, b).view(-1, 1))
             # print(x_i.shape)
-
             if positive:
 
                 while min(x_i) < 0.0:
@@ -408,8 +517,7 @@ def OrthogonalMP_REG_Parallel(A, b, tol=1E-4, nnz=None, positive=False, lam=1, d
                         break
                     # print(argmin.item(),A_i.shape[0],index.item())
                     temp = torch.matmul(A_i, torch.transpose(A_i, 0, 1)) + lam * torch.eye(A_i.shape[0], device=device)
-                    x_i, _ = torch.lstsq(torch.matmul(A_i, b).view(-1, 1), temp)
-
+                    x_i, _, _, _ = torch.linalg.lstsq(temp, torch.matmul(A_i, b).view(-1, 1))
         if argmin.item() == A_i.shape[0]:
             break
         # print(b.shape,torch.transpose(A_i, 0, 1).shape,x_i.shape,\
@@ -422,6 +530,64 @@ def OrthogonalMP_REG_Parallel(A, b, tol=1E-4, nnz=None, positive=False, lam=1, d
     # print(len(indices))
     for i, index in enumerate(indices):
         # print(i,index,end="\t")
+        try:
+            x[index] += x_i[i]
+        except IndexError:
+            x[index] += x_i
+    # print(x[indices])
+    return x
+
+
+# NOTE: Standard Algorithm, e.g. Tropp, ``Greed is Good: Algorithmic Results for Sparse Approximation," IEEE Trans. Info. Theory, 2004.
+def OrthogonalMP_REG_NNLS_Parallel(A, b, tol=1E-4, nnz=None, positive=False, lam=1, device="cpu"):
+    '''approximately solves min_x |x|_0 s.t. Ax=b using Orthogonal Matching Pursuit
+    Args:
+      A: design matrix of size (d, n)
+      b: measurement vector of length d
+      tol: solver tolerance
+      nnz = maximum number of nonzero coefficients (if None set to n)
+      positive: only allow positive nonzero coefficients
+    Returns:
+       vector of length n
+    '''
+    AT = torch.transpose(A, 0, 1)
+    d, n = A.shape
+    if nnz is None:
+        nnz = n
+    x = torch.zeros(n, device=device)  # ,dtype=torch.float64)
+    resid = b.detach().clone()
+    normb = b.norm().item()
+    indices = []
+    argmin = torch.tensor([-1])
+    for i in range(nnz):
+        # if resid.norm().item() / normb < tol:
+        #     break
+        projections = torch.matmul(AT, resid)  # AT.dot(resid)
+        # print("Projections",projections.shape)
+        if positive:
+            index = torch.argmax(projections)
+        else:
+            index = torch.argmax(torch.abs(projections))
+        if index in indices:
+            break
+        indices.append(index)
+            #break
+        if len(indices) == 1:
+            A_i = A[:, index]
+            x_i = projections[index] / torch.dot(A_i, A_i).view(-1)  # A_i.T.dot(A_i)
+            A_i = A[:, index].view(1, -1)
+        else:
+            # print(indices)
+            A_i = torch.cat((A_i, A[:, index].view(1, -1)), dim=0)  # np.vstack([A_i, A[:,index]])
+            temp = torch.matmul(A_i, torch.transpose(A_i, 0, 1)) + lam * torch.eye(A_i.shape[0], device=device)
+            if positive:
+                x_i, _ = nnls(temp.cpu().numpy(), torch.matmul(A_i, b).view(-1).cpu().numpy())
+                x_i = torch.from_numpy(x_i).float().to(device=device)
+            else:
+                x_i, _, _, _ = torch.linalg.lstsq(temp, torch.matmul(A_i, b).view(-1, 1))
+        resid = b - torch.matmul(torch.transpose(A_i, 0, 1), x_i).view(-1)  # A_i.T.dot(x_i)
+    x_i = x_i.view(-1)
+    for i, index in enumerate(indices):
         try:
             x[index] += x_i[i]
         except IndexError:

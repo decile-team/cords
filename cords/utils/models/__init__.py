@@ -1,3 +1,4 @@
+from .custom_hyperparam_net import HyperParamNet
 from .cifar10net import CifarNet
 from .densenet import DenseNet121
 from .densenet import DenseNet161
@@ -41,3 +42,7 @@ from .resnet164 import ResNet164
 from .mobilenetv2tf import MobileNet2
 from .embedding_bag import EmbeddingBagModel
 from .embedding_lstm import LSTMModel
+from .wideresnet import WideResNet
+from .shakenet import ShakeNet
+from .cnn import CNN
+from .cnn13 import CNN13

@@ -252,14 +252,45 @@ if __name__ == "__main__":
     print("Test loss: %10.5f" % test_loss)
     print("Test accu: %10.5f" % test_accu)
 
+    # ckpt_state = {
+    #     'epoch': epoch + 1,
+    #     'state_dict': model.state_dict(),
+    #     'optimizer': optimizer.state_dict(),
+    #     'loss': self.loss_function(),
+    #     'metrics': metric_dict
+    # }
+
     # Save results
-    save_path = os.path.join(".", "scripts", "RESULTS", "EXP_%s" % start)
+    # save_path = os.path.join(".", "scripts", "RESULTS", "EXP_%s" % start)
+    # save_path = os.path.join(checkpoint_dir, self.configdata['dss_strategy']['type'],
+    #                         self.configdata['dataset']['name'], str(
+    #         self.configdata['dss_strategy']['fraction']), str(self.configdata['dss_strategy']['select_every']),
+    #                         str(train_start_time))
+    save_path = os.path.join(".", "results", args.dss_strategy, args.dataset, args.select_ratio, args.select_every,
+                             start)
+
+    # save_path = os.path.join(".", "scripts", "RESULTS", "EXP_%s" % start)
+
     print("Saving to path: %s" % save_path)
     os.makedirs(save_path)
-    with open(os.path.join(save_path, 'save_dict.pickle'), 'wb') as handle:
-        save_dict = {"args": args,
-                     "train_loss": train_loss, "train_accu": train_accu,
-                     "valid_loss": valid_loss, "valid_accu": valid_accu,
-                     "epochs": range(n_epochs), "train_elapsed": train_elapsed,
-                     "test_loss": test_loss, "test_accu": test_accu}
+    # with open(os.path.join(save_path, 'save_dict.pickle'), 'wb') as handle:
+    #     save_dict = {"args": args,
+    #                  "train_loss": train_loss, "train_accu": train_accu,
+    #                  "valid_loss": valid_loss, "valid_accu": valid_accu,
+    #                  "epochs": range(n_epochs), "train_elapsed": train_elapsed,
+    #                  "test_loss": test_loss, "test_accu": test_accu}
+    #     pickle.dump(save_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+    with open(os.path.join(save_path, 'model.pt'), 'wb') as handle:
+        save_dict = {
+            "epoch": args.n_epochs,
+            "state_dict": model.state_dict(),
+            "optimizer": optimizer.state_dict(),
+            "loss": criterion_nored,
+            "metrics": {"val_loss": valid_loss,
+                        "val_acc": valid_accu,
+                        "tst_loss": test_loss,
+                        "tst_acc": test_accu,
+                        "time": train_elapsed}
+        }
         pickle.dump(save_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)

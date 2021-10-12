@@ -11,3 +11,5 @@ sphinxcontrib-bibtex
 sphinx-rtd-theme
 matplotlib
 ray[tune]
+ray[default]
+dotmap

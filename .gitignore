@@ -1,5 +1,4 @@
 notebooks/results
-data
 .idea
 cords.egg-info
 build
@@ -17,3 +16,6 @@ _CHECK_SCRIPTS
 .ipynb_checkpoints
 _CACHED_RESULTS
 _CACHED_SCRIPTS
+.gitignore
+/data/
+/log/

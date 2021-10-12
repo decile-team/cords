@@ -98,7 +98,8 @@ if __name__ == '__main__':
             #                                    _first_k_obj["model"])
             filename = "%s_%s_%s_%s_%s_%s.png" % (_first_k_obj["dataset"], _x_metric, _y_metric,
                                                   "adaptive: %s" % _first_k_obj["is_adaptive"],
-                                                  _first_k_obj["model"], _first_k_obj["select_ratio"])
+                                                  _first_k_obj["model"] if "model" in _first_k_obj else "None",
+                                                  _first_k_obj["select_ratio"])
             plot(x_list, y_list, labels=labels, xlabel=_x_metric, ylabel=_y_metric,
                  note=json.dumps(note_obj, sort_keys=True, indent=4), legend=True,
                  save_path=os.path.join(save_path, filename))

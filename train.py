@@ -178,6 +178,8 @@ class TrainClassifier:
 
         # print("--------------------------------------------------------")
         print("trn_batch_size: %s. " % trn_batch_size)
+
+        print("Using dss_strategy: %s" % self.configdata["dss_strategy"]["type"])
         # print("--------------------------------------------------------")
 
         # Creating the Data Loaders
@@ -233,11 +235,16 @@ class TrainClassifier:
         logfile = open(path_logfile, 'w')
 
         checkpoint_dir = osp.abspath(osp.expanduser(self.configdata['ckpt']['dir']))
-        ckpt_dir = os.path.join(checkpoint_dir, self.configdata['dss_strategy']['type'],
-                                self.configdata['dataset']['name'], str(
-                self.configdata['dss_strategy']['fraction']), str(self.configdata['dss_strategy']['select_every']),
-                                str(train_start_time))
-        checkpoint_path = os.path.join(ckpt_dir, 'model.pt')
+        if "save_dir" in self.configdata:
+            ckpt_dir = os.path.join(checkpoint_dir, self.configdata["save_dir"])
+            checkpoint_path = os.path.join(ckpt_dir, 'model.pt')
+        else:
+            ckpt_dir = os.path.join(checkpoint_dir, self.configdata['dss_strategy']['type'],
+                                    self.configdata['dataset']['name'], str(
+                    self.configdata['dss_strategy']['fraction']), str(self.configdata['dss_strategy']['select_every']),
+                                    str(train_start_time))
+            checkpoint_path = os.path.join(ckpt_dir, 'model.pt')
+        print("making dir: %s" % ckpt_dir)
         os.makedirs(ckpt_dir, exist_ok=True)
 
         # Model Creation
@@ -269,6 +276,12 @@ class TrainClassifier:
                                               lam=self.configdata['dss_strategy']['lam'], eps=1e-100)
         elif self.configdata['dss_strategy']['type'] == 'GLISTER':
             # GLISTER Selection strategy
+            # setf_model = GLISTERStrategy(trainloader, valloader, model1, criterion_nored,
+            #                              self.configdata['optimizer']['lr'], self.configdata['train_args']['device'],
+            #                              num_cls, True, 'Supervised', 'Stochastic', r=int(bud))
+            # GLISTERStrategy(trainloader, valloader, model1, criterion_nored,
+            #                 self.configdata['optimizer']['lr'], self.configdata['train_args']['device'],
+            #                 num_cls, False, 'Supervised', 'Stochastic', r=int(bud))
             setf_model = GLISTERStrategy(trainloader, valloader, model1, criterion_nored,
                                          self.configdata['optimizer']['lr'], self.configdata['train_args']['device'],
                                          num_cls, True, 'Supervised', 'Stochastic', r=int(bud))
@@ -288,6 +301,16 @@ class TrainClassifier:
             setf_model = GLISTERStrategy(trainloader, valloader, model1, criterion_nored,
                                          self.configdata['optimizer']['lr'], self.configdata['train_args']['device'],
                                          num_cls, True, 'Supervised', 'PerClass', r=int(bud))
+            # (self, trainloader, valloader, model,
+            #  loss_func, eta, device, num_classes,
+            #  linear_layer, selection_type, greedy, r=15, verbose=True)
+            setf_model = GLISTERStrategy(trainloader, valloader, model1, criterion_nored,
+                                         self.configdata['optimizer']['lr'], self.configdata['train_args']['device'],
+                                         num_cls, True, 'PerBatch', 'Stochastic', r=int(bud))
+        # elif self.configdata['dss_strategy']['type'] == 'GLISTERPC':
+        #     setf_model = GLISTERStrategy(trainloader, valloader, model1, criterion_nored,
+        #                                  self.configdata['optimizer']['lr'], self.configdata['train_args']['device'],
+        #                                  num_cls, True, 'Supervised', 'PerClass', r=int(bud))
         elif self.configdata['dss_strategy']['type'] == 'CRAIG':
             # CRAIG Selection strategy
             setf_model = CRAIGStrategy(trainloader, valloader, model1, criterion_nored,
@@ -334,9 +357,15 @@ class TrainClassifier:
 
         elif self.configdata['dss_strategy']['type'] == 'GLISTER-Warm':
             # GLISTER Selection strategy
+            # setf_model = GLISTERStrategy(trainloader, valloader, model1, criterion_nored,
+            #                              self.configdata['optimizer']['lr'], self.configdata['train_args']['device'],
+            #                              num_cls, False, 'Stochastic', r=int(bud))
+            # (self, trainloader, valloader, model,
+            #  loss_func, eta, device, num_classes,
+            #  linear_layer, selection_type, greedy, r=15, verbose=True)
             setf_model = GLISTERStrategy(trainloader, valloader, model1, criterion_nored,
                                          self.configdata['optimizer']['lr'], self.configdata['train_args']['device'],
-                                         num_cls, False, 'Stochastic', r=int(bud))
+                                         num_cls, True, 'Supervised', 'Stochastic', r=int(bud))
             # Random-Online Selection strategy
             # rand_setf_model = RandomStrategy(trainloader, online=True)
             if 'kappa' in self.configdata['dss_strategy']:
@@ -488,14 +517,18 @@ class TrainClassifier:
                         print(
                             "batch_idx: %s, inputs.shape: %s, updating model parameters... " % (
                                 batch_idx, inputs.shape))
+                    # if batch_idx % 10 == 0:
+                    #     print(
+                    #         "batch_idx: %s, inputs.shape: %s, updating model parameters... " % (
+                    #             batch_idx, inputs.shape))
                     # print("inputs.device: %s. " % inputs.device)
                     # print("targets.device: %s. " % targets.device)
                     outputs = model(inputs)
                     losses = criterion_nored(outputs, targets)
-                    # loss = torch.dot(losses, gammas[batch_wise_indices[batch_idx]]) / (
-                    #     gammas[batch_wise_indices[batch_idx]].sum())
                     loss = torch.dot(losses, gammas[batch_wise_indices[batch_idx]]) / (
                         gammas[batch_wise_indices[batch_idx]].sum())
+                    # loss = losses.mean()
+                    # loss = torch.dot(losses, gammas[batch_wise_indices[batch_idx]]) / (gammas.sum())
                     ########################################################
                     # print(model)
                     # print(loss)
@@ -536,6 +569,7 @@ class TrainClassifier:
                         losses = criterion_nored(outputs, targets)
                         loss = torch.dot(losses, gammas[batch_wise_indices[batch_idx]]) / (
                             gammas[batch_wise_indices[batch_idx]].sum())
+                        # loss = losses.mean()
                         loss.backward()
                         subtrn_loss += loss.item()
                         optimizer.step()
@@ -547,6 +581,7 @@ class TrainClassifier:
             elif self.configdata['dss_strategy']['type'] in ['GLISTER', 'GLISTERPB', 'Random', 'Random-Online',
                                                              'R-GLISTER']:
                 start_time = time.time()
+                print("len(subset_trnloader): %s" % len(subset_trnloader))
                 for batch_idx, (inputs, targets) in enumerate(subset_trnloader):
                     inputs, targets = inputs.to(self.configdata['train_args']['device']), targets.to(
                         self.configdata['train_args']['device'],
@@ -555,6 +590,7 @@ class TrainClassifier:
                     outputs = model(inputs)
                     loss = criterion(outputs, targets)
                     # if batch_idx % 1000 == 0:
+                    # if batch_idx % 3 == 0:
                     #     print(
                     #         "batch_idx: %s, inputs.shape: %s, updating model parameters... " % (
                     #         batch_idx, inputs.shape))
@@ -797,10 +833,18 @@ class TrainClassifier:
                     if arg == "time":
                         metric_dict['time'] = timing
 
+                # ckpt_state = {
+                #     'epoch': epoch + 1,
+                #     'state_dict': model.state_dict(),
+                #     'optimizer': optimizer.state_dict(),
+                #     'loss': self.loss_function(),
+                #     'metrics': metric_dict
+                # }
+
                 ckpt_state = {
                     'epoch': epoch + 1,
-                    'state_dict': model.state_dict(),
-                    'optimizer': optimizer.state_dict(),
+                    # 'state_dict': model.state_dict(),
+                    # 'optimizer': optimizer.state_dict(),
                     'loss': self.loss_function(),
                     'metrics': metric_dict
                 }
