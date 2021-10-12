@@ -21,10 +21,12 @@ from train_sl import TrainClassifier
 
 class HyperParamTuning:
     def __init__(self, config_file):
-        self.config_data = load_config_data(config_file)
-        self.train_class = TrainClassifier(self.config_data['subset_config'])
-        self.search_algo = self.get_search_algo(self.config_data['search_algo'], self.config_data['space'], self.config_data['metric'], self.config_data['mode'])
-        self.scheduler = self.get_scheduler(self.config_data['scheduler'], self.config_data['metric'], self.config_data['mode'])
+        self.cfg = load_config_data(config_file)
+        self.train_class.cfg['train_args']['print_every'] = 1
+        self.train_class = TrainClassifier(self.cfg['subset_config'])
+        self.search_algo = self.get_search_algo(self.cfg['search_algo'], self.cfg['space'], self.cfg['metric'],
+                                                self.cfg['mode'])
+        self.scheduler = self.get_scheduler(self.cfg['scheduler'], self.cfg['metric'], self.cfg['mode'])
         # save subset method, to be used in log dir name
         self.subset_method = self.train_class.configdata['dss_strategy']['type']
 
@@ -39,56 +41,56 @@ class HyperParamTuning:
     def start_eval(self):
         analysis = tune.run(
             self.param_tune,
-            num_samples=self.config_data['num_evals'],
-            config=self.config_data['space'],
+            num_samples=self.cfg['num_evals'],
+            config=self.cfg['space'],
             search_alg=self.search_algo,
             scheduler=self.scheduler,
-            resources_per_trial={'gpu':1},
-            local_dir=self.config_data['log_dir']+self.subset_method+'/',
+            resources_per_trial={'gpu': 1},
+            local_dir=self.cfg['log_dir'] + self.subset_method + '/',
             log_to_file=True,
-            name=self.config_data['name'],
-            resume=self.config_data['resume'])
+            name=self.cfg['name'],
+            resume=self.cfg['resume'])
 
-        best_config = analysis.get_best_config(metric=self.config_data['metric'], mode=self.config_data['mode'])
+        best_config = analysis.get_best_config(metric=self.cfg['metric'], mode=self.cfg['mode'])
         print("Best Config: ", best_config)
 
-        if self.config_data['final_train']:
+        if self.cfg['final_train']:
             self.final_train(best_config)
 
     def get_search_algo(self, method, space, metric, mode):
         # HyperOptSearch 
         if method == "hyperopt" or method == "TPE":
-            search = HyperOptSearch(space, metric = metric, mode = mode)
+            search = HyperOptSearch(space, metric=metric, mode=mode)
         # BayesOptSearch
         elif method == "bayesopt" or method == "BO":
-            search = BayesOptSearch(space, metric = metric, mode = mode)
+            search = BayesOptSearch(space, metric=metric, mode=mode)
         # SkoptSearch
         elif method == "skopt" or method == "SKBO":
-            search = SkOptSearch(space, metric = metric, mode = mode)
+            search = SkOptSearch(space, metric=metric, mode=mode)
         # DragonflySearch
         elif method == "dragonfly" or method == "SBO":
-            search = DragonflySearch(space, metric = metric, mode = mode)
+            search = DragonflySearch(space, metric=metric, mode=mode)
         # AxSearch
         elif method == "ax" or method == "BBO":
-            search = AxSearch(space, metric = metric, mode = mode)
+            search = AxSearch(space, metric=metric, mode=mode)
         # TuneBOHB
         elif method == "tunebohb" or method == "BOHB":
-            search = TuneBOHB(space, metric = metric, mode = mode)
+            search = TuneBOHB(space, metric=metric, mode=mode)
         # NevergradSearch
         elif method == "nevergrad" or method == "GFO":
-            search = NevergradSearch(space, metric = metric, mode = mode)
+            search = NevergradSearch(space, metric=metric, mode=mode)
         # OptunaSearch
         elif method == "optuna" or method == "OSA":
-            search = OptunaSearch(space, metric = metric, mode = mode)
+            search = OptunaSearch(space, metric=metric, mode=mode)
         # ZOOptSearch
         elif method == "zoopt" or method == "ZOO":
-            search = ZOOptSearch(space, metric = metric, mode = mode)
+            search = ZOOptSearch(space, metric=metric, mode=mode)
         # SigOptSearch
         elif method == "sigopt":
-            search = SigOptSearch(space, metric = metric, mode = mode)
+            search = SigOptSearch(space, metric=metric, mode=mode)
         # HEBOSearch
         elif method == "hebo" or method == "HEBO":
-            search = HEBOSearch(space, metric = metric, mode = mode)
+            search = HEBOSearch(space, metric=metric, mode=mode)
         else:
             return None
 
