@@ -21,11 +21,11 @@ from train_sl import TrainClassifier
 
 class HyperParamTuning:
     def __init__(self, config_file):
-        self.config_data = load_config_data(config_file)
-        self.train_class.configdata['dss_strategy']['print_every'] = 1
-        self.train_class = TrainClassifier(self.config_data['subset_config'])
-        self.search_algo = self.get_search_algo(self.config_data['search_algo'], self.config_data['space'], self.config_data['metric'], self.config_data['mode'])
-        self.scheduler = self.get_scheduler(self.config_data['scheduler'], self.config_data['metric'], self.config_data['mode'])
+        self.cfg = load_config_data(config_file)
+        self.train_class.cfg['train_args']['print_every'] = 1
+        self.train_class = TrainClassifier(self.cfg['subset_config'])
+        self.search_algo = self.get_search_algo(self.cfg['search_algo'], self.cfg['space'], self.cfg['metric'], self.cfg['mode'])
+        self.scheduler = self.get_scheduler(self.cfg['scheduler'], self.cfg['metric'], self.cfg['mode'])
         # save subset method, to be used in log dir name
         self.subset_method = self.train_class.configdata['dss_strategy']['type']
 
@@ -40,20 +40,20 @@ class HyperParamTuning:
     def start_eval(self):
         analysis = tune.run(
             self.param_tune,
-            num_samples=self.config_data['num_evals'],
-            config=self.config_data['space'],
+            num_samples=self.cfg['num_evals'],
+            config=self.cfg['space'],
             search_alg=self.search_algo,
             scheduler=self.scheduler,
             resources_per_trial={'gpu':1},
-            local_dir=self.config_data['log_dir']+self.subset_method+'/',
+            local_dir=self.cfg['log_dir']+self.subset_method+'/',
             log_to_file=True,
-            name=self.config_data['name'],
-            resume=self.config_data['resume'])
+            name=self.cfg['name'],
+            resume=self.cfg['resume'])
     
-        best_config = analysis.get_best_config(metric=self.config_data['metric'], mode=self.config_data['mode'])
+        best_config = analysis.get_best_config(metric=self.cfg['metric'], mode=self.cfg['mode'])
         print("Best Config: ", best_config)
 
-        if self.config_data['final_train']:
+        if self.cfg['final_train']:
             self.final_train(best_config)
 
     def get_search_algo(self, method, space, metric, mode):
