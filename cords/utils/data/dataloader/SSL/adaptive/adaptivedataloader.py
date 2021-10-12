@@ -32,10 +32,10 @@ class AdaptiveDSSDataLoader(DSSDataLoader):
         if dss_args.kappa > 0:
             assert "num_iters" in dss_args.keys(), "'num_iters' is a compulsory argument when warm starting the model(i.e., kappa > 0). Include it as a key in dss_args"
             self.select_after = int(self.kappa * self.num_iters)
-            self.warmup_iters = int(self.kappa * self.num_iters * self.fraction)
+            # self.warmup_iters = int(self.kappa * self.num_iters * self.fraction)
         else:
             self.select_after = 0
-            self.warmup_iters = 0
+            # self.warmup_iters = 0
         self.wtdataloader = DataLoader(self.wt_trainset,
                                        sampler=InfiniteSampler(len(self.wt_trainset), self.select_after * kwargs['batch_size']),
                                        *self.loader_args, **self.loader_kwargs)
@@ -56,26 +56,22 @@ class AdaptiveDSSDataLoader(DSSDataLoader):
 
     def __iter__(self):
         self.initialized = True
-        if self.warmup_iters < self.cur_iter <= self.select_after:
-            logging.info(
-                "Skipping epoch {0:d} due to warm-start option. ".format(self.cur_epoch, self.warmup_epochs))
-            loader = DataLoader([])
-        elif self.cur_iter <= self.select_after:
+        if self.cur_iter <= self.select_after:
             if self.verbose:
-                logging.info('Iteration: {0:d}, reading dataloader... '.format(self.cur_iter))
-            loader = self.wtdataloader
+                logging.info('Iteration: {0:d}, reading full dataloader... '.format(self.cur_iter))
+            self.curr_loader = self.wtdataloader
             if self.verbose:
-                logging.info('Iteration: {0:d}, finished reading dataloader. '.format(self.cur_iter))
+                logging.info('Iteration: {0:d}, finished reading full dataloader. '.format(self.cur_iter))
         else:
             if self.verbose:
                 logging.info('Iteration: {0:d}, reading dataloader... '.format(self.cur_iter))
             if self.cur_iter > 1:
                 self.resample()
-            loader = self.subset_loader
+            self.curr_loader = self.subset_loader
             if self.verbose:
                 logging.info('Iteration: {0:d}, finished reading dataloader. '.format(self.cur_iter))
-        self.cur_iter += len(list(loader.batch_sampler))
-        return loader.__iter__()
+        self.cur_iter += len(list(self.curr_loader.batch_sampler))
+        return self.curr_loader.__iter__()
 
     def resample(self):
         self.subset_indices, self.subset_weights = self._resample_subset_indices()

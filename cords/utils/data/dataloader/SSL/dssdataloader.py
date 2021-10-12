@@ -26,6 +26,7 @@ class DSSDataLoader:
         self.subset_indices = None
         self.subset_weights = None
         self.subset_loader = None
+        self.curr_loader = None
         self.batch_wise_indices = None
         self.strategy = None
         self.cur_iter = 1
@@ -33,8 +34,8 @@ class DSSDataLoader:
         self._init_subset_loader()
 
     def __getattr__(self, item):
-        return object.__getattribute__(self, "subset_loader").__getattribute__(item)
-        
+        return object.__getattribute__(self, "curr_loader").__getattribute__(item)
+
     def _init_subset_loader(self):
         # All strategies start with random selection
         self.subset_indices = self._init_subset_indices()
@@ -42,6 +43,7 @@ class DSSDataLoader:
         self.subset_loader = DataLoader(WeightedSubset(self.dataset, self.subset_indices, self.subset_weights), 
                                         *self.loader_args, **self.loader_kwargs)
         self.batch_wise_indices = list(self.subset_loader.batch_sampler)
+        self.curr_loader = self.subset_loader
 
     # Default subset indices comes from random selection
     def _init_subset_indices(self):
