@@ -6,5 +6,5 @@ Here, we provide example usages of CORDS. We have separated examples by the doma
 
 | Folder | Description |
 | :--- | :----: |
-| [sl](supervised_learning) | Contains examples of CORDS's usage in supervised learning scenario |
-| [ssl](semi_supervised_learning) | Contains examples of CORDS's usage in semi-supervised learning scenario |
+| [Supervised Learning](SL) | Contains examples of CORDS's usage in supervised learning scenario |
+| [Semi-supervised Learning](SSL) | Contains examples of CORDS's usage in semi-supervised learning scenario |
