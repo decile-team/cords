@@ -7,37 +7,37 @@ from .vat import VAT
 def gen_ssl_alg(name, cfg):
     if name == "ict": # mixed target <-> mixed input
         return ICT(
-            cfg.consistency,
-            cfg.threshold,
-            cfg.sharpen,
-            cfg.temp_softmax,
-            cfg.alpha
+            cfg.ssl_args.consis,
+            cfg.ssl_args.threshold,
+            cfg.ssl_args.sharpen,
+            cfg.ssl_args.temp_softmax,
+            cfg.ssl_args.alpha
         )
     elif name == "cr": # base augment <-> another augment
         return ConsistencyRegularization(
-            cfg.consistency,
-            cfg.threshold,
-            cfg.sharpen,
-            cfg.temp_softmax
+            cfg.ssl_args.consis,
+            cfg.ssl_args.threshold,
+            cfg.ssl_args.sharpen,
+            cfg.ssl_args.temp_softmax
         )
     elif name == "pl": # hard label <-> strong augment
         return PseudoLabel(
-            cfg.consistency,
-            cfg.threshold,
-            cfg.sharpen,
-            cfg.temp_softmax
+            cfg.ssl_args.consis,
+            cfg.ssl_args.threshold,
+            cfg.ssl_args.sharpen,
+            cfg.ssl_args.temp_softmax
         )
     elif name == "vat": # base augment <-> adversarial
         from ..consistency import builder
         return VAT(
-            cfg.consistency,
-            cfg.threshold,
-            cfg.sharpen,
-            cfg.temp_softmax,
-            builder.gen_consistency(cfg.consistency, cfg),
-            cfg.eps,
-            cfg.xi,
-            cfg.vat_iter
+            cfg.ssl_args.consis,
+            cfg.ssl_args.threshold,
+            cfg.ssl_args.sharpen,
+            cfg.ssl_args.temp_softmax,
+            builder.gen_consistency(cfg.ssl_args.consis, cfg),
+            cfg.ssl_args.eps,
+            cfg.ssl_args.xi,
+            cfg.ssl_args.vat_iter
         )
     else:
         raise NotImplementedError

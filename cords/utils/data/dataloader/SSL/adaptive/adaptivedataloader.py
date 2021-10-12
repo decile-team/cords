@@ -3,6 +3,7 @@ from abc import abstractmethod
 from torch.utils.data import DataLoader
 from ..dssdataloader import DSSDataLoader
 from cords.utils.data.datasets.SSL.utils import InfiniteSampler
+from cords.utils.data._utils import WeightedSubset
 
 class AdaptiveDSSDataLoader(DSSDataLoader):
     def __init__(self, train_loader, val_loader, dss_args, verbose=False, *args,
@@ -34,7 +35,12 @@ class AdaptiveDSSDataLoader(DSSDataLoader):
                                        *self.loader_args, **self.loader_kwargs)
         self.initialized = False
         
-    
+    def _refresh_subset_loader(self):
+        data_sub = WeightedSubset(self.dataset, self.subset_indices, self.subset_weights)
+        self.subset_loader = DataLoader(data_sub, sampler=InfiniteSampler(len(self.data_sub), 
+                                        self.select_after * self.loader_kwargs.batch_size), *self.loader_args, **self.loader_kwargs)
+        self.batch_wise_indices = list(self.subset_loader.batch_sampler)
+
     def __iter__(self):
         self.initialized = True
         if self.cur_iter <= self.select_after:

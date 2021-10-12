@@ -9,16 +9,16 @@ from .augmentation.augmentation_pool import numpy_batch_gcn, ZCA, GCN
 
 
 def __val_labeled_unlabeled_split(cfg, train_data, test_data, num_classes, ul_data=None):
-    num_validation = int(np.round(len(train_data["images"]) * cfg.val_ratio))
+    num_validation = int(np.round(len(train_data["images"]) * cfg.dataset.val_ratio))
 
-    np.random.seed(cfg.seed)
+    np.random.seed(cfg.train_args.seed)
 
     permutation = np.random.permutation(len(train_data["images"]))
     train_data["images"] = train_data["images"][permutation]
     train_data["labels"] = train_data["labels"][permutation]
 
-    val_data, train_data = utils.dataset_split(train_data, num_validation, num_classes, cfg.random_split)
-    l_train_data, ul_train_data = utils.dataset_split(train_data, cfg.num_labels, num_classes)
+    val_data, train_data = utils.dataset_split(train_data, num_validation, num_classes, cfg.dataset.random_split)
+    l_train_data, ul_train_data = utils.dataset_split(train_data, cfg.dataset.num_labels, num_classes)
 
     if ul_data is not None:
         ul_train_data["images"] = np.concatenate([ul_train_data["images"], ul_data["images"]], 0)
@@ -28,13 +28,13 @@ def __val_labeled_unlabeled_split(cfg, train_data, test_data, num_classes, ul_da
 
 
 def __labeled_unlabeled_split(cfg, train_data, test_data, num_classes, ul_data=None):
-    np.random.seed(cfg.seed)
+    np.random.seed(cfg.train_args.seed)
 
     permutation = np.random.permutation(len(train_data["images"]))
     train_data["images"] = train_data["images"][permutation]
     train_data["labels"] = train_data["labels"][permutation]
 
-    l_train_data, ul_train_data = utils.dataset_split(train_data, cfg.num_labels, num_classes)
+    l_train_data, ul_train_data = utils.dataset_split(train_data, cfg.dataset.num_labels, num_classes)
 
     if ul_data is not None:
         ul_train_data["images"] = np.concatenate([ul_train_data["images"], ul_data["images"]], 0)
@@ -77,7 +77,7 @@ def gen_dataloader(root, dataset, validation_split, cfg, logger=None):
         num_classes = 100
         img_size = 32
     elif dataset == "cifarOOD":
-        train_data, test_data = utils.get_cifarOOD(root, cfg.ood_ratio)
+        train_data, test_data = utils.get_cifarOOD(root, cfg.dataset.ood_ratio)
         num_classes = 6
         img_size = 32
     else:
@@ -115,10 +115,10 @@ def gen_dataloader(root, dataset, validation_split, cfg, logger=None):
         unlabeled_train_data.dataset["images"]
         ], 0)
 
-    if cfg.whiten:
+    if cfg.dataset.whiten:
         mean = train_data.mean((0, 1, 2)) / 255.
         scale = train_data.std((0, 1, 2)) / 255.
-    elif cfg.zca:
+    elif cfg.dataset.zca:
         mean, scale = utils.get_zca_normalization_param(numpy_batch_gcn(train_data))
     else:
         # from [0, 1] to [-1, 1]
@@ -127,25 +127,25 @@ def gen_dataloader(root, dataset, validation_split, cfg, logger=None):
 
     # set augmentation
     # RA: RandAugment, WA: Weak Augmentation
-    randauglist = "fixmatch" if cfg.alg == "pl" else "uda"
+    randauglist = "fixmatch" if cfg.ssl_args.alg == "pl" else "uda"
 
-    flags = [True if b == "t" else False for b in cfg.wa.split(".")]
+    flags = [True if b == "t" else False for b in cfg.dataset.wa.split(".")]
 
-    if cfg.labeled_aug == "RA":
+    if cfg.dataset.labeled_aug == "RA":
         labeled_augmentation = gen_strong_augmentation(
-            img_size, mean, scale, flags[0], flags[1], randauglist, cfg.zca)
-    elif cfg.labeled_aug == "WA":
-        labeled_augmentation = gen_weak_augmentation(img_size, mean, scale, *flags, cfg.zca)
+            img_size, mean, scale, flags[0], flags[1], randauglist, cfg.dataset.zca)
+    elif cfg.dataset.labeled_aug == "WA":
+        labeled_augmentation = gen_weak_augmentation(img_size, mean, scale, *flags, cfg.dataset.zca)
     else:
         raise NotImplementedError
 
     labeled_train_data.transform = labeled_augmentation
 
-    if cfg.unlabeled_aug == "RA":
+    if cfg.dataset.unlabeled_aug == "RA":
         unlabeled_augmentation = gen_strong_augmentation(
-            img_size, mean, scale, flags[0], flags[1], randauglist, cfg.zca)
-    elif cfg.unlabeled_aug == "WA":
-        unlabeled_augmentation = gen_weak_augmentation(img_size, mean, scale, *flags, cfg.zca)
+            img_size, mean, scale, flags[0], flags[1], randauglist, cfg.dataset.zca)
+    elif cfg.dataset.unlabeled_aug == "WA":
+        unlabeled_augmentation = gen_weak_augmentation(img_size, mean, scale, *flags, cfg.dataset.zca)
     else:
         raise NotImplementedError
 
@@ -157,14 +157,14 @@ def gen_dataloader(root, dataset, validation_split, cfg, logger=None):
 
     unlabeled_train_data.weak_augmentation = unlabeled_augmentation
 
-    if cfg.strong_aug:
+    if cfg.dataset.strong_aug:
         strong_augmentation = gen_strong_augmentation(
-            img_size, mean, scale, flags[0], flags[1], randauglist, cfg.zca)
+            img_size, mean, scale, flags[0], flags[1], randauglist, cfg.dataset.zca)
         unlabeled_train_data.strong_augmentation = strong_augmentation
         if logger is not None:
             logger.info(strong_augmentation)
 
-    if cfg.zca:
+    if cfg.dataset.zca:
         test_transform = transforms.Compose([GCN(), ZCA(mean, scale)])
     else:
         test_transform = transforms.Compose([transforms.Normalize(mean, scale, True)])
@@ -173,22 +173,22 @@ def gen_dataloader(root, dataset, validation_split, cfg, logger=None):
 
     l_train_loader = DataLoader(
         labeled_train_data,
-        cfg.l_batch_size,
-        sampler=utils.InfiniteSampler(len(labeled_train_data), cfg.iteration * cfg.l_batch_size),
-        num_workers=cfg.num_workers
+        cfg.dataset.l_batch_size,
+        sampler=utils.InfiniteSampler(len(labeled_train_data), cfg.train_args.iteration * cfg.dataloader.l_batch_size),
+        num_workers=cfg.dataloader.num_workers
     )
     ul_train_loader = DataLoader(
         unlabeled_train_data,
-        cfg.ul_batch_size,
-        sampler=utils.InfiniteSampler(len(unlabeled_train_data), cfg.iteration * cfg.ul_batch_size),
-        num_workers=cfg.num_workers
+        cfg.dataloader.ul_batch_size,
+        sampler=utils.InfiniteSampler(len(unlabeled_train_data), cfg.train_args.iteration * cfg.dataloader.ul_batch_size),
+        num_workers=cfg.dataloader.num_workers
     )
     test_loader = DataLoader(
         test_data,
         1,
         shuffle=False,
         drop_last=False,
-        num_workers=cfg.num_workers
+        num_workers=cfg.dataloader.num_workers
     )
 
     if validation_split:
@@ -198,7 +198,7 @@ def gen_dataloader(root, dataset, validation_split, cfg, logger=None):
             1,
             shuffle=False,
             drop_last=False,
-            num_workers=cfg.num_workers
+            num_workers=cfg.dataloader.num_workers
         )
 
         return (
@@ -254,15 +254,15 @@ def gen_dataset(root, dataset, validation_split, cfg, logger=None):
         num_classes = 100
         img_size = 32
     elif dataset == "cifarOOD":
-        train_data, ul_train_data, test_data = utils.get_cifarOOD(root, cfg.ood_ratio)
+        train_data, ul_train_data, test_data = utils.get_cifarOOD(root, cfg.dataset.ood_ratio)
         num_classes = 6
         img_size = 32
     elif dataset == "mnistOOD":
-        train_data, ul_train_data, test_data = utils.get_mnistOOD(root, cfg.ood_ratio)
+        train_data, ul_train_data, test_data = utils.get_mnistOOD(root, cfg.dataset.ood_ratio)
         num_classes = 6
         img_size = 28
     elif dataset == "cifarImbalance":
-        train_data, ul_train_data, test_data = utils.get_cifarClassImb(root, cfg.ood_ratio)
+        train_data, ul_train_data, test_data = utils.get_cifarClassImb(root, cfg.dataset.ood_ratio)
         num_classes = 10
         img_size = 32
     else:
@@ -300,10 +300,10 @@ def gen_dataset(root, dataset, validation_split, cfg, logger=None):
         unlabeled_train_data.dataset["images"]
         ], 0)
 
-    if cfg.whiten:
+    if cfg.dataset.whiten:
         mean = train_data.mean((0, 1, 2)) / 255.
         scale = train_data.std((0, 1, 2)) / 255.
-    elif cfg.zca:
+    elif cfg.dataset.zca:
         mean, scale = utils.get_zca_normalization_param(numpy_batch_gcn(train_data))
     elif dataset == 'mnistOOD':
         mean = [0.5]
@@ -315,25 +315,25 @@ def gen_dataset(root, dataset, validation_split, cfg, logger=None):
 
     # set augmentation
     # RA: RandAugment, WA: Weak Augmentation
-    randauglist = "fixmatch" if cfg.alg == "pl" else "uda"
+    randauglist = "fixmatch" if cfg.ssl_args.alg == "pl" else "uda"
 
-    flags = [True if b == "t" else False for b in cfg.wa.split(".")]
+    flags = [True if b == "t" else False for b in cfg.dataset.wa.split(".")]
 
-    if cfg.labeled_aug == "RA":
+    if cfg.dataset.labeled_aug == "RA":
         labeled_augmentation = gen_strong_augmentation(
-            img_size, mean, scale, flags[0], flags[1], randauglist, cfg.zca)
-    elif cfg.labeled_aug == "WA":
-        labeled_augmentation = gen_weak_augmentation(img_size, mean, scale, *flags, cfg.zca)
+            img_size, mean, scale, flags[0], flags[1], randauglist, cfg.dataset.zca)
+    elif cfg.dataset.labeled_aug == "WA":
+        labeled_augmentation = gen_weak_augmentation(img_size, mean, scale, *flags, cfg.dataset.zca)
     else:
         raise NotImplementedError
 
     labeled_train_data.transform = labeled_augmentation
 
-    if cfg.unlabeled_aug == "RA":
+    if cfg.dataset.unlabeled_aug == "RA":
         unlabeled_augmentation = gen_strong_augmentation(
-            img_size, mean, scale, flags[0], flags[1], randauglist, cfg.zca)
-    elif cfg.unlabeled_aug == "WA":
-        unlabeled_augmentation = gen_weak_augmentation(img_size, mean, scale, *flags, cfg.zca)
+            img_size, mean, scale, flags[0], flags[1], randauglist, cfg.dataset.zca)
+    elif cfg.dataset.unlabeled_aug == "WA":
+        unlabeled_augmentation = gen_weak_augmentation(img_size, mean, scale, *flags, cfg.dataset.zca)
     else:
         raise NotImplementedError
 
@@ -345,14 +345,14 @@ def gen_dataset(root, dataset, validation_split, cfg, logger=None):
 
     unlabeled_train_data.weak_augmentation = unlabeled_augmentation
 
-    if cfg.strong_aug:
+    if cfg.dataset.strong_aug:
         strong_augmentation = gen_strong_augmentation(
-            img_size, mean, scale, flags[0], flags[1], randauglist, cfg.zca)
+            img_size, mean, scale, flags[0], flags[1], randauglist, cfg.dataset.zca)
         unlabeled_train_data.strong_augmentation = strong_augmentation
         if logger is not None:
             logger.info(strong_augmentation)
 
-    if cfg.zca:
+    if cfg.dataset.zca:
         test_transform = transforms.Compose([GCN(), ZCA(mean, scale)])
     else:
         test_transform = transforms.Compose([transforms.Normalize(mean, scale, True)])
