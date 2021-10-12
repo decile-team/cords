@@ -14,14 +14,16 @@ class AdaptiveDSSDataLoader(DSSDataLoader):
         assert "select_every" in dss_args.keys(), "'select_every' is a compulsory argument. Include it as a key in dss_args"
         assert "device" in dss_args.keys(), "'device' is a compulsory argument. Include it as a key in dss_args"
         assert "kappa" in dss_args.keys(), "'kappa' is a compulsory argument. Include it as a key in dss_args"
+        assert "num_iters" in dss_args.keys(), "'num_iters' is a compulsory argument. Include it as a key in dss_args"
         assert "batch_size" in kwargs.keys(), "'batch_size' is a compulsory argument. Include it as a key in kwargs"
         assert "sampler" not in kwargs.keys(), "'sampler' is a prohibited argument. Do not include it as a key in kwargs"
         assert "shuffle" not in kwargs.keys(), "'shuffle' is a prohibited argument. Do not include it as a key in kwargs"
+        
         self.select_every = dss_args.select_every
         self.sel_iteration = int((self.select_every * len(train_loader.dataset) * dss_args.fraction) // (kwargs['batch_size']))  
         self.device = dss_args.device
         self.kappa = dss_args.kappa
-        
+        self.num_iters = dss_args.num_iters
         super(AdaptiveDSSDataLoader, self).__init__(train_loader.dataset, dss_args,
                                                     verbose=verbose, *args, **kwargs)
         self.train_loader = train_loader
@@ -29,9 +31,11 @@ class AdaptiveDSSDataLoader(DSSDataLoader):
         # kappa_iterations = int()
         if dss_args.kappa > 0:
             assert "num_iters" in dss_args.keys(), "'num_iters' is a compulsory argument when warm starting the model(i.e., kappa > 0). Include it as a key in dss_args"
-            self.select_after =  int(self.kappa * self.num_iters * self.fraction)
+            self.select_after = int(self.kappa * self.num_iters)
+            self.warmup_iters = int(self.kappa * self.num_iters * self.fraction)
         else:
             self.select_after = 0
+            self.warmup_iters = 0
         self.wtdataloader = DataLoader(self.wt_trainset,
                                        sampler=InfiniteSampler(len(self.wt_trainset), self.select_after * kwargs['batch_size']),
                                        *self.loader_args, **self.loader_kwargs)
@@ -52,11 +56,19 @@ class AdaptiveDSSDataLoader(DSSDataLoader):
 
     def __iter__(self):
         self.initialized = True
-        if self.cur_iter <= self.select_after:
+        if self.warmup_iters < self.cur_iter <= self.select_after:
+            logging.info(
+                "Skipping epoch {0:d} due to warm-start option. ".format(self.cur_epoch, self.warmup_epochs))
+            loader = DataLoader([])
+        elif self.cur_iter <= self.select_after:
             if self.verbose:
                 logging.info('Iteration: {0:d}, reading dataloader... '.format(self.cur_iter))
             loader = self.wtdataloader
+            if self.verbose:
+                logging.info('Iteration: {0:d}, finished reading dataloader. '.format(self.cur_iter))
         else:
+            if self.verbose:
+                logging.info('Iteration: {0:d}, reading dataloader... '.format(self.cur_iter))
             if self.cur_iter > 1:
                 self.resample()
             loader = self.subset_loader

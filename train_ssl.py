@@ -309,7 +309,7 @@ class TrainClassifier:
             self.cfg.dss_args.ssl_alg = ssl_alg
             self.cfg.dss_args.loss = consistency_nored
             self.cfg.dss_args.num_classes = num_classes
-            self.cfg.dss_args.num_iters = self.cfg.train_args.iteration
+            self.cfg.dss_args.num_iters = max_iteration
             self.cfg.dss_args.eta = self.cfg.optimizer.lr
             self.cfg.dss_args.device = self.cfg.train_args.device
 
@@ -327,7 +327,7 @@ class TrainClassifier:
             self.cfg.dss_args.ssl_alg = ssl_alg
             self.cfg.dss_args.loss = consistency_nored
             self.cfg.dss_args.num_classes = num_classes
-            self.cfg.dss_args.num_iters = self.cfg.train_args.iteration
+            self.cfg.dss_args.num_iters = max_iteration
             self.cfg.dss_args.device = self.cfg.train_args.device
             ult_loader = CRAIGDataLoader(ult_seq_loader, lt_seq_loader, self.cfg.dss_args, verbose=True, 
                                                 batch_size=self.cfg.dataloader.ul_batch_size, 
@@ -340,7 +340,7 @@ class TrainClassifier:
             """
             self.cfg.dss_args.device = self.cfg.train_args.device
             self.cfg.dss_args.num_classes = num_classes
-            self.cfg.dss_args.num_iters = self.cfg.train_args.iteration
+            self.cfg.dss_args.num_iters = max_iteration
             self.cfg.dss_args.device = self.cfg.train_args.device
             ult_loader = RandomDataLoader(ult_seq_loader, self.cfg.dss_args, verbose=True,
                                             batch_size=self.cfg.dataloader.ul_batch_size, 
@@ -353,7 +353,7 @@ class TrainClassifier:
             """
             self.cfg.dss_args.device = self.cfg.train_args.device
             self.cfg.dss_args.num_classes = num_classes
-            self.cfg.dss_args.num_iters = self.cfg.train_args.iteration
+            self.cfg.dss_args.num_iters = max_iteration
             self.cfg.dss_args.device = self.cfg.train_args.device
             ult_loader = OLRandomDataLoader(ult_seq_loader, self.cfg.dss_args, verbose=True,
                                             batch_size=self.cfg.dataloader.ul_batch_size, 
