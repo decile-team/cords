@@ -6,7 +6,7 @@ import numpy as np
 
 # Base objects
 class DSSDataLoader:
-    def __init__(self, full_data, dss_args, verbose=False, *args, **kwargs):
+    def __init__(self, full_data, dss_args, logger, *args, **kwargs):
         super(DSSDataLoader, self).__init__()
         # TODO: Integrate verbose in logging
         self.len_full = len(full_data)
@@ -19,7 +19,7 @@ class DSSDataLoader:
 
         self.fraction = dss_args.fraction
         self.budget = int(self.len_full * self.fraction)
-        self.verbose = verbose
+        self.logger = logger
         self.dataset = full_data
         self.loader_args = args
         self.loader_kwargs = kwargs
@@ -39,6 +39,7 @@ class DSSDataLoader:
     def _init_subset_loader(self):
         # All strategies start with random selection
         self.subset_indices = self._init_subset_indices()
+        self.logger.debug("Length of the data subset: %d", len(self.subset_indices))
         self.subset_weights = torch.ones(self.budget)
         self.subset_loader = DataLoader(WeightedSubset(self.dataset, self.subset_indices, self.subset_weights), 
                                         *self.loader_args, **self.loader_kwargs)
@@ -52,5 +53,6 @@ class DSSDataLoader:
     def _refresh_subset_loader(self):
         self.subset_loader = DataLoader(WeightedSubset(self.dataset, self.subset_indices, self.subset_weights), 
                                         *self.loader_args, **self.loader_kwargs)
+        self.logger.debug("Subset Loader Refreshed")
         self.batch_wise_indices = list(self.subset_loader.batch_sampler)
 

@@ -28,9 +28,11 @@ class DataSelectionStrategy(object):
             Consistency loss function for unlabeled data with no reduction
         device: str
             The device being utilized - cpu | cuda
+        logger : class
+            logger file for printing the info
     """
 
-    def __init__(self, trainloader, valloader, model, tea_model, ssl_alg, num_classes, linear_layer, loss, device):
+    def __init__(self, trainloader, valloader, model, tea_model, ssl_alg, num_classes, linear_layer, loss, device, logger):
         """
         Constructor method
         """
@@ -50,11 +52,13 @@ class DataSelectionStrategy(object):
         self.device = device
         self.tea_model = tea_model
         self.ssl_alg = ssl_alg
+        self.logger = logger
 
     def select(self, budget, model_params, tea_model_params):
         pass
 
     def ssl_loss(self, ul_weak_data, ul_strong_data, labels=False):
+        self.logger.debug("SSL loss computation initiated")
         all_data = torch.cat([ul_weak_data, ul_strong_data], 0)
         forward_func = self.model.forward
         stu_logits, l1 = forward_func(all_data, last=True, freeze=True)
@@ -87,6 +91,7 @@ class DataSelectionStrategy(object):
                 stu_forward=forward_func,
                 tea_forward=t_forward_func
             )
+        self.logger.debug("SSL loss computation finished")
         if labels:
             if targets.ndim == 1:
                 return targets
@@ -99,6 +104,7 @@ class DataSelectionStrategy(object):
             return L_consistency, y, l1_strong, targets, mask
 
     def get_labels(self, valid=False):
+        self.logger.debug("Get labels function Initiated")
         for batch_idx, (ul_weak_aug, ul_strong_aug, _) in enumerate(self.trainloader):
             ul_weak_aug, ul_strong_aug = ul_weak_aug.to(self.device), ul_strong_aug.to(self.device)
             targets = self.ssl_loss(ul_weak_data=ul_weak_aug, ul_strong_data=ul_strong_aug, labels=True)
@@ -115,6 +121,7 @@ class DataSelectionStrategy(object):
                 else:
                     self.val_lbls = torch.cat((self.val_lbls, targets.view(-1, 1)), dim=0)
             self.val_lbls = self.val_lbls.view(-1)
+        self.logger.debug("Get labels function finished")
 
     def compute_gradients(self, valid=False, perBatch=False, perClass=False, store_t=False):
         """
@@ -157,6 +164,7 @@ class DataSelectionStrategy(object):
         if (perBatch and perClass):
             raise ValueError("batch and perClass are mutually exclusive. Only one of them can be true at a time")
 
+        self.logger.debug("Per-sampele gradient computation Initiated")
         embDim = self.model.get_embedding_dim()
         if perClass:
             trainloader = self.pctrainloader
@@ -247,6 +255,7 @@ class DataSelectionStrategy(object):
                 self.val_grads_per_elem = torch.cat((l0_grads, l1_grads), dim=1)
             else:
                 self.val_grads_per_elem = l0_grads
+        self.logger.debug("Per-sample gradient computation Finished")
 
         
     def update_model(self, model_params, tea_model_params):

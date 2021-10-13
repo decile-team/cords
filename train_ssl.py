@@ -29,10 +29,10 @@ class TrainClassifier:
         # setup logger
         plain_formatter = logging.Formatter("[%(asctime)s] %(name)s %(levelname)s: %(message)s", datefmt="%m/%d %H:%M:%S")
         self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.DEBUG)
+        self.logger.setLevel(logging.INFO)
         s_handler = logging.StreamHandler(stream=sys.stdout)
         s_handler.setFormatter(plain_formatter)
-        s_handler.setLevel(logging.DEBUG)
+        s_handler.setLevel(logging.INFO)
         self.logger.addHandler(s_handler)
         f_handler = logging.FileHandler(os.path.join(self.cfg.train_args.out_dir, "console.log"))
         f_handler.setFormatter(plain_formatter)
@@ -201,7 +201,7 @@ class TrainClassifier:
     def get_ul_ood_ratio(self, ul_dataset):
         actual_lbls = ul_dataset.dataset.dataset['labels'][ul_dataset.indices]
         bincnt = numpy.bincount(actual_lbls, minlength=10)
-        print("ID points selected", (bincnt[:6].sum()/bincnt.sum()).item())
+        self.logger.info("Ratio of ID points selected: {0:f}".format((bincnt[:6].sum()/bincnt.sum()).item()))
 
 
     """
@@ -210,7 +210,7 @@ class TrainClassifier:
     def get_ul_classimb_ratio(self, ul_dataset):
         actual_lbls = ul_dataset.dataset.dataset['labels'][ul_dataset.indices]
         bincnt = numpy.bincount(actual_lbls, minlength=10)
-        print("ClassImbalance points selected", (bincnt[:5].sum()/bincnt.sum()).item())
+        self.logger.info("Ratio of points selected from under-represented classes: {0:f}".format((bincnt[:5].sum()/bincnt.sum()).item()))
 
 
     """
@@ -295,7 +295,7 @@ class TrainClassifier:
             self.cfg.dss_args.eta = self.cfg.optimizer.lr
             self.cfg.dss_args.device = self.cfg.train_args.device
 
-            ult_loader = GradMatchDataLoader(ult_seq_loader, lt_seq_loader, self.cfg.dss_args, verbose=True, 
+            ult_loader = GradMatchDataLoader(ult_seq_loader, lt_seq_loader, self.cfg.dss_args, logger=logger, 
                                                 batch_size=self.cfg.dataloader.ul_batch_size, 
                                                 pin_memory=self.cfg.dataloader.pin_memory)
 
@@ -313,7 +313,7 @@ class TrainClassifier:
             self.cfg.dss_args.eta = self.cfg.optimizer.lr
             self.cfg.dss_args.device = self.cfg.train_args.device
 
-            ult_loader = RETRIEVEDataLoader(ult_seq_loader, lt_seq_loader, self.cfg.dss_args, verbose=True, 
+            ult_loader = RETRIEVEDataLoader(ult_seq_loader, lt_seq_loader, self.cfg.dss_args, logger=logger, 
                                                 batch_size=self.cfg.dataloader.ul_batch_size, 
                                                 pin_memory=self.cfg.dataloader.pin_memory)
 
@@ -329,7 +329,7 @@ class TrainClassifier:
             self.cfg.dss_args.num_classes = num_classes
             self.cfg.dss_args.num_iters = max_iteration
             self.cfg.dss_args.device = self.cfg.train_args.device
-            ult_loader = CRAIGDataLoader(ult_seq_loader, lt_seq_loader, self.cfg.dss_args, verbose=True, 
+            ult_loader = CRAIGDataLoader(ult_seq_loader, lt_seq_loader, self.cfg.dss_args, logger=logger, 
                                                 batch_size=self.cfg.dataloader.ul_batch_size, 
                                                 pin_memory=self.cfg.dataloader.pin_memory)
 
@@ -342,7 +342,7 @@ class TrainClassifier:
             self.cfg.dss_args.num_classes = num_classes
             self.cfg.dss_args.num_iters = max_iteration
             self.cfg.dss_args.device = self.cfg.train_args.device
-            ult_loader = RandomDataLoader(ult_seq_loader, self.cfg.dss_args, verbose=True,
+            ult_loader = RandomDataLoader(ult_seq_loader, self.cfg.dss_args, logger=logger,
                                             batch_size=self.cfg.dataloader.ul_batch_size, 
                                             pin_memory=self.cfg.dataloader.pin_memory)
             
@@ -355,12 +355,14 @@ class TrainClassifier:
             self.cfg.dss_args.num_classes = num_classes
             self.cfg.dss_args.num_iters = max_iteration
             self.cfg.dss_args.device = self.cfg.train_args.device
-            ult_loader = OLRandomDataLoader(ult_seq_loader, self.cfg.dss_args, verbose=True,
+            ult_loader = OLRandomDataLoader(ult_seq_loader, self.cfg.dss_args, logger=logger,
                                             batch_size=self.cfg.dataloader.ul_batch_size, 
                                             pin_memory=self.cfg.dataloader.pin_memory)
         
         elif self.cfg.dss_args.type == 'Full':
+            """
             ############################## Full Dataloader Additional Arguments ##############################
+            """
             wt_trainset = WeightedSubset(ult_data, list(range(len(ult_data))), [1]*len(ult_data))
 
             ult_loader = torch.utils.data.DataLoader(wt_trainset,
@@ -414,6 +416,8 @@ class TrainClassifier:
                 sampler=dataset_utils.InfiniteSampler(len(lt_data), len(list(ult_loader.batch_sampler)) * self.cfg.dataloader.l_batch_size),
                 num_workers=self.cfg.dataloader.num_workers
             )
+
+            logger.debug("Data loader iteration count is: {0:d}".format(len(list(ult_loader.batch_sampler))))
             for batch_idx, (l_data, ul_data) in enumerate(zip(lt_loader, ult_loader)):
                 batch_start_time = time.time()
                 if iter_count > max_iteration:
@@ -459,8 +463,8 @@ class TrainClassifier:
             
         numpy.save(os.path.join(self.cfg.train_args.out_dir, "results"), test_acc_list)
         numpy.save(os.path.join(self.cfg.train_args.out_dir, "raw_results"), raw_acc_list)
-        print("Total Time taken: ", training_time + subset_selection_time)
-        print("Subset Selection Time: ", subset_selection_time)
+        logger.info("Total Time taken: %f", training_time + subset_selection_time)
+        logger.info("Subset Selection Time: %f", subset_selection_time)
         accuracies = {}
         for i in [1, 10, 20, 50]:
             logger.info("mean test acc. over last %d checkpoints: %f", i, numpy.median(test_acc_list[-i:]))

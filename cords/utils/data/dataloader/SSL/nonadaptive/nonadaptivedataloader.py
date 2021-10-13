@@ -5,10 +5,10 @@ from cords.utils.data._utils import WeightedSubset
 
 
 class NonAdaptiveDSSDataLoader(DSSDataLoader):
-    def __init__(self, train_loader, val_loader, dss_args, verbose=False, *args,
-                 **kwargs):
+    def __init__(self, train_loader, val_loader, dss_args, 
+                logger, *args, **kwargs):
         super(NonAdaptiveDSSDataLoader, self).__init__(train_loader.dataset, dss_args,
-                                                       verbose=verbose, *args, **kwargs)
+                                                       logger, *args, **kwargs)
 
         assert "device" in dss_args.keys(), "'device' is a compulsory argument. Include it as a key in dss_args"
         assert "num_iters" in dss_args.keys(), "'num_iters' is a compulsory argument. Include it as a key in dss_args"

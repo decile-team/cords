@@ -49,6 +49,8 @@ class GradMatchStrategy(DataSelectionStrategy):
         - 'PerClass': PerClass method is where OMP algorithm is applied on each class data points seperately.
         - 'PerBatch': PerBatch method is where OMP algorithm is applied on each minibatch data points.
         - 'PerClassPerGradient': PerClassPerGradient method is same as PerClass but we use the gradient corresponding to classification layer of that class only.
+    logger : class
+        logger file for printing the info
     valid : bool, optional
         If valid==True we use validation dataset gradient sum in OMP otherwise we use training dataset (default: False)
     v1 : bool
@@ -60,13 +62,13 @@ class GradMatchStrategy(DataSelectionStrategy):
     """
 
     def __init__(self, trainloader, valloader, model, tea_model, ssl_alg, loss,
-                 eta, device, num_classes, linear_layer, selection_type, valid=False,
-                 v1=True, lam=0, eps=1e-4):
+                 eta, device, num_classes, linear_layer, selection_type, logger, 
+                 valid=False, v1=True, lam=0, eps=1e-4):
         """
         Constructor method
         """
 
-        super().__init__(trainloader, valloader, model, tea_model, ssl_alg, num_classes, linear_layer, loss, device)
+        super().__init__(trainloader, valloader, model, tea_model, ssl_alg, num_classes, linear_layer, loss, device, logger)
         self.eta = eta  # step size for the one step gradient update
         self.device = device
         self.selection_type = selection_type
@@ -210,5 +212,5 @@ class GradMatchStrategy(DataSelectionStrategy):
             idxs = list(np.array(idxs)[rand_indices])
             gammas = list(np.array(gammas)[rand_indices])
 
-        print("OMP algorithm Subset Selection time is: ", omp_end_time - omp_start_time)
+        self.logger.debug("OMP algorithm Subset Selection time is: %f", omp_end_time - omp_start_time)
         return idxs, gammas

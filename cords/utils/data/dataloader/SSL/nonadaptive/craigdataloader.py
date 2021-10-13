@@ -1,5 +1,5 @@
 from .nonadaptivedataloader import NonAdaptiveDSSDataLoader
-from cords.selectionstrategies.SL import CRAIGStrategy
+from cords.selectionstrategies.SSL import CRAIGStrategy
 from torch.utils.data import DataLoader
 from cords.utils.data._utils import WeightedSubset
 import time, copy
@@ -8,7 +8,7 @@ import time, copy
 # CRAIG
 class CRAIGDataLoader(NonAdaptiveDSSDataLoader):
 
-    def __init__(self, train_loader, val_loader, dss_args, verbose=True, *args, **kwargs):
+    def __init__(self, train_loader, val_loader, dss_args, logger, *args, **kwargs):
         """
          Arguments assertion check
         """
@@ -24,11 +24,11 @@ class CRAIGDataLoader(NonAdaptiveDSSDataLoader):
         assert "optimizer" in dss_args.keys(), "'optimizer' is a compulsory argument for CRAIG. Include it as a key in dss_args"
         
         super(CRAIGDataLoader, self).__init__(train_loader, val_loader, dss_args,
-                                                verbose=verbose, *args, **kwargs)
+                                             logger, *args, **kwargs)
         
         self.strategy = CRAIGStrategy(train_loader, val_loader, copy.deepcopy(dss_args.model), copy.deepcopy(dss_args.tea_model), 
                                      dss_args.ssl_alg, dss_args.loss, dss_args.device, dss_args.num_classes, dss_args.linear_layer,  
-                                     False, dss_args.selection_type, dss_args.optimizer)
+                                     False, dss_args.selection_type, logger, dss_args.optimizer)
         self.train_model = dss_args.model
         self.eta = dss_args.eta
         self.num_cls = dss_args.num_classes
@@ -47,9 +47,8 @@ class CRAIGDataLoader(NonAdaptiveDSSDataLoader):
         self.curr_loader = self.subset_loader
 
     def _init_subset_indices(self):
-        if self.verbose:
-            start = time.time()
-            print('Iteration: {0:d}, requires subset selection. '.format(self.cur_iter))
+        start = time.time()
+        self.logger.debug('Iteration: {0:d}, requires subset selection. '.format(self.cur_iter))
         cached_state_dict = copy.deepcopy(self.train_model.state_dict())
         clone_dict = copy.deepcopy(self.train_model.state_dict())
         if self.teacher_model is not None:
@@ -61,7 +60,6 @@ class CRAIGDataLoader(NonAdaptiveDSSDataLoader):
         self.train_model.load_state_dict(cached_state_dict)
         if self.teacher_model is not None:
             self.teacher_model.load_state_dict(tea_cached_state_dict)
-        if self.verbose:
-            end = time.time()
-            print('Iteration: {0:d}, subset selection finished, takes {1:.2f}. '.format(self.cur_iter, (end - start)))
+        end = time.time()
+        self.logger.info('Iteration: {0:d}, subset selection finished, takes {1:.2f}. '.format(self.cur_iter, (end - start)))
         return subset_indices, subset_weights

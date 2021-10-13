@@ -22,8 +22,8 @@ from train_sl import TrainClassifier
 class HyperParamTuning:
     def __init__(self, config_file):
         self.cfg = load_config_data(config_file)
-        self.train_class.cfg['train_args']['print_every'] = 1
         self.train_class = TrainClassifier(self.cfg['subset_config'])
+        self.train_class.cfg['train_args']['print_every'] = 1
         self.search_algo = self.get_search_algo(self.cfg['search_algo'], self.cfg['space'], self.cfg['metric'], self.cfg['mode'])
         self.scheduler = self.get_scheduler(self.cfg['scheduler'], self.cfg['metric'], self.cfg['mode'])
         # save subset method, to be used in log dir name

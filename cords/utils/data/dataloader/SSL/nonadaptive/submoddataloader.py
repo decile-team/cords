@@ -7,16 +7,15 @@ from .nonadaptivedataloader import NonAdaptiveDSSDataLoader
 class SubmodDataLoader(NonAdaptiveDSSDataLoader):
     # Currently split dataset with size of |max_chunk| then proportionably select samples in every chunk
     # Otherwise distance matrix will be too large
-    def __init__(self, train_loader, val_loader, dss_args, verbose=False, *args,
+    def __init__(self, train_loader, val_loader, dss_args, logger, *args,
                  **kwargs):
         
-        super(SubmodDataLoader, self).__init__(train_loader, val_loader, dss_args, verbose=verbose,
-                                               *args,
-                                               **kwargs)
+        super(SubmodDataLoader, self).__init__(train_loader, val_loader, dss_args, 
+                                               logger, *args, **kwargs)
 
         assert "size_chunk" in dss_args.keys(), "'size_chunk' is a compulsory agument for submodular dataloader"
         if dss_args.size_chunk:
-            print("You are using max_chunk: %s" % dss_args.size_chunk)
+            self.logger.info("You are using max_chunk: %s" % dss_args.size_chunk)
         self.size_chunk = dss_args.size_chunk
         
     def _init_subset_indices(self):

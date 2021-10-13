@@ -78,6 +78,8 @@ class RETRIEVEStrategy(DataSelectionStrategy):
         - 'RGreedy' : RGreedy Selection method is a variant of naive greedy where we just perform r rounds of greedy selection by choosing k/r points in each round.
         - 'Stochastic' : Stochastic greedy selection method is based on the algorithm presented in this paper :footcite:`mirzasoleiman2014lazier`
         - 'Naive' : Normal naive greedy selection method that selects a single best element every step until the budget is fulfilled
+    logger: class
+        Logger class for logging the information
     r : int, optional
         Number of greedy selection rounds when selection method is RGreedy (default: 15)
     valid: bool
@@ -86,11 +88,12 @@ class RETRIEVEStrategy(DataSelectionStrategy):
     """
 
     def __init__(self, trainloader, valloader, model, tea_model, ssl_alg, loss,
-                 eta, device, num_classes, linear_layer, selection_type, greedy, r=15, valid=True):
+                 eta, device, num_classes, linear_layer, selection_type, greedy, 
+                 logger, r=15, valid=True):
         """
         Constructor method
         """
-        super().__init__(trainloader, valloader, model, tea_model, ssl_alg, num_classes, linear_layer, loss, device)
+        super().__init__(trainloader, valloader, model, tea_model, ssl_alg, num_classes, linear_layer, loss, device, logger)
         self.eta = eta  # step size for the one step gradient update
         self.init_out = list()
         self.init_l1 = list()
@@ -356,7 +359,7 @@ class RETRIEVEStrategy(DataSelectionStrategy):
                 # Update the grads_val_current using current greedySet grads
                 self._update_grads_val(grads_curr)
                 numSelected += selection_size
-            print("R greedy RETRIEVE total time:", time.time() - t_ng_start)
+            self.logger.debug("RETRIEVE's R-greedy selection time: %f", time.time() - t_ng_start)
 
         # Stochastic Greedy Selection Algorithm
         elif self.greedy == 'Stochastic':
@@ -372,14 +375,14 @@ class RETRIEVEStrategy(DataSelectionStrategy):
                 greedySet.append(bestId[0])
                 remainSet.remove(bestId[0])
                 numSelected += 1
-                # Update info in grads_currX using element=bestId
+                # Update debug in grads_currX using element=bestId
                 if numSelected > 1:
                     self._update_gradients_subset(grads_curr, bestId)
                 else:  # If 1st selection, then just set it to bestId grads
                     grads_curr = self.grads_per_elem[bestId].view(1, -1)  # Making it a list so that is mutable!
                 # Update the grads_val_current using current greedySet grads
                 self._update_grads_val(grads_curr)
-            print("Stochastic Greedy RETRIEVE total time:", time.time() - t_ng_start)
+            self.logger.debug("RETRIEVE's Stochastic Greedy selection time: %f", time.time() - t_ng_start)
 
         elif self.greedy == 'Naive':
             while (numSelected < budget):
@@ -393,14 +396,14 @@ class RETRIEVEStrategy(DataSelectionStrategy):
                 greedySet.append(bestId[0])
                 remainSet.remove(bestId[0])
                 numSelected += 1
-                # Update info in grads_currX using element=bestId
+                # Update debug in grads_currX using element=bestId
                 if numSelected == 1:
                     grads_curr = self.grads_per_elem[bestId[0]].view(1, -1)
                 else:  # If 1st selection, then just set it to bestId grads
                     self._update_gradients_subset(grads_curr, bestId)
                 # Update the grads_val_current using current greedySet grads
                 self._update_grads_val(grads_curr)
-            print("Naive Greedy RETRIEVE total time:", time.time() - t_ng_start)
+            self.logger.debug("RETRIEVE's Naive Greedy selection time: %f", time.time() - t_ng_start)
         return list(greedySet), [1] * budget
 
     def select(self, budget, model_params, tea_model_params):
@@ -470,6 +473,6 @@ class RETRIEVEStrategy(DataSelectionStrategy):
             self._update_grads_val(first_init=True)
             idxs, gammas = self.greedy_algo(budget)
         glister_end_time = time.time()
-        print("RETRIEVE algorithm Subset Selection time is: ", glister_end_time - glister_start_time)
+        self.logger.debug("RETRIEVE algorithm Subset Selection time is: %f", glister_end_time - glister_start_time)
         return idxs, torch.FloatTensor(gammas)
 

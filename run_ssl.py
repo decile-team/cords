@@ -1,5 +1,5 @@
 from train_ssl import TrainClassifier
-config_file = "configs/SSL/config_retrieve-warm_vat_cifar10.py"
+config_file = "configs/SSL/config_retrievepb_vat_cifar10.py"
 classifier = TrainClassifier(config_file)
 classifier.cfg.dss_args.fraction = 0.1
 classifier.cfg.dss_args.select_every = 20

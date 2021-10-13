@@ -1,10 +1,8 @@
-import apricot
 import numpy as np
-import torch
+import torch, time, apricot, math
 from scipy.sparse import csr_matrix
 from .dataselectionstrategy import DataSelectionStrategy
 from torch.utils.data.sampler import SubsetRandomSampler
-import math
 
 
 class CRAIGStrategy(DataSelectionStrategy):
@@ -58,16 +56,19 @@ class CRAIGStrategy(DataSelectionStrategy):
          - 'PerClass': PerClass Implementation where the facility location problem is solved for each class seperately for speed ups.
          - 'Supervised': Supervised Implementation where the facility location problem is solved using a sparse similarity matrix by assigning the similarity of a point with other points of different class to zero.
          - 'PerBatch': PerBatch Implementation where the facility location problem tries to select subset of mini-batches.
+    logger: class
+        Logger class for logging the information
     optimizer: str
         Type of Greedy Algorithm
     """
 
     def __init__(self, trainloader, valloader, model, tea_model, ssl_alg, loss,
-                 device, num_classes, linear_layer, if_convex, selection_type, optimizer='lazy'):
+                 device, num_classes, linear_layer, if_convex, selection_type, 
+                 logger, optimizer='lazy'):
         """
-        Constructer method
+        Constructor method
         """
-        super().__init__(trainloader, valloader, model, tea_model, ssl_alg, num_classes, linear_layer, loss, device)
+        super().__init__(trainloader, valloader, model, tea_model, ssl_alg, num_classes, linear_layer, loss, device, logger)
         self.if_convex = if_convex
         self.selection_type = selection_type
         self.optimizer = optimizer
@@ -252,6 +253,7 @@ class CRAIGStrategy(DataSelectionStrategy):
         # per_class_bud = int(budget / self.num_classes)
         total_greedy_list = []
         gammas = []
+        start_time = time.time()
         if self.selection_type == 'PerClass':
             self.get_labels(valid=False)
             for i in range(self.num_classes):
@@ -308,4 +310,6 @@ class CRAIGStrategy(DataSelectionStrategy):
                 tmp = batch_wise_indices[temp_list[i]]
                 total_greedy_list.extend(tmp)
                 gammas.extend(list(gammas_temp[i] * np.ones(len(tmp))))
+        end_time = time.time()
+        self.logger.debug("CRAIG subset selection time is: %f", end_time-start_time)
         return total_greedy_list, gammas
