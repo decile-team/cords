@@ -68,7 +68,8 @@ class TrainClassifier:
         if self.cfg.optimizer.type == 'sgd':
             optimizer = optim.SGD(model.parameters(), lr=self.cfg.optimizer.lr,
                                   momentum=self.cfg.optimizer.momentum,
-                                  weight_decay=self.cfg.optimizer.weight_decay)
+                                  weight_decay=self.cfg.optimizer.weight_decay,
+                                  nesterov=self.cfg.optimizer.nesterov)
         elif self.cfg.optimizer.type == "adam":
             optimizer = optim.Adam(model.parameters(), lr=self.cfg.optimizer.lr)
         elif self.cfg.optimizer.type == "rmsprop":

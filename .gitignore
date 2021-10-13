@@ -8,3 +8,4 @@ __pycache__
 .gitignore
 /data/
 /log/
+/RayLogs/

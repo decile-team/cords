@@ -29,7 +29,7 @@ mode = "max",
 scheduler = None,
 
 # where to store logs
-log_dir = "/content/drive/MyDrive/RayLogs/",
+log_dir = "RayLogs/",
 
 # resume hyper-parameter tuning from previous log
 # specify 'name' (i.e main_2021-03-09_18-33-56) below

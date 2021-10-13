@@ -27,21 +27,21 @@ class HyperParamTuning:
         self.search_algo = self.get_search_algo(self.cfg['search_algo'], self.cfg['space'], self.cfg['metric'], self.cfg['mode'])
         self.scheduler = self.get_scheduler(self.cfg['scheduler'], self.cfg['metric'], self.cfg['mode'])
         # save subset method, to be used in log dir name
-        self.subset_method = self.train_class.configdata['dss_strategy']['type']
+        self.subset_method = self.train_class.cfg['dss_args']['type']
 
     def param_tune(self, config):
         #update parameters in config dict
-        new_config = self.update_parameters(self.train_class.configdata, config)
-        self.train_class.configdata = new_config
+        new_config = self.update_parameters(self.train_class.cfg, config)
+        self.train_class.cfg = new_config
         # turn on reporting to ray every time
-        self.train_class.configdata['report_tune'] = True
+        self.train_class.cfg['report_tune'] = True
         self.train_class.train()
 
     def start_eval(self):
         analysis = tune.run(
             self.param_tune,
             num_samples=self.cfg['num_evals'],
-            config=self.cfg['space'],
+            # config=self.cfg['space'],
             search_alg=self.search_algo,
             scheduler=self.scheduler,
             resources_per_trial={'gpu':1},
@@ -112,12 +112,12 @@ class HyperParamTuning:
     def final_train(self, best_params):
         # change strategy to Full (i.e use whole dataset)
         # update (optimized) parameters
-        new_config = self.update_parameters(self.train_class.configdata, best_params)
-        self.train_class.configdata = new_config
-        # self.train_class.configdata['dss_strategy']['type'] = 'Full'
-        self.train_class.configdata['dss_strategy']['type'] = 'GradMatchPB'
-        self.train_class.configdata['dss_strategy']['fraction'] = 0.3
-        self.train_class.configdata['dss_strategy']['lam'] = 0
+        new_config = self.update_parameters(self.train_class.cfg, best_params)
+        self.train_class.cfg = new_config
+        # self.train_class.cfg['dss_args']['type'] = 'Full'
+        self.train_class.cfg['dss_args']['type'] = 'GradMatchPB'
+        self.train_class.cfg['dss_args']['fraction'] = 0.3
+        self.train_class.cfg['dss_args']['lam'] = 0
         self.train_class.train()
     
     def update_parameters(self, config, new_config):
