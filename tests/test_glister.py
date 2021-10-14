@@ -1,6 +1,4 @@
 # Sanity checks for glister
-
-
 def test_grads_val():
     print("grads_val")
     assert True

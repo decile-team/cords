@@ -1,8 +1,11 @@
 notebooks/results
-data
 .idea
 cords.egg-info
 build
 dist
 __pycache__
 /results/
+.gitignore
+/data/
+/log/
+/RayLogs/
