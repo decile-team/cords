@@ -12,11 +12,7 @@ class LogisticRegNet(nn.Module):
 
 
     def forward(self, x, last=False, freeze=False):
-        if freeze:
-            with torch.no_grad():
-                scores = self.linear(x)
-        else:
-            scores = self.linear(x)
+        scores = self.linear(x)
         if last:
             return scores, x
         else:
