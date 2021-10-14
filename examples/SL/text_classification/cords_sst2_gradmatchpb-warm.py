@@ -1,13 +1,8 @@
 from cords.utils.data.datasets.SL.builder import SSTDataset, loadGloveModel
 import torch
-import torch.autograd as autograd
 import torch.nn as nn
 import torch.optim
-import torch.utils.data as data
-import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
-# from cords.utils.models.TextCNN import TextCNN
-# from RCNN import RCNN
 from cords.utils.models import LSTMClassifier
 import argparse
 import time
@@ -114,6 +109,7 @@ def main():
     del wordvec  # Save some memory
 
     criterion = nn.CrossEntropyLoss()
+    criterion_nored = nn.CrossEntropyLoss(reduction='none')
     # optimizer = optim.SGD(model.parameters(), lr=config.lr)
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)  # Adam优化器
 
