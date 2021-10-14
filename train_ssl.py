@@ -1,11 +1,12 @@
 import logging
 import numpy, random, time, json, copy
 import numpy as np
+import os.path as osp
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader, Subset
-from cords.utils.data._utils import WeightedSubset
+from cords.utils.data.data_utils import WeightedSubset
 from cords.utils.models import WideResNet, ShakeNet, CNN13, CNN
 from cords.utils.data.datasets.SSL import utils as dataset_utils
 from cords.selectionstrategies.helpers.ssl_lib.algs.builder import gen_ssl_alg
@@ -25,16 +26,24 @@ class TrainClassifier:
     def __init__(self, config_file):
         self.config_file = config_file
         self.cfg = load_config_data(self.config_file)
-        os.makedirs(self.cfg.train_args.out_dir, exist_ok=True)
+        results_dir = osp.abspath(osp.expanduser(self.cfg.train_args.results_dir))
+        all_logs_dir = os.path.join(results_dir, self.cfg.setting,
+                                    self.cfg.dss_args.type,
+                                    self.cfg.dataset.name,
+                                    str(self.cfg.dss_args.fraction),
+                                    str(self.cfg.dss_args.select_every))
+
+        os.makedirs(all_logs_dir, exist_ok=True)
         # setup logger
-        plain_formatter = logging.Formatter("[%(asctime)s] %(name)s %(levelname)s: %(message)s", datefmt="%m/%d %H:%M:%S")
+        plain_formatter = logging.Formatter("[%(asctime)s] %(name)s %(levelname)s: %(message)s",
+                                            datefmt="%m/%d %H:%M:%S")
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
         s_handler = logging.StreamHandler(stream=sys.stdout)
         s_handler.setFormatter(plain_formatter)
         s_handler.setLevel(logging.INFO)
         self.logger.addHandler(s_handler)
-        f_handler = logging.FileHandler(os.path.join(self.cfg.train_args.out_dir, "console.log"))
+        f_handler = logging.FileHandler(os.path.join(all_logs_dir, self.cfg.dataset.name + ".log"))
         f_handler.setFormatter(plain_formatter)
         f_handler.setLevel(logging.DEBUG)
         self.logger.addHandler(f_handler)

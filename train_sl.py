@@ -1,28 +1,54 @@
-import time
-import numpy as np
+import logging
 import os
+import os.path as osp
+import sys
+import time
 import torch
+import numpy as np
 import torch.nn as nn
 import torch.optim as optim
-from cords.utils.models import *
-from cords.utils.data.datasets.SL import gen_dataset
+from ray import tune
 from torch.utils.data import Subset
 from cords.utils.config_utils import load_config_data
-import os.path as osp
-from cords.utils.data._utils import WeightedSubset
+from cords.utils.data.data_utils import WeightedSubset
 from cords.utils.data.dataloader.SL.adaptive import GLISTERDataLoader, OLRandomDataLoader, \
     CRAIGDataLoader, GradMatchDataLoader, RandomDataLoader
-from ray import tune
+from cords.utils.data.datasets.SL import gen_dataset
+from cords.utils.models import *
 
 
 class TrainClassifier:
     def __init__(self, config_file):
         self.config_file = config_file
         self.cfg = load_config_data(self.config_file)
+        results_dir = osp.abspath(osp.expanduser(self.cfg.train_args.results_dir))
+        all_logs_dir = os.path.join(results_dir, self.cfg.setting,
+                                    self.cfg.dss_args.type,
+                                    self.cfg.dataset.name,
+                                    str(self.cfg.dss_args.fraction),
+                                    str(self.cfg.dss_args.select_every))
+
+        os.makedirs(all_logs_dir, exist_ok=True)
+        # setup logger
+        plain_formatter = logging.Formatter("[%(asctime)s] %(name)s %(levelname)s: %(message)s",
+                                            datefmt="%m/%d %H:%M:%S")
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.INFO)
+        s_handler = logging.StreamHandler(stream=sys.stdout)
+        s_handler.setFormatter(plain_formatter)
+        s_handler.setLevel(logging.INFO)
+        self.logger.addHandler(s_handler)
+        f_handler = logging.FileHandler(os.path.join(all_logs_dir, self.cfg.dataset.name + ".log"))
+        f_handler.setFormatter(plain_formatter)
+        f_handler.setLevel(logging.DEBUG)
+        self.logger.addHandler(f_handler)
+        self.logger.propagate = False
+        self.logger.info(self.cfg)
 
     """
     ############################## Loss Evaluation ##############################
     """
+
     def model_eval_loss(self, data_loader, model, criterion):
         total_loss = 0
         with torch.no_grad():
@@ -37,6 +63,7 @@ class TrainClassifier:
     """
     ############################## Model Creation ##############################
     """
+
     def create_model(self):
         if self.cfg.model.architecture == 'ResNet18':
             model = ResNet18(self.cfg.model.numclasses)
@@ -58,6 +85,7 @@ class TrainClassifier:
     """
     ############################## Loss Type, Optimizer and Learning Rate Scheduler ##############################
     """
+
     def loss_function(self):
         if self.cfg.loss.type == "CrossEntropyLoss":
             criterion = nn.CrossEntropyLoss()
@@ -80,7 +108,8 @@ class TrainClassifier:
                                                                    T_max=self.cfg.scheduler.T_max)
         return optimizer, scheduler
 
-    def generate_cumulative_timing(self, mod_timing):
+    @staticmethod
+    def generate_cumulative_timing(mod_timing):
         tmp = 0
         mod_cum_timing = np.zeros(len(mod_timing))
         for i in range(len(mod_timing)):
@@ -88,10 +117,12 @@ class TrainClassifier:
             mod_cum_timing[i] = tmp
         return mod_cum_timing / 3600
 
-    def save_ckpt(self, state, ckpt_path):
+    @staticmethod
+    def save_ckpt(state, ckpt_path):
         torch.save(state, ckpt_path)
 
-    def load_ckp(self, ckpt_path, model, optimizer):
+    @staticmethod
+    def load_ckpt(ckpt_path, model, optimizer):
         checkpoint = torch.load(ckpt_path)
         start_epoch = checkpoint['epoch']
         model.load_state_dict(checkpoint['state_dict'])
@@ -105,6 +136,7 @@ class TrainClassifier:
         ############################## General Training Loop with Data Selection Strategies ##############################
         """
         # Loading the Dataset
+        logger = self.logger
         if self.cfg.dataset.feature == 'classimb':
             trainset, validset, testset, num_cls = gen_dataset(self.cfg.dataset.datadir,
                                                                self.cfg.dataset.name,
@@ -140,22 +172,11 @@ class TrainClassifier:
         tst_acc = list()  # np.zeros(configdata['train_args']['num_epochs'])
         subtrn_acc = list()  # np.zeros(configdata['train_args']['num_epochs'])
 
-        # Results logging file
-        print_every = self.cfg.train_args.print_every
-        results_dir = osp.abspath(osp.expanduser(self.cfg.train_args.results_dir))
-        all_logs_dir = os.path.join(results_dir, self.cfg.dss_args.type,
-                                    self.cfg.dataset.name, 
-                                    str(self.cfg.dss_args.fraction), 
-                                    str(self.cfg.dss_args.select_every))
-
-        os.makedirs(all_logs_dir, exist_ok=True)
-        path_logfile = os.path.join(all_logs_dir, self.cfg.dataset.name + '.txt')
-        logfile = open(path_logfile, 'w')
-
+        # Checkpoint file
         checkpoint_dir = osp.abspath(osp.expanduser(self.cfg.ckpt.dir))
         ckpt_dir = os.path.join(checkpoint_dir, self.cfg.dss_args.type,
-                                self.cfg.dataset.name, 
-                                str(self.cfg.dss_args.fraction), 
+                                self.cfg.dataset.name,
+                                str(self.cfg.dss_args.fraction),
                                 str(self.cfg.dss_args.select_every))
         checkpoint_path = os.path.join(ckpt_dir, 'model.pt')
         os.makedirs(ckpt_dir, exist_ok=True)
@@ -181,16 +202,15 @@ class TrainClassifier:
             self.cfg.dss_args.model = model
             self.cfg.dss_args.loss = criterion_nored
             self.cfg.dss_args.eta = self.cfg.optimizer.lr
-            self.cfg.dss_args.num_classes = self.cfg.model.numclasses 
+            self.cfg.dss_args.num_classes = self.cfg.model.numclasses
             self.cfg.dss_args.num_epochs = self.cfg.train_args.num_epochs
             self.cfg.dss_args.device = self.cfg.train_args.device
 
-            dataloader = GradMatchDataLoader(trainloader, valloader, self.cfg.dss_args, verbose=True, 
-                                             batch_size=self.cfg.dataloader.batch_size, 
+            dataloader = GradMatchDataLoader(trainloader, valloader, self.cfg.dss_args, verbose=True,
+                                             batch_size=self.cfg.dataloader.batch_size,
                                              shuffle=self.cfg.dataloader.shuffle,
                                              pin_memory=self.cfg.dataloader.pin_memory)
 
-        
         elif self.cfg.dss_args.type in ['GLISTER', 'GLISTER-Warm', 'GLISTERPB', 'GLISTERPB-Warm']:
             """
             ############################## GLISTER Dataloader Additional Arguments ##############################
@@ -198,32 +218,30 @@ class TrainClassifier:
             self.cfg.dss_args.model = model
             self.cfg.dss_args.loss = criterion_nored
             self.cfg.dss_args.eta = self.cfg.optimizer.lr
-            self.cfg.dss_args.num_classes = self.cfg.model.numclasses 
+            self.cfg.dss_args.num_classes = self.cfg.model.numclasses
             self.cfg.dss_args.num_epochs = self.cfg.train_args.num_epochs
             self.cfg.dss_args.device = self.cfg.train_args.device
 
-            dataloader = GLISTERDataLoader(trainloader, valloader, self.cfg.dss_args, verbose=True, 
-                                             batch_size=self.cfg.dataloader.batch_size, 
-                                             shuffle=self.cfg.dataloader.shuffle,
-                                             pin_memory=self.cfg.dataloader.pin_memory)
+            dataloader = GLISTERDataLoader(trainloader, valloader, self.cfg.dss_args, verbose=True,
+                                           batch_size=self.cfg.dataloader.batch_size,
+                                           shuffle=self.cfg.dataloader.shuffle,
+                                           pin_memory=self.cfg.dataloader.pin_memory)
 
-        
         elif self.cfg.dss_args.type in ['CRAIG', 'CRAIG-Warm', 'CRAIGPB', 'CRAIGPB-Warm']:
             """
             ############################## CRAIG Dataloader Additional Arguments ##############################
             """
             self.cfg.dss_args.model = model
             self.cfg.dss_args.loss = criterion_nored
-            self.cfg.dss_args.num_classes = self.cfg.model.numclasses 
+            self.cfg.dss_args.num_classes = self.cfg.model.numclasses
             self.cfg.dss_args.num_epochs = self.cfg.train_args.num_epochs
             self.cfg.dss_args.device = self.cfg.train_args.device
 
-            dataloader = CRAIGDataLoader(trainloader, valloader, self.cfg.dss_args, verbose=True, 
-                                             batch_size=self.cfg.dataloader.batch_size,
-                                             shuffle=self.cfg.dataloader.shuffle,
-                                             pin_memory=self.cfg.dataloader.pin_memory)
+            dataloader = CRAIGDataLoader(trainloader, valloader, self.cfg.dss_args, verbose=True,
+                                         batch_size=self.cfg.dataloader.batch_size,
+                                         shuffle=self.cfg.dataloader.shuffle,
+                                         pin_memory=self.cfg.dataloader.pin_memory)
 
-    
         elif self.cfg.dss_args.type in ['Random', 'Random-Warm']:
             """
             ############################## Random Dataloader Additional Arguments ##############################
@@ -232,10 +250,9 @@ class TrainClassifier:
             self.cfg.dss_args.num_epochs = self.cfg.train_args.num_epochs
 
             dataloader = RandomDataLoader(trainloader, self.cfg.dss_args, verbose=True,
-                                         batch_size=self.cfg.dataloader.batch_size,
-                                         shuffle=self.cfg.dataloader.shuffle,
-                                         pin_memory=self.cfg.dataloader.pin_memory)
-           
+                                          batch_size=self.cfg.dataloader.batch_size,
+                                          shuffle=self.cfg.dataloader.shuffle,
+                                          pin_memory=self.cfg.dataloader.pin_memory)
 
         elif self.cfg.dss_args.type == ['OLRandom', 'OLRandom-Warm']:
             """
@@ -245,28 +262,30 @@ class TrainClassifier:
             self.cfg.dss_args.num_epochs = self.cfg.train_args.num_epochs
 
             dataloader = OLRandomDataLoader(trainloader, self.cfg.dss_args, verbose=True,
-                                         batch_size=self.cfg.dataloader.batch_size,
-                                         shuffle=self.cfg.dataloader.shuffle,
-                                         pin_memory=self.cfg.dataloader.pin_memory)
-        
+                                            batch_size=self.cfg.dataloader.batch_size,
+                                            shuffle=self.cfg.dataloader.shuffle,
+                                            pin_memory=self.cfg.dataloader.pin_memory)
+
         elif self.cfg.dss_args.type == 'Full':
+            """
             ############################## Full Dataloader Additional Arguments ##############################
-            wt_trainset = WeightedSubset(trainset, list(range(len(trainset))), [1]*len(trainset))
+            """
+            wt_trainset = WeightedSubset(trainset, list(range(len(trainset))), [1] * len(trainset))
 
             dataloader = torch.utils.data.DataLoader(wt_trainset,
-                                         batch_size=self.cfg.dataloader.batch_size,
-                                         shuffle=self.cfg.dataloader.shuffle,
-                                         pin_memory=self.cfg.dataloader.pin_memory)
+                                                     batch_size=self.cfg.dataloader.batch_size,
+                                                     shuffle=self.cfg.dataloader.shuffle,
+                                                     pin_memory=self.cfg.dataloader.pin_memory)
 
-        print("=======================================", file=logfile)
+        logger.info("=======================================")
 
         """
         ################################################# Checkpoint Loading #################################################
         """
 
-        if self.cfg.ckpt.is_load == True:
-            start_epoch, model, optimizer, ckpt_loss, load_metrics = self.load_ckp(checkpoint_path, model, optimizer)
-            print("Loading saved checkpoint model at epoch " + str(start_epoch))
+        if self.cfg.ckpt.is_load:
+            start_epoch, model, optimizer, ckpt_loss, load_metrics = self.load_ckpt(checkpoint_path, model, optimizer)
+            logger.info("Loading saved checkpoint model at epoch: %s".format(str(start_epoch)))
             for arg in load_metrics.keys():
                 if arg == "val_loss":
                     val_losses = load_metrics['val_loss']
@@ -302,11 +321,11 @@ class TrainClassifier:
             for _, (inputs, targets, weights) in enumerate(dataloader):
                 inputs = inputs.to(self.cfg.train_args.device)
                 targets = targets.to(self.cfg.train_args.device, non_blocking=True)
-                weights = weights.to(self.cfg.train_args.device)  
+                weights = weights.to(self.cfg.train_args.device)
                 optimizer.zero_grad()
                 outputs = model(inputs)
                 losses = criterion_nored(outputs, targets)
-                loss = torch.dot(losses, weights/(weights.sum()))
+                loss = torch.dot(losses, weights / (weights.sum()))
                 loss.backward()
                 subtrn_loss += loss.item()
                 optimizer.step()
@@ -317,12 +336,12 @@ class TrainClassifier:
             scheduler.step()
             timing.append(epoch_time)
             print_args = self.cfg.train_args.print_args
-            
+
             """
             ################################################# Evaluation Loop #################################################
             """
 
-            if ((epoch + 1) % self.cfg.train_args.print_every == 0):
+            if (epoch + 1) % self.cfg.train_args.print_every == 0:
                 trn_loss = 0
                 trn_correct = 0
                 trn_total = 0
@@ -334,10 +353,10 @@ class TrainClassifier:
                 tst_loss = 0
                 model.eval()
 
-                if (("trn_loss" in print_args) or ("trn_acc" in print_args)):
+                if ("trn_loss" in print_args) or ("trn_acc" in print_args):
                     with torch.no_grad():
                         for _, (inputs, targets) in enumerate(trainloader):
-                            inputs, targets = inputs.to(self.cfg.train_args.device),  \
+                            inputs, targets = inputs.to(self.cfg.train_args.device), \
                                               targets.to(self.cfg.train_args.device, non_blocking=True)
                             outputs = model(inputs)
                             loss = criterion(outputs, targets)
@@ -347,11 +366,11 @@ class TrainClassifier:
                                 trn_total += targets.size(0)
                                 trn_correct += predicted.eq(targets).sum().item()
                         trn_losses.append(trn_loss)
-                        
+
                     if "trn_acc" in print_args:
                         trn_acc.append(trn_correct / trn_total)
 
-                if (("val_loss" in print_args) or ("val_acc" in print_args)):
+                if ("val_loss" in print_args) or ("val_acc" in print_args):
                     with torch.no_grad():
                         for _, (inputs, targets) in enumerate(valloader):
                             inputs, targets = inputs.to(self.cfg.train_args.device), \
@@ -368,10 +387,10 @@ class TrainClassifier:
                     if "val_acc" in print_args:
                         val_acc.append(val_correct / val_total)
 
-                if (("tst_loss" in print_args) or ("tst_acc" in print_args)):
+                if ("tst_loss" in print_args) or ("tst_acc" in print_args):
                     with torch.no_grad():
                         for _, (inputs, targets) in enumerate(testloader):
-                            inputs, targets = inputs.to(self.cfg.train_args.device),  \
+                            inputs, targets = inputs.to(self.cfg.train_args.device), \
                                               targets.to(self.cfg.train_args.device, non_blocking=True)
                             outputs = model(inputs)
                             loss = criterion(outputs, targets)
@@ -381,7 +400,7 @@ class TrainClassifier:
                                 tst_total += targets.size(0)
                                 tst_correct += predicted.eq(targets).sum().item()
                         tst_losses.append(tst_loss)
-                    
+
                     if "tst_acc" in print_args:
                         tst_acc.append(tst_correct / tst_total)
 
@@ -430,10 +449,13 @@ class TrainClassifier:
                 if 'report_tune' in self.cfg and self.cfg.report_tune:
                     tune.report(mean_accuracy=val_acc[-1])
 
-                print(print_str)
+                logger.info(print_str)
 
+            """
             ################################################# Checkpoint Saving #################################################
-            if ((epoch + 1) % self.cfg.ckpt.save_every == 0) and self.cfg.ckpt.is_save == True:
+            """
+
+            if ((epoch + 1) % self.cfg.ckpt.save_every == 0) and self.cfg.ckpt.is_save:
 
                 metric_dict = {}
 
@@ -467,28 +489,28 @@ class TrainClassifier:
 
                 # save checkpoint
                 self.save_ckpt(ckpt_state, checkpoint_path)
-                print("Model checkpoint saved at epoch " + str(epoch + 1))
+                logger.info("Model checkpoint saved at epoch: %s".format(str(epoch + 1)))
 
         """
         ################################################# Results Summary #################################################
         """
 
-        print(self.cfg.dss_args.type + " Selection Run---------------------------------")
-        print("Final SubsetTrn:", subtrn_loss)
+        logger.info(self.cfg.dss_args.type + " Selection Run---------------------------------")
+        logger.info("Final SubsetTrn: %s".format(subtrn_loss))
         if "val_loss" in print_args:
             if "val_acc" in print_args:
-                print("Validation Loss and Accuracy: ", val_loss, val_acc[-1])
+                logger.info("Validation Loss: %.2f , Validation Accuracy: %.2f", val_loss, val_acc[-1])
             else:
-                print("Validation Loss: ", val_loss)
+                logger.info("Validation Loss: %.2f", val_loss)
 
         if "tst_loss" in print_args:
             if "tst_acc" in print_args:
-                print("Test Data Loss and Accuracy: ", tst_loss, tst_acc[-1])
+                logger.info("Test Loss: %.2f, Test Accuracy: %.2f", tst_loss, tst_acc[-1])
             else:
-                print("Test Data Loss: ", tst_loss)
-        print('-----------------------------------')
-        print(self.cfg.dss_args.type, file=logfile)
-        print('---------------------------------------------------------------------', file=logfile)
+                logger.info("Test Data Loss: %f", tst_loss)
+        logger.info('---------------------------------------------------------------------')
+        logger.info(self.cfg.dss_args.type)
+        logger.info('---------------------------------------------------------------------')
 
         """
         ################################################# Final Results Logging #################################################
@@ -498,21 +520,20 @@ class TrainClassifier:
             val_str = "Validation Accuracy, "
             for val in val_acc:
                 val_str = val_str + " , " + str(val)
-            print(val_str, file=logfile)
+            logger.info(val_str)
 
         if "tst_acc" in print_args:
             tst_str = "Test Accuracy, "
             for tst in tst_acc:
                 tst_str = tst_str + " , " + str(tst)
-            print(tst_str, file=logfile)
+            logger.info(tst_str)
 
         if "time" in print_args:
             time_str = "Time, "
             for t in timing:
                 time_str = time_str + " , " + str(t)
-            print(timing, file=logfile)
+            logger.info(timing)
 
         omp_timing = np.array(timing)
         omp_cum_timing = list(self.generate_cumulative_timing(omp_timing))
-        print("Total time taken by " + self.cfg.dss_args.type + " = " + str(omp_cum_timing[-1]))
-        logfile.close()        
+        logger.info("Total time taken by %s = %.4f ", self.cfg.dss_args.type, omp_cum_timing[-1])

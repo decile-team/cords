@@ -1,7 +1,7 @@
 from .nonadaptivedataloader import NonAdaptiveDSSDataLoader
 from cords.selectionstrategies.SSL import CRAIGStrategy
 from torch.utils.data import DataLoader
-from cords.utils.data._utils import WeightedSubset
+from cords.utils.data.data_utils import WeightedSubset
 import time, copy
 
 

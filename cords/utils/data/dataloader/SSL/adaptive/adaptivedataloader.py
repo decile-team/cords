@@ -3,7 +3,7 @@ from abc import abstractmethod
 from torch.utils.data import DataLoader
 from ..dssdataloader import DSSDataLoader
 from cords.utils.data.datasets.SSL.utils import InfiniteSampler
-from cords.utils.data._utils import WeightedSubset
+from cords.utils.data.data_utils import WeightedSubset
 
 
 class AdaptiveDSSDataLoader(DSSDataLoader):
