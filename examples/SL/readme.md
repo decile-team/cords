@@ -6,6 +6,6 @@ Here, we provide example usages of CORDS. We have separated examples by the doma
 
 | Folder | Description |
 | :--- | :----: |
-| [image_classification](image_classification) | Contains examples of CORDS's usage on image classification tasks |
-| [tabular](tabular) | Contains examples of CORDS's usage on classification tasks arising from tabular data |
-| [nlp](nlp_sentiment_analysis) | Contains examples of CORDS's usage on NLP sentiment analysis tasks |
+| [Image Classification](image_classification) | Contains examples of CORDS's usage on image classification tasks |
+| [Tabular Classification](tabular) | Contains examples of CORDS's usage on classification tasks arising from tabular data |
+| [Text Classification](text_classification) | Contains examples of CORDS's usage on NLP sentiment analysis tasks |
