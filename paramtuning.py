@@ -21,21 +21,27 @@ from train_sl import TrainClassifier
 
 class HyperParamTuning:
     def __init__(self, config_file):
-        self.cfg = load_config_data(config_file)
-        self.train_class.cfg['train_args']['print_every'] = 1
+        self.config_file = config_file
+        self.cfg = load_config_data(config_file).toDict()
+        self.train_class, self.search_algo, self.scheduler, self.subset_method = None, None, None, None
+        self._init()
+
+    def _init(self):
         self.train_class = TrainClassifier(self.cfg['subset_config'])
+        self.train_class.cfg['train_args']['print_every'] = 1
         self.search_algo = self.get_search_algo(self.cfg['search_algo'], self.cfg['space'], self.cfg['metric'],
                                                 self.cfg['mode'])
         self.scheduler = self.get_scheduler(self.cfg['scheduler'], self.cfg['metric'], self.cfg['mode'])
         # save subset method, to be used in log dir name
-        self.subset_method = self.train_class.configdata['dss_strategy']['type']
+        self.subset_method = self.train_class.cfg['dss_args']['type']
 
     def param_tune(self, config):
         # update parameters in config dict
-        new_config = self.update_parameters(self.train_class.configdata, config)
-        self.train_class.configdata = new_config
+        new_config = self.update_parameters(self.train_class.cfg, config)
+        print("new_config: %s" % new_config)
+        self.train_class.cfg = new_config
         # turn on reporting to ray every time
-        self.train_class.configdata['report_tune'] = True
+        self.train_class.cfg['report_tune'] = True
         self.train_class.train()
 
     def start_eval(self):
@@ -58,6 +64,7 @@ class HyperParamTuning:
             self.final_train(best_config)
 
     def get_search_algo(self, method, space, metric, mode):
+
         # HyperOptSearch 
         if method == "hyperopt" or method == "TPE":
             search = HyperOptSearch(space, metric=metric, mode=mode)
@@ -94,6 +101,7 @@ class HyperParamTuning:
         else:
             return None
 
+        print("search: %s" % search)
         return search
 
     def get_scheduler(self, method, metric, mode):
@@ -112,12 +120,11 @@ class HyperParamTuning:
     def final_train(self, best_params):
         # change strategy to Full (i.e use whole dataset)
         # update (optimized) parameters
-        new_config = self.update_parameters(self.train_class.configdata, best_params)
-        self.train_class.configdata = new_config
-        # self.train_class.configdata['dss_strategy']['type'] = 'Full'
-        self.train_class.configdata['dss_strategy']['type'] = 'GradMatchPB'
-        self.train_class.configdata['dss_strategy']['fraction'] = 0.3
-        self.train_class.configdata['dss_strategy']['lam'] = 0
+        new_config = self.update_parameters(self.train_class.cfg, best_params)
+        self.train_class.cfg = new_config
+        self.train_class.cfg['dss_strategy']['type'] = 'GradMatchPB'
+        self.train_class.cfg['dss_strategy']['fraction'] = 0.3
+        self.train_class.cfg['dss_strategy']['lam'] = 0
         self.train_class.train()
 
     def update_parameters(self, config, new_config):
@@ -128,13 +135,14 @@ class HyperParamTuning:
             config['optimizer']['type'] = new_config['optimizer']
         if 'trn_batch_size' in new_config:
             config['dataloader']['batch_size'] = new_config['trn_batch_size']
+            print("config['dataloader']['batch_size']: %s" % config['dataloader']['batch_size'])
 
         return config
 
 
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser()
-    argparser.add_argument("--config_file", default="configs/config_hyper_param_tuning.py")
+    argparser.add_argument("--config_file", default="configs/config_hyper_param_tuning_vision.py")
     args = argparser.parse_args()
 
     hyperparam_tuning = HyperParamTuning(args.config_file)

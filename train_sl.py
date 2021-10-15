@@ -23,6 +23,7 @@ class TrainClassifier:
     """
     ############################## Loss Evaluation ##############################
     """
+
     def model_eval_loss(self, data_loader, model, criterion):
         total_loss = 0
         with torch.no_grad():
@@ -37,6 +38,7 @@ class TrainClassifier:
     """
     ############################## Model Creation ##############################
     """
+
     def create_model(self):
         if self.cfg.model.architecture == 'ResNet18':
             model = ResNet18(self.cfg.model.numclasses)
@@ -58,6 +60,7 @@ class TrainClassifier:
     """
     ############################## Loss Type, Optimizer and Learning Rate Scheduler ##############################
     """
+
     def loss_function(self):
         if self.cfg.loss.type == "CrossEntropyLoss":
             criterion = nn.CrossEntropyLoss()
@@ -119,6 +122,7 @@ class TrainClassifier:
         tst_batch_size = 1000
 
         # Creating the Data Loaders
+        print("trn_batch_size: %s" % trn_batch_size)
         trainloader = torch.utils.data.DataLoader(trainset, batch_size=trn_batch_size,
                                                   shuffle=False, pin_memory=True)
 
@@ -143,8 +147,8 @@ class TrainClassifier:
         print_every = self.cfg.train_args.print_every
         results_dir = osp.abspath(osp.expanduser(self.cfg.train_args.results_dir))
         all_logs_dir = os.path.join(results_dir, self.cfg.dss_args.type,
-                                    self.cfg.dataset.name, 
-                                    str(self.cfg.dss_args.fraction), 
+                                    self.cfg.dataset.name,
+                                    str(self.cfg.dss_args.fraction),
                                     str(self.cfg.dss_args.select_every))
 
         os.makedirs(all_logs_dir, exist_ok=True)
@@ -153,8 +157,8 @@ class TrainClassifier:
 
         checkpoint_dir = osp.abspath(osp.expanduser(self.cfg.ckpt.dir))
         ckpt_dir = os.path.join(checkpoint_dir, self.cfg.dss_args.type,
-                                self.cfg.dataset.name, 
-                                str(self.cfg.dss_args.fraction), 
+                                self.cfg.dataset.name,
+                                str(self.cfg.dss_args.fraction),
                                 str(self.cfg.dss_args.select_every))
         checkpoint_path = os.path.join(ckpt_dir, 'model.pt')
         os.makedirs(ckpt_dir, exist_ok=True)
@@ -180,16 +184,16 @@ class TrainClassifier:
             self.cfg.dss_args.model = model
             self.cfg.dss_args.loss = criterion_nored
             self.cfg.dss_args.eta = self.cfg.optimizer.lr
-            self.cfg.dss_args.num_classes = self.cfg.model.numclasses 
+            self.cfg.dss_args.num_classes = self.cfg.model.numclasses
             self.cfg.dss_args.num_epochs = self.cfg.train_args.num_epochs
             self.cfg.dss_args.device = self.cfg.train_args.device
 
-            dataloader = GradMatchDataLoader(trainloader, valloader, self.cfg.dss_args, verbose=True, 
-                                             batch_size=self.cfg.dataloader.batch_size, 
+            dataloader = GradMatchDataLoader(trainloader, valloader, self.cfg.dss_args, verbose=True,
+                                             batch_size=self.cfg.dataloader.batch_size,
                                              shuffle=self.cfg.dataloader.shuffle,
                                              pin_memory=self.cfg.dataloader.pin_memory)
 
-        
+
         elif self.cfg.dss_args.type in ['GLISTER', 'GLISTER-Warm', 'GLISTERPB', 'GLISTERPB-Warm']:
             """
             ############################## GLISTER Dataloader Additional Arguments ##############################
@@ -197,32 +201,32 @@ class TrainClassifier:
             self.cfg.dss_args.model = model
             self.cfg.dss_args.loss = criterion_nored
             self.cfg.dss_args.eta = self.cfg.optimizer.lr
-            self.cfg.dss_args.num_classes = self.cfg.model.numclasses 
+            self.cfg.dss_args.num_classes = self.cfg.model.numclasses
             self.cfg.dss_args.num_epochs = self.cfg.train_args.num_epochs
             self.cfg.dss_args.device = self.cfg.train_args.device
 
-            dataloader = GLISTERDataLoader(trainloader, valloader, self.cfg.dss_args, verbose=True, 
-                                             batch_size=self.cfg.dataloader.batch_size, 
-                                             shuffle=self.cfg.dataloader.shuffle,
-                                             pin_memory=self.cfg.dataloader.pin_memory)
+            dataloader = GLISTERDataLoader(trainloader, valloader, self.cfg.dss_args, verbose=True,
+                                           batch_size=self.cfg.dataloader.batch_size,
+                                           shuffle=self.cfg.dataloader.shuffle,
+                                           pin_memory=self.cfg.dataloader.pin_memory)
 
-        
+
         elif self.cfg.dss_args.type in ['CRAIG', 'CRAIG-Warm', 'CRAIGPB', 'CRAIGPB-Warm']:
             """
             ############################## CRAIG Dataloader Additional Arguments ##############################
             """
             self.cfg.dss_args.model = model
             self.cfg.dss_args.loss = criterion_nored
-            self.cfg.dss_args.num_classes = self.cfg.model.numclasses 
+            self.cfg.dss_args.num_classes = self.cfg.model.numclasses
             self.cfg.dss_args.num_epochs = self.cfg.train_args.num_epochs
             self.cfg.dss_args.device = self.cfg.train_args.device
 
-            dataloader = CRAIGDataLoader(trainloader, valloader, self.cfg.dss_args, verbose=True, 
-                                             batch_size=self.cfg.dataloader.batch_size,
-                                             shuffle=self.cfg.dataloader.shuffle,
-                                             pin_memory=self.cfg.dataloader.pin_memory)
+            dataloader = CRAIGDataLoader(trainloader, valloader, self.cfg.dss_args, verbose=True,
+                                         batch_size=self.cfg.dataloader.batch_size,
+                                         shuffle=self.cfg.dataloader.shuffle,
+                                         pin_memory=self.cfg.dataloader.pin_memory)
 
-    
+
         elif self.cfg.dss_args.type in ['Random', 'Random-Warm']:
             """
             ############################## Random Dataloader Additional Arguments ##############################
@@ -231,10 +235,10 @@ class TrainClassifier:
             self.cfg.dss_args.num_epochs = self.cfg.train_args.num_epochs
 
             dataloader = RandomDataLoader(trainloader, self.cfg.dss_args, verbose=True,
-                                         batch_size=self.cfg.dataloader.batch_size,
-                                         shuffle=self.cfg.dataloader.shuffle,
-                                         pin_memory=self.cfg.dataloader.pin_memory)
-           
+                                          batch_size=self.cfg.dataloader.batch_size,
+                                          shuffle=self.cfg.dataloader.shuffle,
+                                          pin_memory=self.cfg.dataloader.pin_memory)
+
 
         elif self.cfg.dss_args.type == ['OLRandom', 'OLRandom-Warm']:
             """
@@ -244,18 +248,18 @@ class TrainClassifier:
             self.cfg.dss_args.num_epochs = self.cfg.train_args.num_epochs
 
             dataloader = OLRandomDataLoader(trainloader, self.cfg.dss_args, verbose=True,
-                                         batch_size=self.cfg.dataloader.batch_size,
-                                         shuffle=self.cfg.dataloader.shuffle,
-                                         pin_memory=self.cfg.dataloader.pin_memory)
-        
+                                            batch_size=self.cfg.dataloader.batch_size,
+                                            shuffle=self.cfg.dataloader.shuffle,
+                                            pin_memory=self.cfg.dataloader.pin_memory)
+
         elif self.cfg.dss_args.type == 'Full':
             ############################## Full Dataloader Additional Arguments ##############################
-            wt_trainset = WeightedSubset(trainset, list(range(len(trainset))), [1]*len(trainset))
+            wt_trainset = WeightedSubset(trainset, list(range(len(trainset))), [1] * len(trainset))
 
             dataloader = torch.utils.data.DataLoader(wt_trainset,
-                                         batch_size=self.cfg.dataloader.batch_size,
-                                         shuffle=self.cfg.dataloader.shuffle,
-                                         pin_memory=self.cfg.dataloader.pin_memory)
+                                                     batch_size=self.cfg.dataloader.batch_size,
+                                                     shuffle=self.cfg.dataloader.shuffle,
+                                                     pin_memory=self.cfg.dataloader.pin_memory)
 
         print("=======================================", file=logfile)
 
@@ -301,11 +305,11 @@ class TrainClassifier:
             for _, (inputs, targets, weights) in enumerate(dataloader):
                 inputs = inputs.to(self.cfg.train_args.device)
                 targets = targets.to(self.cfg.train_args.device, non_blocking=True)
-                weights = weights.to(self.cfg.train_args.device)  
+                weights = weights.to(self.cfg.train_args.device)
                 optimizer.zero_grad()
                 outputs = model(inputs)
                 losses = criterion_nored(outputs, targets)
-                loss = torch.dot(losses, weights/(weights.sum()))
+                loss = torch.dot(losses, weights / (weights.sum()))
                 loss.backward()
                 subtrn_loss += loss.item()
                 optimizer.step()
@@ -316,7 +320,7 @@ class TrainClassifier:
             scheduler.step()
             timing.append(epoch_time)
             print_args = self.cfg.train_args.print_args
-            
+
             """
             ################################################# Evaluation Loop #################################################
             """
@@ -336,7 +340,7 @@ class TrainClassifier:
                 if (("trn_loss" in print_args) or ("trn_acc" in print_args)):
                     with torch.no_grad():
                         for _, (inputs, targets) in enumerate(trainloader):
-                            inputs, targets = inputs.to(self.cfg.train_args.device),  \
+                            inputs, targets = inputs.to(self.cfg.train_args.device), \
                                               targets.to(self.cfg.train_args.device, non_blocking=True)
                             outputs = model(inputs)
                             loss = criterion(outputs, targets)
@@ -346,7 +350,7 @@ class TrainClassifier:
                                 trn_total += targets.size(0)
                                 trn_correct += predicted.eq(targets).sum().item()
                         trn_losses.append(trn_loss)
-                        
+
                     if "trn_acc" in print_args:
                         trn_acc.append(trn_correct / trn_total)
 
@@ -370,7 +374,7 @@ class TrainClassifier:
                 if (("tst_loss" in print_args) or ("tst_acc" in print_args)):
                     with torch.no_grad():
                         for _, (inputs, targets) in enumerate(testloader):
-                            inputs, targets = inputs.to(self.cfg.train_args.device),  \
+                            inputs, targets = inputs.to(self.cfg.train_args.device), \
                                               targets.to(self.cfg.train_args.device, non_blocking=True)
                             outputs = model(inputs)
                             loss = criterion(outputs, targets)
@@ -380,7 +384,7 @@ class TrainClassifier:
                                 tst_total += targets.size(0)
                                 tst_correct += predicted.eq(targets).sum().item()
                         tst_losses.append(tst_loss)
-                    
+
                     if "tst_acc" in print_args:
                         tst_acc.append(tst_correct / tst_total)
 
@@ -514,4 +518,4 @@ class TrainClassifier:
         omp_timing = np.array(timing)
         omp_cum_timing = list(self.generate_cumulative_timing(omp_timing))
         print("Total time taken by " + self.cfg.dss_args.type + " = " + str(omp_cum_timing[-1]))
-        logfile.close()        
+        logfile.close()

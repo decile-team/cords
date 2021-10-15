@@ -29,6 +29,7 @@ def fopen(filepath, *args, **kwargs):
 
 
 def check_file_exist(filename, msg_tmpl='file "{}" does not exist'):
+    # import pdb; pdb.set_trace()
     if not osp.isfile(filename):
         raise FileNotFoundError(msg_tmpl.format(filename))
 
@@ -68,4 +69,5 @@ def load_config_data(filepath):
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
         configdata = copy.deepcopy(mod.config)
+    # import pdb; pdb.set_trace()
     return DotMap(configdata)
