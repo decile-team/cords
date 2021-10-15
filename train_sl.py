@@ -282,7 +282,7 @@ class TrainClassifier:
 
         if self.cfg.ckpt.is_load:
             start_epoch, model, optimizer, ckpt_loss, load_metrics = self.load_ckpt(checkpoint_path, model, optimizer)
-            logger.info("Loading saved checkpoint model at epoch: %s".format(str(start_epoch)))
+            logger.info("Loading saved checkpoint model at epoch: %d".format(start_epoch))
             for arg in load_metrics.keys():
                 if arg == "val_loss":
                     val_losses = load_metrics['val_loss']
@@ -486,14 +486,14 @@ class TrainClassifier:
 
                 # save checkpoint
                 self.save_ckpt(ckpt_state, checkpoint_path)
-                logger.info("Model checkpoint saved at epoch: %s".format(str(epoch + 1)))
+                logger.info("Model checkpoint saved at epoch: %d".format(epoch + 1))
 
         """
         ################################################# Results Summary #################################################
         """
 
         logger.info(self.cfg.dss_args.type + " Selection Run---------------------------------")
-        logger.info("Final SubsetTrn: %s".format(subtrn_loss))
+        logger.info("Final SubsetTrn: %f".format(subtrn_loss))
         if "val_loss" in print_args:
             if "val_acc" in print_args:
                 logger.info("Validation Loss: %.2f , Validation Accuracy: %.2f", val_loss, val_acc[-1])
