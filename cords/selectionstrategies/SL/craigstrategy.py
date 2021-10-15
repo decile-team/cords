@@ -1,11 +1,11 @@
+import math
 import apricot
 import numpy as np
+import time
 import torch
-import torch.nn.functional as F
 from scipy.sparse import csr_matrix
-from .dataselectionstrategy import DataSelectionStrategy
 from torch.utils.data.sampler import SubsetRandomSampler
-import math
+from .dataselectionstrategy import DataSelectionStrategy
 
 
 class CRAIGStrategy(DataSelectionStrategy):
@@ -56,19 +56,22 @@ class CRAIGStrategy(DataSelectionStrategy):
          - 'Supervised':  Supervised Implementation where the facility location problem is solved using a sparse similarity matrix by 
                           assigning the similarity of a point with other points of different class to zero.
          - 'PerBatch': PerBatch Implementation where the facility location problem tries to select subset of mini-batches.
+    logger : class
+        - logger object for logging the information
     optimizer: str
         Type of Greedy Algorithm
     """
 
     def __init__(self, trainloader, valloader, model, loss,
                  device, num_classes, linear_layer, if_convex,
-                 selection_type, optimizer='lazy'):
+                 selection_type, logger, optimizer='lazy'):
         """
         Constructer method
         """
-        super().__init__(trainloader, valloader, model, num_classes, linear_layer, loss, device)
+        super().__init__(trainloader, valloader, model, num_classes, linear_layer, loss, device, logger)
         self.if_convex = if_convex
         self.selection_type = selection_type
+        self.logger = logger
         self.optimizer = optimizer
 
     def distance(self, x, y, exp=2):
@@ -243,7 +246,7 @@ class CRAIGStrategy(DataSelectionStrategy):
         gammas: list
             List containing gradients of datapoints present in greedySet
         """
-
+        start_time = time.time()
         for batch_idx, (inputs, targets) in enumerate(self.trainloader):
             if batch_idx == 0:
                 labels = targets
@@ -288,7 +291,8 @@ class CRAIGStrategy(DataSelectionStrategy):
             sparse_simmat = csr_matrix((data, (row.numpy(), col.numpy())), shape=(self.N_trn, self.N_trn))
             self.dist_mat = sparse_simmat
             fl = apricot.functions.facilityLocation.FacilityLocationSelection(random_state=0, metric='precomputed',
-                                                                              n_samples=budget, optimizer=self.optimizer)
+                                                                              n_samples=budget,
+                                                                              optimizer=self.optimizer)
             sim_sub = fl.fit_transform(sparse_simmat)
             total_greedy_list = list(np.array(np.argmax(sim_sub, axis=1)).reshape(-1))
             gammas = self.compute_gamma(total_greedy_list)
@@ -308,4 +312,6 @@ class CRAIGStrategy(DataSelectionStrategy):
                 tmp = batch_wise_indices[temp_list[i]]
                 total_greedy_list.extend(tmp)
                 gammas.extend([gammas_temp[i]] * len(tmp))
+        end_time = time.time()
+        self.logger.debug("CRAIG strategy data selection time is: %.4f", end_time-start_time)
         return total_greedy_list, torch.FloatTensor(gammas)

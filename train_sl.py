@@ -206,7 +206,7 @@ class TrainClassifier:
             self.cfg.dss_args.num_epochs = self.cfg.train_args.num_epochs
             self.cfg.dss_args.device = self.cfg.train_args.device
 
-            dataloader = GradMatchDataLoader(trainloader, valloader, self.cfg.dss_args, verbose=True,
+            dataloader = GradMatchDataLoader(trainloader, valloader, self.cfg.dss_args, logger,
                                              batch_size=self.cfg.dataloader.batch_size,
                                              shuffle=self.cfg.dataloader.shuffle,
                                              pin_memory=self.cfg.dataloader.pin_memory)
@@ -221,8 +221,7 @@ class TrainClassifier:
             self.cfg.dss_args.num_classes = self.cfg.model.numclasses
             self.cfg.dss_args.num_epochs = self.cfg.train_args.num_epochs
             self.cfg.dss_args.device = self.cfg.train_args.device
-
-            dataloader = GLISTERDataLoader(trainloader, valloader, self.cfg.dss_args, verbose=True,
+            dataloader = GLISTERDataLoader(trainloader, valloader, self.cfg.dss_args, logger,
                                            batch_size=self.cfg.dataloader.batch_size,
                                            shuffle=self.cfg.dataloader.shuffle,
                                            pin_memory=self.cfg.dataloader.pin_memory)
@@ -237,7 +236,7 @@ class TrainClassifier:
             self.cfg.dss_args.num_epochs = self.cfg.train_args.num_epochs
             self.cfg.dss_args.device = self.cfg.train_args.device
 
-            dataloader = CRAIGDataLoader(trainloader, valloader, self.cfg.dss_args, verbose=True,
+            dataloader = CRAIGDataLoader(trainloader, valloader, self.cfg.dss_args, logger,
                                          batch_size=self.cfg.dataloader.batch_size,
                                          shuffle=self.cfg.dataloader.shuffle,
                                          pin_memory=self.cfg.dataloader.pin_memory)
@@ -249,7 +248,7 @@ class TrainClassifier:
             self.cfg.dss_args.device = self.cfg.train_args.device
             self.cfg.dss_args.num_epochs = self.cfg.train_args.num_epochs
 
-            dataloader = RandomDataLoader(trainloader, self.cfg.dss_args, verbose=True,
+            dataloader = RandomDataLoader(trainloader, self.cfg.dss_args, logger,
                                           batch_size=self.cfg.dataloader.batch_size,
                                           shuffle=self.cfg.dataloader.shuffle,
                                           pin_memory=self.cfg.dataloader.pin_memory)
@@ -261,7 +260,7 @@ class TrainClassifier:
             self.cfg.dss_args.device = self.cfg.train_args.device
             self.cfg.dss_args.num_epochs = self.cfg.train_args.num_epochs
 
-            dataloader = OLRandomDataLoader(trainloader, self.cfg.dss_args, verbose=True,
+            dataloader = OLRandomDataLoader(trainloader, self.cfg.dss_args, logger,
                                             batch_size=self.cfg.dataloader.batch_size,
                                             shuffle=self.cfg.dataloader.shuffle,
                                             pin_memory=self.cfg.dataloader.pin_memory)
@@ -276,8 +275,6 @@ class TrainClassifier:
                                                      batch_size=self.cfg.dataloader.batch_size,
                                                      shuffle=self.cfg.dataloader.shuffle,
                                                      pin_memory=self.cfg.dataloader.pin_memory)
-
-        logger.info("=======================================")
 
         """
         ################################################# Checkpoint Loading #################################################

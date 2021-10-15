@@ -6,7 +6,7 @@ import time, copy
 # CRAIG
 class CRAIGDataLoader(AdaptiveDSSDataLoader):
 
-    def __init__(self, train_loader, val_loader, dss_args, verbose=True, *args, **kwargs):
+    def __init__(self, train_loader, val_loader, dss_args, logger, *args, **kwargs):
         """
          Arguments assertion check
         """
@@ -20,11 +20,11 @@ class CRAIGDataLoader(AdaptiveDSSDataLoader):
         assert "optimizer" in dss_args.keys(), "'optimizer' is a compulsory argument for CRAIG. Include it as a key in dss_args"
         
         super(CRAIGDataLoader, self).__init__(train_loader, val_loader, dss_args,
-                                                verbose=verbose, *args, **kwargs)
+                                                logger, *args, **kwargs)
         
         self.strategy = CRAIGStrategy(train_loader, val_loader, copy.deepcopy(dss_args.model), dss_args.loss, 
                                      dss_args.device, dss_args.num_classes, dss_args.linear_layer,  
-                                     True, dss_args.selection_type, dss_args.optimizer)
+                                     True, dss_args.selection_type, logger, dss_args.optimizer)
         self.train_model = dss_args.model        
         if self.verbose:
             print('CRAIG dataloader initialized. ')

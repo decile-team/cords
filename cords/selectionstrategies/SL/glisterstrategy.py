@@ -74,27 +74,26 @@ class GLISTERStrategy(DataSelectionStrategy):
         - 'RGreedy' : RGreedy Selection method is a variant of naive greedy where we just perform r rounds of greedy selection by choosing k/r points in each round.
         - 'Stochastic' : Stochastic greedy selection method is based on the algorithm presented in this paper :footcite:`mirzasoleiman2014lazier`
         - 'Naive' : Normal naive greedy selection method that selects a single best element every step until the budget is fulfilled
+    logger: class
+        logger class for logging the information
     r : int, optional
         Number of greedy selection rounds when selection method is RGreedy (default: 15)
-    verbose : bool, optional
-        If True, we print the information of GLISTER subset selection
     """
 
     def __init__(self, trainloader, valloader, model, 
                 loss_func, eta, device, num_classes, 
-                linear_layer, selection_type, greedy, r=15, 
-                verbose=True):
+                linear_layer, selection_type, greedy,
+                logger, r=15):
         """
         Constructor method
         """
-        super().__init__(trainloader, valloader, model, num_classes, linear_layer, loss_func, device)
+        super().__init__(trainloader, valloader, model, num_classes, linear_layer, loss_func, device, logger)
         self.eta = eta  # step size for the one step gradient update
         self.init_out = list()
         self.init_l1 = list()
         self.selection_type = selection_type
         self.greedy = greedy
         self.r = r
-        self.verbose = verbose
 
     def _update_grads_val(self, grads_curr=None, first_init=False):
         """
@@ -247,7 +246,7 @@ class GLISTERStrategy(DataSelectionStrategy):
                 # Update the grads_val_current using current greedySet grads
                 self._update_grads_val(grads_curr)
                 numSelected += selection_size
-            print("R greedy GLISTER total time:", time.time() - t_ng_start)
+            self.logger.debug("R greedy GLISTER total time: %.4f", time.time() - t_ng_start)
 
         # Stochastic Greedy Selection Algorithm
         elif self.greedy == 'Stochastic':
@@ -270,7 +269,7 @@ class GLISTERStrategy(DataSelectionStrategy):
                     grads_curr = self.grads_per_elem[bestId].view(1, -1)  # Making it a list so that is mutable!
                 # Update the grads_val_current using current greedySet grads
                 self._update_grads_val(grads_curr)
-            print("Stochastic Greedy GLISTER total time:", time.time() - t_ng_start)
+            self.logger.debug("Stochastic Greedy GLISTER total time: %.4f", time.time() - t_ng_start)
 
         elif self.greedy == 'Naive':
             while (numSelected < budget):
@@ -291,7 +290,7 @@ class GLISTERStrategy(DataSelectionStrategy):
                     self._update_gradients_subset(grads_curr, bestId)
                 # Update the grads_val_current using current greedySet grads
                 self._update_grads_val(grads_curr)
-            print("Naive Greedy GLISTER total time:", time.time() - t_ng_start)
+            self.logger.debug("Naive Greedy GLISTER total time: %.4f", time.time() - t_ng_start)
         return list(greedySet), [1] * budget
 
 
@@ -349,6 +348,6 @@ class GLISTERStrategy(DataSelectionStrategy):
             self._update_grads_val(first_init=True)
             idxs, gammas = self.greedy_algo(budget)
         glister_end_time = time.time()
-        print("GLISTER algorithm Subset Selection time is: ", glister_end_time - glister_start_time)
+        self.logger.debug("GLISTER algorithm Subset Selection time is: %.4f", glister_end_time - glister_start_time)
         return idxs, torch.FloatTensor(gammas)
         

@@ -79,7 +79,7 @@ class AdaptiveDSSDataLoader(DSSDataLoader):
         self.logger.debug("Subset indices length: %d", len(self.subset_indices))
         self._refresh_subset_loader()
         self.logger.debug("Subset loader initiated, args: %s, kwargs: %s", self.loader_args, self.loader_kwargs)
-        self.logger.info('Subset selection finished, Training data size: %d, Subset size: %d',
+        self.logger.debug('Subset selection finished, Training data size: %d, Subset size: %d',
                      self.len_full, len(self.subset_loader.dataset))
 
     @abstractmethod

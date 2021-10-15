@@ -44,7 +44,7 @@ class HyperParamTuning:
             # config=self.cfg['space'],
             search_alg=self.search_algo,
             scheduler=self.scheduler,
-            resources_per_trial={'gpu':1},
+            resources_per_trial={'gpu': 1},
             local_dir=self.cfg['log_dir']+self.subset_method+'/',
             log_to_file=True,
             name=self.cfg['name'],
