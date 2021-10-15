@@ -206,7 +206,7 @@ class TrainClassifier:
             self.cfg.dss_args.num_epochs = self.cfg.train_args.num_epochs
             self.cfg.dss_args.device = self.cfg.train_args.device
 
-            dataloader = GradMatchDataLoader(trainloader, valloader, self.cfg.dss_args, verbose=True,
+            dataloader = GradMatchDataLoader(trainloader, valloader, self.cfg.dss_args, logger,
                                              batch_size=self.cfg.dataloader.batch_size,
                                              shuffle=self.cfg.dataloader.shuffle,
                                              pin_memory=self.cfg.dataloader.pin_memory)
@@ -221,8 +221,7 @@ class TrainClassifier:
             self.cfg.dss_args.num_classes = self.cfg.model.numclasses
             self.cfg.dss_args.num_epochs = self.cfg.train_args.num_epochs
             self.cfg.dss_args.device = self.cfg.train_args.device
-
-            dataloader = GLISTERDataLoader(trainloader, valloader, self.cfg.dss_args, verbose=True,
+            dataloader = GLISTERDataLoader(trainloader, valloader, self.cfg.dss_args, logger,
                                            batch_size=self.cfg.dataloader.batch_size,
                                            shuffle=self.cfg.dataloader.shuffle,
                                            pin_memory=self.cfg.dataloader.pin_memory)
@@ -237,7 +236,7 @@ class TrainClassifier:
             self.cfg.dss_args.num_epochs = self.cfg.train_args.num_epochs
             self.cfg.dss_args.device = self.cfg.train_args.device
 
-            dataloader = CRAIGDataLoader(trainloader, valloader, self.cfg.dss_args, verbose=True,
+            dataloader = CRAIGDataLoader(trainloader, valloader, self.cfg.dss_args, logger,
                                          batch_size=self.cfg.dataloader.batch_size,
                                          shuffle=self.cfg.dataloader.shuffle,
                                          pin_memory=self.cfg.dataloader.pin_memory)
@@ -249,7 +248,7 @@ class TrainClassifier:
             self.cfg.dss_args.device = self.cfg.train_args.device
             self.cfg.dss_args.num_epochs = self.cfg.train_args.num_epochs
 
-            dataloader = RandomDataLoader(trainloader, self.cfg.dss_args, verbose=True,
+            dataloader = RandomDataLoader(trainloader, self.cfg.dss_args, logger,
                                           batch_size=self.cfg.dataloader.batch_size,
                                           shuffle=self.cfg.dataloader.shuffle,
                                           pin_memory=self.cfg.dataloader.pin_memory)
@@ -261,7 +260,7 @@ class TrainClassifier:
             self.cfg.dss_args.device = self.cfg.train_args.device
             self.cfg.dss_args.num_epochs = self.cfg.train_args.num_epochs
 
-            dataloader = OLRandomDataLoader(trainloader, self.cfg.dss_args, verbose=True,
+            dataloader = OLRandomDataLoader(trainloader, self.cfg.dss_args, logger,
                                             batch_size=self.cfg.dataloader.batch_size,
                                             shuffle=self.cfg.dataloader.shuffle,
                                             pin_memory=self.cfg.dataloader.pin_memory)
@@ -277,15 +276,13 @@ class TrainClassifier:
                                                      shuffle=self.cfg.dataloader.shuffle,
                                                      pin_memory=self.cfg.dataloader.pin_memory)
 
-        logger.info("=======================================")
-
         """
         ################################################# Checkpoint Loading #################################################
         """
 
         if self.cfg.ckpt.is_load:
             start_epoch, model, optimizer, ckpt_loss, load_metrics = self.load_ckpt(checkpoint_path, model, optimizer)
-            logger.info("Loading saved checkpoint model at epoch: %s".format(str(start_epoch)))
+            logger.info("Loading saved checkpoint model at epoch: %d".format(start_epoch))
             for arg in load_metrics.keys():
                 if arg == "val_loss":
                     val_losses = load_metrics['val_loss']
@@ -489,14 +486,14 @@ class TrainClassifier:
 
                 # save checkpoint
                 self.save_ckpt(ckpt_state, checkpoint_path)
-                logger.info("Model checkpoint saved at epoch: %s".format(str(epoch + 1)))
+                logger.info("Model checkpoint saved at epoch: %d".format(epoch + 1))
 
         """
         ################################################# Results Summary #################################################
         """
 
         logger.info(self.cfg.dss_args.type + " Selection Run---------------------------------")
-        logger.info("Final SubsetTrn: %s".format(subtrn_loss))
+        logger.info("Final SubsetTrn: %f".format(subtrn_loss))
         if "val_loss" in print_args:
             if "val_acc" in print_args:
                 logger.info("Validation Loss: %.2f , Validation Accuracy: %.2f", val_loss, val_acc[-1])

@@ -5,10 +5,10 @@ from ..dssdataloader import DSSDataLoader
 
 
 class AdaptiveDSSDataLoader(DSSDataLoader):
-    def __init__(self, train_loader, val_loader, dss_args, verbose=False, *args,
+    def __init__(self, train_loader, val_loader, dss_args, logger, *args,
                  **kwargs):
         super(AdaptiveDSSDataLoader, self).__init__(train_loader.dataset, dss_args,
-                                                    verbose=verbose, *args, **kwargs)
+                                                    logger, *args, **kwargs)
         self.train_loader = train_loader
         self.val_loader = val_loader
         
@@ -34,36 +34,32 @@ class AdaptiveDSSDataLoader(DSSDataLoader):
     def __iter__(self):
         self.initialized = True
         if self.warmup_epochs < self.cur_epoch <= self.select_after:
-            logging.info(
+            self.logger.debug(
                 "Skipping epoch {0:d} due to warm-start option. ".format(self.cur_epoch, self.warmup_epochs))
             loader = DataLoader([])
             
-        elif self.cur_epoch <=  self.warmup_epochs:
-            if self.verbose:
-                logging.info('Epoch: {0:d}, reading dataloader... '.format(self.cur_epoch))
+        elif self.cur_epoch <= self.warmup_epochs:
+            self.logger.debug('Epoch: {0:d}, reading dataloader... '.format(self.cur_epoch))
             loader = self.wtdataloader
-            if self.verbose:
-                logging.info('Epoch: {0:d}, finished reading dataloader. '.format(self.cur_epoch))
+            self.logger.debug('Epoch: {0:d}, finished reading dataloader. '.format(self.cur_epoch))
         else:
-            if self.verbose:
-                logging.info('Epoch: {0:d}, reading dataloader... '.format(self.cur_epoch))
+            self.logger.debug('Epoch: {0:d}, reading dataloader... '.format(self.cur_epoch))
             if ((self.cur_epoch - 1) % self.select_every == 0) and (self.cur_epoch > 1):
                 self.resample()
             loader = self.subset_loader
-            if self.verbose:
-                logging.info('Epoch: {0:d}, finished reading dataloader. '.format(self.cur_epoch))
+            self.logger.debug('Epoch: {0:d}, finished reading dataloader. '.format(self.cur_epoch))
             
         self.cur_epoch += 1
         return loader.__iter__()
 
     def resample(self):
         self.subset_indices, self.subset_weights = self._resample_subset_indices()
-        logging.debug("Subset indices length: %d", len(self.subset_indices))
+        self.logger.debug("Subset indices length: %d", len(self.subset_indices))
         self._refresh_subset_loader()
-        logging.debug("Subset loader initiated, args: %s, kwargs: %s", self.loader_args, self.loader_kwargs)
-        logging.info('Subset selection finished, Training data size: %d, Subset size: %d',
+        self.logger.debug("Subset loader initiated, args: %s, kwargs: %s", self.loader_args, self.loader_kwargs)
+        self.logger.debug('Subset selection finished, Training data size: %d, Subset size: %d',
                      self.len_full, len(self.subset_loader.dataset))
 
     @abstractmethod
     def _resample_subset_indices(self):
-        raise Exception('Not implemented. ')
+        raise Exception('Not implemented.')

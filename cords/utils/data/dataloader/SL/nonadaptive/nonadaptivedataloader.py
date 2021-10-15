@@ -2,10 +2,10 @@ from ..dssdataloader import DSSDataLoader
 
 
 class NonAdaptiveDSSDataLoader(DSSDataLoader):
-    def __init__(self, train_loader, val_loader, dss_args, verbose=False, *args,
+    def __init__(self, train_loader, val_loader, dss_args, logger, *args,
                  **kwargs):
         super(NonAdaptiveDSSDataLoader, self).__init__(train_loader.dataset, dss_args,
-                                                       verbose=verbose, *args, **kwargs)
+                                                       logger, *args, **kwargs)
 
         assert "device" in dss_args.keys(), "'device' is a compulsory argument. Include it as a key in dss_args"
         self.train_loader = train_loader

@@ -6,7 +6,7 @@ import time, copy
 # CRAIG
 class CRAIGDataLoader(NonAdaptiveDSSDataLoader):
 
-    def __init__(self, train_loader, val_loader, dss_args, verbose=True, *args, **kwargs):
+    def __init__(self, train_loader, val_loader, dss_args, logger, *args, **kwargs):
         """
          Arguments assertion check
         """
@@ -20,19 +20,17 @@ class CRAIGDataLoader(NonAdaptiveDSSDataLoader):
         assert "optimizer" in dss_args.keys(), "'optimizer' is a compulsory argument for CRAIG. Include it as a key in dss_args"
         
         super(CRAIGDataLoader, self).__init__(train_loader, val_loader, dss_args,
-                                                verbose=verbose, *args, **kwargs)
+                                              logger, *args, **kwargs)
         
         self.strategy = CRAIGStrategy(train_loader, val_loader, copy.deepcopy(dss_args.model), dss_args.num_classes, 
                                      dss_args.linear_layer, dss_args.loss, dss_args.device, 
-                                     False, dss_args.selection_type, dss_args.optimizer)
+                                     False, dss_args.selection_type, logger, dss_args.optimizer)
         self.train_model = dss_args.model
         self.eta = dss_args.eta
         self.num_cls = dss_args.num_classes
         self.model = dss_args.model
         self.loss = copy.deepcopy(dss_args.loss)
-        
-        if self.verbose:
-            print('CRAIG dataloader loader initialized. ')
+        self.logger.debug('Non-adaptive CRAIG dataloader loader initialized. ')
 
     def _init_subset_loader(self):
         # All strategies start with random selection
@@ -40,14 +38,12 @@ class CRAIGDataLoader(NonAdaptiveDSSDataLoader):
         self._refresh_subset_loader()
 
     def _init_subset_indices(self):
-        if self.verbose:
-            start = time.time()
-            print('Epoch: {0:d}, requires subset selection. '.format(self.cur_epoch))
+        start = time.time()
+        self.logger.debug('Epoch: {0:d}, requires subset selection. '.format(self.cur_epoch))
         cached_state_dict = copy.deepcopy(self.train_model.state_dict())
         clone_dict = copy.deepcopy(self.train_model.state_dict())
         subset_indices, subset_weights = self.strategy.select(self.budget, clone_dict)
         self.train_model.load_state_dict(cached_state_dict)
-        if self.verbose:
-            end = time.time()
-            print('Epoch: {0:d}, subset selection finished, takes {1:.2f}. '.format(self.cur_epoch, (end - start)))
+        end = time.time()
+        self.logger.info('Epoch: {0:d}, CRAIG subset selection finished, takes {1:.4f}. '.format(self.cur_epoch, (end - start)))
         return subset_indices, subset_weights

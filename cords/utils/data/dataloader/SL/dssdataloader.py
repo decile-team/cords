@@ -7,7 +7,7 @@ import numpy as np
 
 # Base objects
 class DSSDataLoader:
-    def __init__(self, full_data, dss_args, verbose=False, *args, **kwargs):
+    def __init__(self, full_data, dss_args, logger, *args, **kwargs):
         super(DSSDataLoader, self).__init__()
         # TODO: Integrate verbose in logging
         self.len_full = len(full_data)
@@ -20,7 +20,7 @@ class DSSDataLoader:
 
         self.fraction = dss_args.fraction
         self.budget = int(self.len_full * self.fraction)
-        self.verbose = verbose
+        self.logger = logger
         self.dataset = full_data
         self.loader_args = args
         self.loader_kwargs = kwargs

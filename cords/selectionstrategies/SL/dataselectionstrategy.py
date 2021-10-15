@@ -1,6 +1,4 @@
-import numpy as np
 import torch
-import torch.nn.functional as F
 
 
 class DataSelectionStrategy(object):
@@ -22,9 +20,13 @@ class DataSelectionStrategy(object):
             If False, we use the last fc layer biases gradients
         loss: class
             PyTorch Loss function
+        device: str
+            The device being utilized - cpu | cuda
+        logger: class
+            logger object for logging the information
     """
 
-    def __init__(self, trainloader, valloader, model, num_classes, linear_layer, loss, device):
+    def __init__(self, trainloader, valloader, model, num_classes, linear_layer, loss, device, logger):
         """
         Constructer method
         """
@@ -42,6 +44,7 @@ class DataSelectionStrategy(object):
         self.val_lbls = None
         self.loss = loss
         self.device = device
+        self.logger = logger
 
     def select(self, budget, model_params):
         pass

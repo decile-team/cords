@@ -26,7 +26,7 @@ mode = "max",
 # scheduler to be used (i.e ASHAScheduler)
 # scheduler terminates trials that perform poorly
 # learn more here: https://docs.ray.io/en/releases-0.7.1/tune-schedulers.html
-scheduler = None,
+scheduler = 'hyperband',
 
 # where to store logs
 log_dir = "RayLogs/",

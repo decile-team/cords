@@ -45,6 +45,8 @@ class GradMatchStrategy(DataSelectionStrategy):
         - 'PerClass': PerClass method is where OMP algorithm is applied on each class data points seperately.
         - 'PerBatch': PerBatch method is where OMP algorithm is applied on each minibatch data points.
         - 'PerClassPerGradient': PerClassPerGradient method is same as PerClass but we use the gradient corresponding to classification layer of that class only.
+    logger : class
+        - logger object for logging the information
     valid : bool
         If valid==True, we use validation dataset gradient sum in OMP otherwise we use training dataset (default: False)
     v1 : bool
@@ -53,17 +55,15 @@ class GradMatchStrategy(DataSelectionStrategy):
         Regularization constant of OMP solver
     eps : float
         Epsilon parameter to which the above optimization problem is solved using OMP algorithm
-    verbose : bool
-        If verbose==True, we print the information of run
     """
 
     def __init__(self, trainloader, valloader, model, loss,
                  eta, device, num_classes, linear_layer,
-                 selection_type, valid=False, v1=True, lam=0, eps=1e-4, verbose=True):
+                 selection_type, logger, valid=False, v1=True, lam=0, eps=1e-4):
         """
         Constructor method
         """
-        super().__init__(trainloader, valloader, model, num_classes, linear_layer, loss, device)
+        super().__init__(trainloader, valloader, model, num_classes, linear_layer, loss, device, logger)
         self.eta = eta  # step size for the one step gradient update
         self.device = device
         self.init_out = list()
@@ -73,10 +73,8 @@ class GradMatchStrategy(DataSelectionStrategy):
         self.lam = lam
         self.eps = eps
         self.v1 = v1
-        self.verbose = verbose
 
     def ompwrapper(self, X, Y, bud):
-
         if self.device == "cpu":
             reg = OrthogonalMP_REG(X.numpy(), Y.numpy(), nnz=bud, positive=True, lam=0)
             ind = np.nonzero(reg)[0]
@@ -195,7 +193,7 @@ class GradMatchStrategy(DataSelectionStrategy):
                 idxs.extend(list(np.array(trn_subset_idx)[idxs_temp]))
                 gammas.extend(gammas_temp)
         diff = budget - len(idxs)
-        print("Random points added: ", diff)
+        self.logger.debug("Random points added: %d ", diff)
 
         if diff > 0:
             remainList = set(np.arange(self.N_trn)).difference(set(idxs))
@@ -211,5 +209,5 @@ class GradMatchStrategy(DataSelectionStrategy):
             gammas = list(np.array(gammas)[rand_indices])
         
         omp_end_time = time.time()
-        print("OMP algorithm Subset Selection time is: ", omp_end_time - omp_start_time)
+        self.logger.debug("GradMatch algorithm Subset Selection time is: %.4f", omp_end_time - omp_start_time)
         return idxs, torch.FloatTensor(gammas)

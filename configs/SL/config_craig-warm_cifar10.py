@@ -2,7 +2,7 @@
 from torch.optim import optimizer
 
 
-config = dict(setting="supervisedlearning",
+config = dict(setting="SL",
 
               dataset=dict(name="cifar10",
                            datadir="../data",
