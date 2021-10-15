@@ -38,7 +38,8 @@ class TrainClassifier:
         s_handler.setFormatter(plain_formatter)
         s_handler.setLevel(logging.INFO)
         self.logger.addHandler(s_handler)
-        f_handler = logging.FileHandler(os.path.join(all_logs_dir, self.cfg.dataset.name + ".log"))
+        f_handler = logging.FileHandler(os.path.join(all_logs_dir, self.cfg.dataset.name + "_" +
+                                                     self.cfg.dss_args.type + ".log"))
         f_handler.setFormatter(plain_formatter)
         f_handler.setLevel(logging.DEBUG)
         self.logger.addHandler(f_handler)
@@ -174,7 +175,8 @@ class TrainClassifier:
 
         # Checkpoint file
         checkpoint_dir = osp.abspath(osp.expanduser(self.cfg.ckpt.dir))
-        ckpt_dir = os.path.join(checkpoint_dir, self.cfg.dss_args.type,
+        ckpt_dir = os.path.join(checkpoint_dir, self.cfg.setting,
+                                self.cfg.dss_args.type,
                                 self.cfg.dataset.name,
                                 str(self.cfg.dss_args.fraction),
                                 str(self.cfg.dss_args.select_every))
@@ -282,7 +284,7 @@ class TrainClassifier:
 
         if self.cfg.ckpt.is_load:
             start_epoch, model, optimizer, ckpt_loss, load_metrics = self.load_ckpt(checkpoint_path, model, optimizer)
-            logger.info("Loading saved checkpoint model at epoch: %d".format(start_epoch))
+            logger.info("Loading saved checkpoint model at epoch: {0:d}".format(start_epoch))
             for arg in load_metrics.keys():
                 if arg == "val_loss":
                     val_losses = load_metrics['val_loss']
@@ -486,14 +488,14 @@ class TrainClassifier:
 
                 # save checkpoint
                 self.save_ckpt(ckpt_state, checkpoint_path)
-                logger.info("Model checkpoint saved at epoch: %d".format(epoch + 1))
+                logger.info("Model checkpoint saved at epoch: {0:d}".format(epoch + 1))
 
         """
         ################################################# Results Summary #################################################
         """
 
         logger.info(self.cfg.dss_args.type + " Selection Run---------------------------------")
-        logger.info("Final SubsetTrn: %f".format(subtrn_loss))
+        logger.info("Final SubsetTrn: {0:f}".format(subtrn_loss))
         if "val_loss" in print_args:
             if "val_acc" in print_args:
                 logger.info("Validation Loss: %.2f , Validation Accuracy: %.2f", val_loss, val_acc[-1])
