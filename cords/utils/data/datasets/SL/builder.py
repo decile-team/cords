@@ -85,7 +85,7 @@ class SSTDataset(Dataset):
             self.phrase_vec.append(torch.tensor(tmp1, dtype=torch.long)) 
             self.labels[i] = get_class(SSTDataset.label_tmp[idx], self.num_classes) 
 
-        # print(missing_count)
+        print(missing_count)
 
     def __getitem__(self, index):
         return self.phrase_vec[index], self.labels[index]
@@ -1341,19 +1341,4 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
                         batch_subset_idxs = list(torch.where(trainset.identity == i)[0].cpu().numpy())
                     subset_idxs.extend(batch_subset_idxs)
             trainset = torch.utils.data.Subset(trainset, subset_idxs)
-        return trainset, valset, testset, num_cls
-    elif dset_name == "sst2":
-        '''
-        download data/SST from https://drive.google.com/file/d/14KU6RQJpP6HKKqVGm0OF3MVxtI0NlEcr/view?usp=sharing
-        pass datadir arg in dataset in config appropiriately(...../SST)
-        '''
-        num_cls = 2
-        wordvec_dim = kwargs['dataset'].wordvec_dim
-        weight_path = kwargs['dataset'].weight_path
-        weight_full_path = weight_path+'glove.6B.' + str(wordvec_dim) + 'd.txt'
-        wordvec = loadGloveModel(weight_full_path)
-        trainset = SSTDataset(datadir, 'train', num_cls, wordvec_dim, wordvec)
-        testset = SSTDataset(datadir, 'test', num_cls, wordvec_dim, wordvec)
-        valset = SSTDataset(datadir, 'dev', num_cls, wordvec_dim, wordvec)
-
         return trainset, valset, testset, num_cls
