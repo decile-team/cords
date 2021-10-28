@@ -15,7 +15,7 @@ from cords.utils.data.dataloader.SL.adaptive import GLISTERDataLoader, OLRandomD
     CRAIGDataLoader, GradMatchDataLoader, RandomDataLoader
 from cords.utils.data.datasets.SL import gen_dataset
 from cords.utils.models import *
-from collate import *
+from cords.utils.data.data_utils.collate import *
 
 class TrainClassifier:
     def __init__(self, config_file_data):

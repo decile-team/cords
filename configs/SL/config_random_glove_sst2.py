@@ -1,14 +1,14 @@
 # Learning setting
-from collate import *
+from cords.utils.data.data_utils.collate import *
 
 config = dict(setting="SL",
 
               dataset=dict(name="sst2",
-                           datadir="/home/ayush/Documents/abhishek/data/SST/",
+                           datadir="data/SST/",
                            feature="dss",
                            type="pre-defined",
                            wordvec_dim=300,
-                           weight_path='/home/ayush/Documents/abhishek/glove.6B/',),
+                           weight_path='data/glove.6B/',),
 
               dataloader=dict(shuffle=True,
                               batch_size=16,
@@ -19,7 +19,7 @@ config = dict(setting="SL",
                          type='pre-defined',
                          numclasses=2,
                          wordvec_dim=300,
-                         weight_path='/home/ayush/Documents/abhishek/glove.6B/',
+                         weight_path='data/glove.6B/',
                          hidden_size=150,
                          num_layers=1),
 
@@ -44,7 +44,7 @@ config = dict(setting="SL",
                             fraction=0.3,
                             select_every=5,
                             kappa=0,
-                            collate_fn = collate_fn_weighted),
+                            collate_fn = collate_fn_pad_batch),
 
               train_args=dict(num_epochs=10,
                               device="cuda",
