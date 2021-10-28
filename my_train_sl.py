@@ -13,6 +13,7 @@ from cords.utils.config_utils import load_config_data
 from cords.utils.data.data_utils import WeightedSubset
 from cords.utils.data.dataloader.SL.adaptive import GLISTERDataLoader, OLRandomDataLoader, \
     CRAIGDataLoader, GradMatchDataLoader, RandomDataLoader
+from cords.utils.data.dataloader.SL.nonadaptive import FacLocDataLoader
 from cords.utils.data.datasets.SL import gen_dataset
 from cords.utils.models import *
 from cords.utils.data.data_utils.collate import *
@@ -262,7 +263,8 @@ class TrainClassifier:
             dataloader = RandomDataLoader(trainloader, self.cfg.dss_args, logger,
                                           batch_size=self.cfg.dataloader.batch_size,
                                           shuffle=self.cfg.dataloader.shuffle,
-                                          pin_memory=self.cfg.dataloader.pin_memory, collate_fn = self.cfg.dss_args.collate_fn)
+                                          pin_memory=self.cfg.dataloader.pin_memory, 
+                                          collate_fn = self.cfg.dss_args.collate_fn)
 
         elif self.cfg.dss_args.type == ['OLRandom', 'OLRandom-Warm']:
             """
@@ -274,7 +276,22 @@ class TrainClassifier:
             dataloader = OLRandomDataLoader(trainloader, self.cfg.dss_args, logger,
                                             batch_size=self.cfg.dataloader.batch_size,
                                             shuffle=self.cfg.dataloader.shuffle,
-                                            pin_memory=self.cfg.dataloader.pin_memory)
+                                            pin_memory=self.cfg.dataloader.pin_memory,
+                                            collate_fn = self.cfg.dss_args.collate_fn)
+
+        elif self.cfg.dss_args.type == 'FacLoc':
+            """
+            ############################## Facility Location Dataloader Additional Arguments ##############################
+            """
+            wt_trainset = WeightedSubset(trainset, list(range(len(trainset))), [1] * len(trainset))
+            self.cfg.dss_args.device = self.cfg.train_args.device
+            self.cfg.dss_args.model = model
+            self.cfg.dss_args.data_type = self.cfg.dataset.type
+            dataloader = FacLocDataLoader(trainloader, valloader, self.cfg.dss_args, logger, 
+                                          batch_size=self.cfg.dataloader.batch_size,
+                                          shuffle=self.cfg.dataloader.shuffle,
+                                          pin_memory=self.cfg.dataloader.pin_memory, 
+                                          collate_fn = self.cfg.dss_args.collate_fn)
 
         elif self.cfg.dss_args.type == 'Full':
             """
@@ -350,7 +367,7 @@ class TrainClassifier:
             ################################################# Evaluation Loop #################################################
             """
 
-            if (epoch + 1) % self.cfg.train_args.print_every == 0:
+            if ((epoch + 1) % self.cfg.train_args.print_every == 0) or (epoch == self.cfg.train_args.num_epochs - 1):
                 trn_loss = 0
                 trn_correct = 0
                 trn_total = 0

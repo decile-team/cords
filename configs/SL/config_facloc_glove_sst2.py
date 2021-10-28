@@ -33,30 +33,25 @@ config = dict(setting="SL",
 
               optimizer=dict(type="adam",
                              momentum=0.9,
-                             lr=0.01,
+                             lr=0.001,
                              weight_decay=5e-4),
 
               scheduler=dict(type=None,
                             #  type="cosine_annealing",
                              T_max=300),
 
-              dss_args=dict(type="GradMatch",
-                            fraction=0.1,
-                            select_every=3,
-                            lam=0.5,
-                            selection_type='PerClassPerGradient',
-                            v1=True,
-                            valid=False,
+              dss_args=dict(type="FacLoc",
+                            fraction=0.3,
+                            select_every=5,
                             kappa=0,
-                            eps=1e-100,
-                            linear_layer=True,
-                            collate_fn = collate_fn_pad_batch),
+                            collate_fn = collate_fn_pad_batch,
+                            size_chunk=8534),
 
               train_args=dict(num_epochs=10,
                               device="cuda",
-                              print_every=3,
+                              print_every=5,
                               results_dir='results/',
-                              print_args=["val_loss", "val_acc", "tst_loss", "tst_acc", "time"],
+                              print_args=["trn_loss", "trn_acc", "val_loss", "val_acc", "tst_loss", "tst_acc", "time"],
                               return_args=[]
                               )
               )
