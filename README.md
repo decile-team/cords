@@ -88,6 +88,8 @@ We are continuously incorporating newer and better algorithms into CORDS. Some o
 
 ## Next Steps
 
+## Tutorials
+
 ## Documentation
 
 The documentation for the latest version of CORDS can always be found [here](https://cords.readthedocs.io/en/latest/).
