@@ -10,7 +10,7 @@ subset_config = "configs/SL/config_gradmatchpb_glove_sst2.py",
 # search space for hyper-parameter tuning
 space = dict(learning_rate=tune.uniform(0.001, 0.01), 
         # optimizer= tune.choice(['sgd', 'adam']),
-        epochs = tune.choice([10, 20, 30]),
+        hidden_size = tune.choice([64, 128, 256]),
         trn_batch_size= tune.choice([16, 32, 64]),        
         ),
 
@@ -18,7 +18,7 @@ space = dict(learning_rate=tune.uniform(0.001, 0.01),
 search_algo = "TPE",
 
 # number of hyper-parameter set to try
-num_evals = 25,
+num_evals = 27,
 
 # metric to be optimized, for 'mean_loss' metric mode should be 'min'
 metric = "mean_accuracy",

@@ -39,7 +39,6 @@ class HyperParamTuning:
         self.train_class.cfg['report_tune'] = True
         self.train_class.train()
 
-    @ray.remote(num_gpus=1)
     def start_eval(self):
         analysis = tune.run(
             self.param_tune,
@@ -140,6 +139,8 @@ class HyperParamTuning:
             config['train_args']['num_epochs'] = new_config['epochs']
         if 'trn_batch_size' in new_config:
             config['dataloader']['batch_size'] = new_config['trn_batch_size']
+        if 'hidden_size' in new_config:
+            config['model']['hidden_size'] = new_config['hidden_size']
         
         return config
         
