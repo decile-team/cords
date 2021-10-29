@@ -14,9 +14,9 @@ class LSTMClassifier(nn.Module):
         wordvec = loadGloveModel(weight_full_path)
         weight = torch.tensor(wordvec.values, dtype=torch.float)  # word embedding for the embedding layer
         
-        self.word_embeddings = nn.Embedding(
+        self.embedding = nn.Embedding(
             weight.shape[0], self.embedding_length)  # Embedding layer
-        self.word_embeddings = self.word_embeddings.from_pretrained(
+        self.embedding = self.embedding.from_pretrained(
             weight, freeze=False)  # Load pretrianed word embedding, and fine-tuing
         self.lstm = nn.LSTM(self.embedding_length,
                             self.hidden_size, num_layers=num_layers, batch_first=True)  # lstm
@@ -25,10 +25,10 @@ class LSTMClassifier(nn.Module):
     def forward(self, input_sentence, last=False, freeze=False):
         if freeze:
             with torch.no_grad():
-                x = self.word_embeddings(input_sentence)  # (batch_size, batch_dim, embedding_length)
+                x = self.embedding(input_sentence)  # (batch_size, batch_dim, embedding_length)
                 output, (final_hidden_state, final_cell_state) = self.lstm(x)
         else:
-            x = self.word_embeddings(input_sentence)  # (batch_size, batch_dim, embedding_length)
+            x = self.embedding(input_sentence)  # (batch_size, batch_dim, embedding_length)
             output, (final_hidden_state, final_cell_state) = self.lstm(x)
         logits = self.fc(final_hidden_state[-1])  # final_hidden_state.size() = (1, batch_size, hidden_size) & logits.size() = (batch_size, num_classes)
         if last:

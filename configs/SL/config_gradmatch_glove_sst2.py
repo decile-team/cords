@@ -6,7 +6,7 @@ config = dict(setting="SL",
               dataset=dict(name="sst2",
                            datadir="/home/ayush/Documents/abhishek/data/SST/",
                            feature="dss",
-                           type="pre-defined",
+                           type="text",
                            wordvec_dim=300,
                            weight_path='/home/ayush/Documents/abhishek/glove.6B/',),
 
