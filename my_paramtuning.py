@@ -119,13 +119,14 @@ class HyperParamTuning:
         # self.train_class.cfg['dss_args']['type'] = 'Full'
         self.train_class.cfg['dss_args']['type'] = 'GradMatchPB'
         self.train_class.cfg['dss_args']['fraction'] = 0.3
+        self.train_class.cfg['dss_args']['select_every'] = 5
         self.train_class.cfg['dss_args']['lam'] = 0
-
         self.train_class.cfg['dss_args']['selection_type'] = 'PerBatch'
         self.train_class.cfg['dss_args']['v1'] = True
         self.train_class.cfg['dss_args']['valid'] = False
         self.train_class.cfg['dss_args']['eps'] = 1e-100
         self.train_class.cfg['dss_args']['linear_layer'] = True
+        self.train_class.cfg['dss_args']['kappa'] = 0
 
         self.train_class.train()
     
