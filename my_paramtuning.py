@@ -45,10 +45,10 @@ class HyperParamTuning:
         analysis = tune.run(
             self.param_tune,
             num_samples=self.cfg['num_evals'],
-            # config=self.cfg['space'],
+            config=self.cfg['space'],
             search_alg=self.search_algo,
             scheduler=self.scheduler,
-            resources_per_trial={'gpu': 1},
+            resources_per_trial=self.cfg['resources'],
             local_dir=self.cfg['log_dir']+self.subset_method+'/',
             log_to_file=True,
             name=self.cfg['name'],
@@ -105,7 +105,7 @@ class HyperParamTuning:
         if method == "ASHA":
             scheduler = AsyncHyperBandScheduler(metric = metric, mode = mode)
         elif method == "hyperband" or method == "HB":
-            scheduler = HyperBandScheduler(metric = metric, mode = mode)
+            scheduler = HyperBandScheduler(metric = metric, mode = mode, max_t =  self.train_class.cfg['train_args']['num_epochs'])
         elif method == "BOHB":
             scheduler = HyperBandForBOHB(metric = metric, mode = mode)
         else:
@@ -128,7 +128,7 @@ class HyperParamTuning:
         self.train_class.cfg['dss_args']['valid'] = False
         self.train_class.cfg['dss_args']['eps'] = 1e-100
         self.train_class.cfg['dss_args']['linear_layer'] = True
-        self.train_class.cfg['dss_args']['kappa'] = 0
+        self.train_class.cfg['dss_args']['kappa'] = 0.5
         self.train_class.train()
     
     def update_parameters(self, config, new_config):

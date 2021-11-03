@@ -16,16 +16,16 @@ if __name__ == '__main__':
     parser.add_argument('--print_every', type=int, default=3)
     parser.add_argument('--wordvec_dim', type=int, default=300, help='Dimension of GloVe vectors')
 
-    parser.add_argument('--fraction', type=float, default=0.1, help='fraction in subset selection')
+    parser.add_argument('--fraction', type=float, default=0.01, help='fraction in subset selection')
     parser.add_argument('--select_every', type=int, default=5, help='perform subset selection every _ epochs')
-    parser.add_argument('--change', type=int, default=0, help='change params mentioned for train class?')
+    parser.add_argument('--change', type=int, default=1, help='change params mentioned for train class?')
 
     parser.add_argument('--config_file', type=str, default='configs/SL/config_facloc_glove_sst2.py')
     parser.add_argument('--config_hp', type=str, default='configs/SL/config_hp.py')
     parser.add_argument('--is_hp', type=int, default=1, help='do we perform hyper parameter tuning?')
     parser.add_argument('--final_train', type=int, default=1, help='need final training hyper parameter tuning?')
     args = parser.parse_args()
-    weight_path = '/home/ayush/Documents/abhishek/glove.6B/'
+    weight_path = '/home/kk/cords/data/glove.6B/'
 
     if bool(args.is_hp):
         config_hp_data = load_config_data(args.config_hp)
