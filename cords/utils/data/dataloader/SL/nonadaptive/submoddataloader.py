@@ -3,7 +3,7 @@ import apricot
 import math
 from .nonadaptivedataloader import NonAdaptiveDSSDataLoader
 import torch
-
+import time
 
 class SubmodDataLoader(NonAdaptiveDSSDataLoader):
     # Currently split dataset with size of |max_chunk| then proportionably select samples in every chunk
@@ -18,6 +18,7 @@ class SubmodDataLoader(NonAdaptiveDSSDataLoader):
         self.logger.info("You are using max_chunk: %s", dss_args.size_chunk) 
 
     def _init_subset_indices(self): 
+        start_time = time.time()
         for i, (x, y) in enumerate(self.train_loader):
             if i == 0:
                 if self.dss_args.data_type == 'text':
@@ -53,6 +54,8 @@ class SubmodDataLoader(NonAdaptiveDSSDataLoader):
             _sample_indices = self._chunk_select(chunk, n_samples)
             _sample_indices = [_sample_indice + l_idx for _sample_indice in _sample_indices]
             sample_indices += _sample_indices
+        time_taken = time.time() - start_time
+        self.logger.info("Submodular subset selection time is %.4f", time_taken)
         return np.array(sample_indices)
 
 
