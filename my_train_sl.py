@@ -17,6 +17,7 @@ from cords.utils.data.dataloader.SL.nonadaptive import FacLocDataLoader
 from cords.utils.data.datasets.SL import gen_dataset
 from cords.utils.models import *
 from cords.utils.data.data_utils.collate import *
+import pickle
 
 class TrainClassifier:
     def __init__(self, config_file_data):
@@ -139,6 +140,20 @@ class TrainClassifier:
         metrics = checkpoint['metrics']
         return start_epoch, model, optimizer, loss, metrics
 
+    def count_pkl(self, path):
+        if not osp.exists(path):
+            return -1
+        return_val = 0
+        file = open(path, 'rb')
+        while(True):
+            try:
+                _ = pickle.load(file)
+                return_val += 1
+            except EOFError:
+                break
+        file.close()
+        return return_val
+
     def train(self):
         """
         ############################## General Training Loop with Data Selection Strategies ##############################
@@ -158,6 +173,13 @@ class TrainClassifier:
         trn_batch_size = self.cfg.dataloader.batch_size
         val_batch_size = self.cfg.dataloader.batch_size
         tst_batch_size = self.cfg.dataloader.batch_size
+
+        if self.cfg.dataset.name == "sst2_facloc" and self.count_pkl(self.cfg.dataset.ss_path) == 1:
+            self.cfg.dss_args.type = 'Full'
+            file_ss = open(self.cfg.dataset.ss_path, 'rb')
+            ss_indices = pickle.load(file_ss)
+            file_ss.close()
+            trainset = torch.utils.data.Subset(trainset, ss_indices)
 
         # Creating the Data Loaders
         trainloader = torch.utils.data.DataLoader(trainset, batch_size=trn_batch_size,
@@ -288,11 +310,21 @@ class TrainClassifier:
             self.cfg.dss_args.device = self.cfg.train_args.device
             self.cfg.dss_args.model = model
             self.cfg.dss_args.data_type = self.cfg.dataset.type
+            
             dataloader = FacLocDataLoader(trainloader, valloader, self.cfg.dss_args, logger, 
                                           batch_size=self.cfg.dataloader.batch_size,
                                           shuffle=self.cfg.dataloader.shuffle,
                                           pin_memory=self.cfg.dataloader.pin_memory, 
                                           collate_fn = self.cfg.dss_args.collate_fn)
+            if self.cfg.dataset.name == "sst2_facloc" and self.count_pkl(self.cfg.dataset.ss_path) < 1:
+
+                ss_indices = dataloader.subset_indices
+                file_ss = open(self.cfg.dataset.ss_path, 'wb')
+                try:
+                    pickle.dump(ss_indices, file_ss)
+                except EOFError:
+                    pass
+                file_ss.close()
 
         elif self.cfg.dss_args.type == 'Full':
             """
