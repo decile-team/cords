@@ -121,12 +121,14 @@ class HyperParamTuning:
         # self.train_class.cfg['dss_args']['type'] = 'Full'
         self.train_class.cfg['dss_args']['type'] = 'GradMatchPB'
         self.train_class.cfg['dss_args']['fraction'] = 0.3
+        self.train_class.cfg['dss_args']['select_every'] = 5
         self.train_class.cfg['dss_args']['lam'] = 0
         self.train_class.cfg['dss_args']['selection_type'] = 'PerBatch'
         self.train_class.cfg['dss_args']['v1'] = True
         self.train_class.cfg['dss_args']['valid'] = False
         self.train_class.cfg['dss_args']['eps'] = 1e-100
         self.train_class.cfg['dss_args']['linear_layer'] = True
+        self.train_class.cfg['dss_args']['kappa'] = 0
         self.train_class.train()
     
     def update_parameters(self, config, new_config):
@@ -140,7 +142,8 @@ class HyperParamTuning:
         if 'trn_batch_size' in new_config:
             config['dataloader']['batch_size'] = new_config['trn_batch_size']
         if 'hidden_size' in new_config:
-            config['model']['hidden_size'] = new_config['hidden_size']      
+            config['model']['hidden_size'] = new_config['hidden_size']
+        
         return config
         
 

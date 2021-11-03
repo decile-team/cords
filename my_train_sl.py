@@ -221,7 +221,8 @@ class TrainClassifier:
             dataloader = GradMatchDataLoader(trainloader, valloader, self.cfg.dss_args, logger,
                                              batch_size=self.cfg.dataloader.batch_size,
                                              shuffle=self.cfg.dataloader.shuffle,
-                                             pin_memory=self.cfg.dataloader.pin_memory, collate_fn = self.cfg.dss_args.collate_fn)
+                                             pin_memory=self.cfg.dataloader.pin_memory,
+                                             collate_fn = self.cfg.dss_args.collate_fn)
 
         elif self.cfg.dss_args.type in ['GLISTER', 'GLISTER-Warm', 'GLISTERPB', 'GLISTERPB-Warm']:
             """
@@ -302,7 +303,8 @@ class TrainClassifier:
             dataloader = torch.utils.data.DataLoader(wt_trainset,
                                                      batch_size=self.cfg.dataloader.batch_size,
                                                      shuffle=self.cfg.dataloader.shuffle,
-                                                     pin_memory=self.cfg.dataloader.pin_memory, collate_fn=self.cfg.dss_args.collate_fn)
+                                                     pin_memory=self.cfg.dataloader.pin_memory,
+                                                     collate_fn=self.cfg.dss_args.collate_fn)
 
         """
         ################################################# Checkpoint Loading #################################################
