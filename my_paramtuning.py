@@ -14,11 +14,13 @@ from ray.tune.suggest.hebo import HEBOSearch
 from ray.tune.schedulers import AsyncHyperBandScheduler
 from ray.tune.schedulers import HyperBandScheduler
 from ray.tune.schedulers.hb_bohb import HyperBandForBOHB
+from ray.tune.suggest import BasicVariantGenerator
 from ray import tune
 import ray
 import sys
 from my_train_sl import TrainClassifier
 
+# @ray.remote(num_gpus=1)
 class HyperParamTuning:
     def __init__(self, config_file_data, train_config_data):
         # self.cfg = load_config_data(config_file)
@@ -39,7 +41,6 @@ class HyperParamTuning:
         self.train_class.cfg['report_tune'] = True
         self.train_class.train()
 
-    @ray.remote(num_gpus=1)
     def start_eval(self):
         analysis = tune.run(
             self.param_tune,
@@ -121,13 +122,11 @@ class HyperParamTuning:
         self.train_class.cfg['dss_args']['type'] = 'GradMatchPB'
         self.train_class.cfg['dss_args']['fraction'] = 0.3
         self.train_class.cfg['dss_args']['lam'] = 0
-
         self.train_class.cfg['dss_args']['selection_type'] = 'PerBatch'
         self.train_class.cfg['dss_args']['v1'] = True
         self.train_class.cfg['dss_args']['valid'] = False
         self.train_class.cfg['dss_args']['eps'] = 1e-100
         self.train_class.cfg['dss_args']['linear_layer'] = True
-
         self.train_class.train()
     
     def update_parameters(self, config, new_config):
@@ -140,7 +139,8 @@ class HyperParamTuning:
             config['train_args']['num_epochs'] = new_config['epochs']
         if 'trn_batch_size' in new_config:
             config['dataloader']['batch_size'] = new_config['trn_batch_size']
-        
+        if 'hidden_size' in new_config:
+            config['model']['hidden_size'] = new_config['hidden_size']      
         return config
         
 
