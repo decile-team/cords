@@ -13,7 +13,8 @@ import re
 import pandas as pd
 import torch
 import torchtext.data
-
+import pickle
+from cords.utils.data.data_utils import WeightedSubset
 
 def clean_data(sentence):
     # From yoonkim: https://github.com/yoonkim/CNN_sentence/blob/master/process_data.py
@@ -47,7 +48,7 @@ class SSTDataset(Dataset):
             device (str, optional): torch.device. Defaults to 'cpu'.
         """
         phrase_ids = pd.read_csv(path_to_dataset + 'phrase_ids.' +
-                                 name + '.txt', header=None, encoding='utf-8', dtype=int)
+                                name + '.txt', header=None, encoding='utf-8', dtype=int)
         phrase_ids = set(np.array(phrase_ids).squeeze())  # phrase_id in this dataset
         self.num_classes = num_classes
         phrase_dict = {}  # {id->phrase} 
@@ -69,7 +70,7 @@ class SSTDataset(Dataset):
                     phrase_dict[int(phrase_id)] = phrase
                     i += 1
         f.close()
-  
+
         self.phrase_vec = []  # word index in glove
         # label of each sentence
         self.labels = torch.zeros((len(phrase_dict),), dtype=torch.long)
@@ -92,7 +93,6 @@ class SSTDataset(Dataset):
 
     def __len__(self):
         return len(self.phrase_vec)
-
 
 ## Custom PyTorch Dataset Class wrapper
 class CustomDataset(Dataset):
@@ -1342,7 +1342,7 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
                     subset_idxs.extend(batch_subset_idxs)
             trainset = torch.utils.data.Subset(trainset, subset_idxs)
         return trainset, valset, testset, num_cls
-    elif dset_name == "sst2":
+    elif dset_name == "sst2" or dset_name == "sst2_facloc":
         '''
         download data/SST from https://drive.google.com/file/d/14KU6RQJpP6HKKqVGm0OF3MVxtI0NlEcr/view?usp=sharing
         pass datadir arg in dataset in config appropiriately(...../SST)

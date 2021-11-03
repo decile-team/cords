@@ -20,9 +20,9 @@ if __name__ == '__main__':
     parser.add_argument('--select_every', type=int, default=5, help='perform subset selection every _ epochs')
     parser.add_argument('--change', type=int, default=0, help='change params mentioned for train class?')
 
-    parser.add_argument('--config_file', type=str, default='configs/SL/config_facloc_glove_sst2.py')
-    parser.add_argument('--config_hp', type=str, default='configs/SL/config_hp.py')
-    parser.add_argument('--is_hp', type=int, default=1, help='do we perform hyper parameter tuning?')
+    parser.add_argument('--config_file', type=str, default='/home/ayush/Documents/abhishek/cords/configs/SL/config_facloc_glove_sst2.py')
+    parser.add_argument('--config_hp', type=str, default='/home/ayush/Documents/abhishek/cords/configs/SL/config_hp.py')
+    parser.add_argument('--is_hp', type=int, default=0, help='do we perform hyper parameter tuning?')
     parser.add_argument('--final_train', type=int, default=1, help='need final training hyper parameter tuning?')
     args = parser.parse_args()
     weight_path = '/home/ayush/Documents/abhishek/glove.6B/'
