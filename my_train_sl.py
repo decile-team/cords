@@ -174,7 +174,7 @@ class TrainClassifier:
         val_batch_size = self.cfg.dataloader.batch_size
         tst_batch_size = self.cfg.dataloader.batch_size
 
-        if self.cfg.dataset.name == "sst2_facloc" and self.count_pkl(self.cfg.dataset.ss_path) == 1:
+        if self.cfg.dataset.name == "sst2_facloc" and self.count_pkl(self.cfg.dataset.ss_path) == 1 and self.cfg.dss_args.type == 'FacLoc':
             self.cfg.dss_args.type = 'Full'
             file_ss = open(self.cfg.dataset.ss_path, 'rb')
             ss_indices = pickle.load(file_ss)

@@ -48,7 +48,7 @@ config = dict(setting="SL",
                             collate_fn = collate_fn_pad_batch,
                             size_chunk=8534),
 
-              train_args=dict(num_epochs=4,
+              train_args=dict(num_epochs=20,
                               device="cuda",
                               print_every=3,
                               results_dir='results/',

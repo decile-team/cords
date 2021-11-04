@@ -25,7 +25,7 @@ if __name__ == '__main__':
     parser.add_argument('--is_hp', type=int, default=0, help='do we perform hyper parameter tuning?')
     parser.add_argument('--final_train', type=int, default=1, help='need final training hyper parameter tuning?')
     args = parser.parse_args()
-    weight_path = '/home/kk/cords/data/glove.6B/'
+    weight_path = '/home/ayush/Documents/abhishek/glove.6B/'
 
     if bool(args.is_hp):
         config_hp_data = load_config_data(args.config_hp)
