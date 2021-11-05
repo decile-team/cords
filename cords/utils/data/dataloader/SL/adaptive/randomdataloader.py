@@ -14,7 +14,7 @@ class RandomDataLoader(AdaptiveDSSDataLoader):
         start = time.time()
         self.logger.debug("Epoch: {0:d}, requires subset selection. ".format(self.cur_epoch))
         self.logger.debug("Random budget: %d", self.budget)
-        subset_indices, _ = self.strategy.select(self.budget)
+        subset_indices, subset_weights = self.strategy.select(self.budget)
         end = time.time()
         self.logger.info("Epoch: {0:d}, Random subset selection finished, takes {1:.4f}. ".format(self.cur_epoch, (end - start)))
-        return subset_indices
+        return subset_indices, subset_weights
