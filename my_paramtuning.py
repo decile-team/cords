@@ -27,37 +27,48 @@ class HyperParamTuning:
         self.cfg = config_file_data
         self.train_class = TrainClassifier(train_config_data)
         # self.train_class = TrainClassifier(self.cfg['subset_config'])
-        self.train_class.cfg['train_args']['print_every'] = 1
-        self.search_algo = self.get_search_algo(self.cfg['search_algo'], self.cfg['space'], self.cfg['metric'], self.cfg['mode'])
-        self.scheduler = self.get_scheduler(self.cfg['scheduler'], self.cfg['metric'], self.cfg['mode'])
+        self.train_class.cfg.train_args.print_every = 1
+        self.search_algo = self.get_search_algo(self.cfg.search_algo, self.cfg.space, self.cfg.metric, self.cfg.mode)
+        self.scheduler = self.get_scheduler(self.cfg.scheduler, self.cfg.metric, self.cfg.mode)
         # save subset method, to be used in log dir name
-        self.subset_method = self.train_class.cfg['dss_args']['type']
+        self.subset_method = self.train_class.cfg.dss_args.type
 
     def param_tune(self, config):
         #update parameters in config dict
         new_config = self.update_parameters(self.train_class.cfg, config)
         self.train_class.cfg = new_config
         # turn on reporting to ray every time
-        self.train_class.cfg['report_tune'] = True
+        self.train_class.cfg.report_tune = True
         self.train_class.train()
 
     def start_eval(self):
-        analysis = tune.run(
-            self.param_tune,
-            num_samples=self.cfg['num_evals'],
-            config=self.cfg['space'],
-            search_alg=self.search_algo,
-            scheduler=self.scheduler,
-            resources_per_trial=self.cfg['resources'],
-            local_dir=self.cfg['log_dir']+self.subset_method+'/',
-            log_to_file=True,
-            name=self.cfg['name'],
-            resume=self.cfg['resume'])
-    
-        best_config = analysis.get_best_config(metric=self.cfg['metric'], mode=self.cfg['mode'])
+        if self.search_algo is None:
+            analysis = tune.run(
+                self.param_tune,
+                num_samples=self.cfg.num_evals,
+                config=self.cfg.space,
+                search_alg=self.search_algo,
+                scheduler=self.scheduler,
+                resources_per_trial=self.cfg.resources,
+                local_dir=self.cfg.log_dir+self.subset_method+'/',
+                log_to_file=True,
+                name=self.cfg.name,
+                resume=self.cfg.resume)
+        else:
+            analysis = tune.run(
+                self.param_tune,
+                num_samples=self.cfg.num_evals,
+                search_alg=self.search_algo,
+                scheduler=self.scheduler,
+                resources_per_trial=self.cfg.resources,
+                local_dir=self.cfg.log_dir+self.subset_method+'/',
+                log_to_file=True,
+                name=self.cfg.name,
+                resume=self.cfg.resume)
+        best_config = analysis.get_best_config(metric=self.cfg.metric, mode=self.cfg.mode)
         print("Best Config: ", best_config)
 
-        if self.cfg['final_train']:
+        if self.cfg.final_train:
             self.final_train(best_config)
 
     def get_search_algo(self, method, space, metric, mode):
@@ -105,7 +116,8 @@ class HyperParamTuning:
         if method == "ASHA":
             scheduler = AsyncHyperBandScheduler(metric = metric, mode = mode)
         elif method == "hyperband" or method == "HB":
-            scheduler = HyperBandScheduler(metric = metric, mode = mode, max_t =  self.train_class.cfg['train_args']['num_epochs'])
+            scheduler = HyperBandScheduler(metric = metric, mode = mode, 
+                        max_t = self.train_class.cfg.train_args.num_epochs)
         elif method == "BOHB":
             scheduler = HyperBandForBOHB(metric = metric, mode = mode)
         else:
@@ -117,33 +129,31 @@ class HyperParamTuning:
         # change strategy to Full (i.e use whole dataset)
         # update (optimized) parameters
         new_config = self.update_parameters(self.train_class.cfg, best_params)
+        new_config.dss_args.type = 'GradMatchPB'
+        new_config.dss_args.fraction = 0.3
+        new_config.dss_args.select_every = 5
+        new_config.dss_args.lam = 0
+        new_config.dss_args.selection_type = 'PerBatch'
+        new_config.dss_args.v1 = True
+        new_config.dss_args.valid = False
+        new_config.dss_args.eps = 1e-100
+        new_config.dss_args.linear_layer = True
+        new_config.dss_args.kappa = 0
         self.train_class.cfg = new_config
-        # self.train_class.cfg['dss_args']['type'] = 'Full'
-        self.train_class.cfg['dss_args']['type'] = 'GradMatchPB'
-        self.train_class.cfg['dss_args']['fraction'] = 0.3
-        self.train_class.cfg['dss_args']['select_every'] = 5
-        self.train_class.cfg['dss_args']['lam'] = 0
-        self.train_class.cfg['dss_args']['selection_type'] = 'PerBatch'
-        self.train_class.cfg['dss_args']['v1'] = True
-        self.train_class.cfg['dss_args']['valid'] = False
-        self.train_class.cfg['dss_args']['eps'] = 1e-100
-        self.train_class.cfg['dss_args']['linear_layer'] = True
-        self.train_class.cfg['dss_args']['kappa'] = 0.5
         self.train_class.train()
     
     def update_parameters(self, config, new_config):
         # a generic function to update parameters
         if 'learning_rate' in new_config:
-            config['optimizer']['lr'] = new_config['learning_rate']
+            config.optimizer.lr = new_config.learning_rate
         if 'optimizer' in new_config:
-            config['optimizer']['type'] = new_config['optimizer']
+            config.optimizer.type = new_config.optimizer
         if 'epochs' in new_config:
-            config['train_args']['num_epochs'] = new_config['epochs']
+            config.train_args.num_epochs = new_config.epochs
         if 'trn_batch_size' in new_config:
-            config['dataloader']['batch_size'] = new_config['trn_batch_size']
+            config.dataloader.batch_size = new_config.trn_batch_size
         if 'hidden_size' in new_config:
-            config['model']['hidden_size'] = new_config['hidden_size']
-        
+            config.model.hidden_size = new_config.hidden_size     
         return config
         
 
