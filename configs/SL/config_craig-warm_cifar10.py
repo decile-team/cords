@@ -3,7 +3,7 @@ from torch.optim import optimizer
 
 
 config = dict(setting="SL",
-
+              is_reg = False,
               dataset=dict(name="cifar10",
                            datadir="../data",
                            feature="dss",

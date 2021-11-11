@@ -82,6 +82,8 @@ class TrainClassifier:
             model = MobileNet2(output_size=self.cfg.model.numclasses)
         elif self.cfg.model.architecture == 'HyperParamNet':
             model = HyperParamNet(self.cfg.model.l1, self.cfg.model.l2)
+        elif self.cfg.model.architecture == 'ThreeLayerNet':
+            model = ThreeLayerNet(self.cfg.model.input_dim, self.cfg.model.num_classes, self.cfg.model.h1, self.cfg.model.h2)
         elif self.cfg.model.architecture == 'LSTM':
             model = LSTMClassifier(self.cfg.model.numclasses, self.cfg.model.wordvec_dim, \
                  self.cfg.model.weight_path, self.cfg.model.num_layers, self.cfg.model.hidden_size)
@@ -96,6 +98,9 @@ class TrainClassifier:
         if self.cfg.loss.type == "CrossEntropyLoss":
             criterion = nn.CrossEntropyLoss()
             criterion_nored = nn.CrossEntropyLoss(reduction='none')
+        elif self.cfg.loss.type == "MeanSquaredLoss":
+            criterion = nn.MSELoss()
+            criterion_nored = nn.MSELoss(reduction='none')
         return criterion, criterion_nored
 
     def optimizer_with_scheduler(self, model):
@@ -388,9 +393,10 @@ class TrainClassifier:
                 loss.backward()
                 subtrn_loss += loss.item()
                 optimizer.step()
-                _, predicted = outputs.max(1)
-                subtrn_total += targets.size(0)
-                subtrn_correct += predicted.eq(targets).sum().item()
+                if not self.cfg.is_reg:
+                    _, predicted = outputs.max(1)
+                    subtrn_total += targets.size(0)
+                    subtrn_correct += predicted.eq(targets).sum().item()
             epoch_time = time.time() - start_time
             if not scheduler == None:
                 scheduler.step()

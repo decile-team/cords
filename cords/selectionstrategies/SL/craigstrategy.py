@@ -273,21 +273,12 @@ class CRAIGStrategy(DataSelectionStrategy):
             total_greedy_list = list(np.array(total_greedy_list)[rand_indices])
             gammas = list(np.array(gammas)[rand_indices])
         elif self.selection_type == 'Supervised':
-            for i in range(self.num_classes):
-                if i == 0:
-                    idxs = torch.where(labels == i)[0]
-                    N = len(idxs)
-                    self.compute_score(model_params, idxs)
-                    row = idxs.repeat_interleave(N)
-                    col = idxs.repeat(N)
-                    data = self.dist_mat.flatten()
-                else:
-                    idxs = torch.where(labels == i)[0]
-                    N = len(idxs)
-                    self.compute_score(model_params, idxs)
-                    row = torch.cat((row, idxs.repeat_interleave(N)), dim=0)
-                    col = torch.cat((col, idxs.repeat(N)), dim=0)
-                    data = np.concatenate([data, self.dist_mat.flatten()], axis=0)
+            idxs = torch.arange(0, self.N_trn).long()
+            N = len(idxs)
+            self.compute_score(model_params, idxs)
+            row = idxs.repeat_interleave(N)
+            col = idxs.repeat(N)
+            data = self.dist_mat.flatten()
             sparse_simmat = csr_matrix((data, (row.numpy(), col.numpy())), shape=(self.N_trn, self.N_trn))
             self.dist_mat = sparse_simmat
             fl = apricot.functions.facilityLocation.FacilityLocationSelection(random_state=0, metric='precomputed',

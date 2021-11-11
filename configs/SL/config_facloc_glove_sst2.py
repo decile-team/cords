@@ -2,7 +2,7 @@
 from cords.utils.data.data_utils.collate import *
 
 config = dict(setting="SL",
-
+              is_reg = False,
               dataset=dict(name="sst2_facloc",
                            datadir="/home/kk/cords/data/SST/",
                            feature="dss",

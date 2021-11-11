@@ -16,6 +16,25 @@ import torchtext.data
 import pickle
 from cords.utils.data.data_utils import WeightedSubset
 
+
+class standard_scaling:
+    def __init__(self):
+        self.std = None
+        self.mean = None
+
+    def fit_transform(self, data):
+        self.std = np.std(data, axis=0)
+        self.mean = np.mean(data, axis=0)
+        transformed_data = np.subtract(data, self.mean)
+        transformed_data = np.divide(transformed_data, self.std)
+        return transformed_data
+
+    def transform(self, data):
+        transformed_data = np.subtract(data, self.mean)
+        transformed_data = np.divide(transformed_data, self.std)
+        return transformed_data
+
+
 def clean_data(sentence):
     # From yoonkim: https://github.com/yoonkim/CNN_sentence/blob/master/process_data.py
     sentence = re.sub(r"[^A-Za-z0-9(),!?\'\`]", " ", sentence)
@@ -96,15 +115,22 @@ class SSTDataset(Dataset):
 
 ## Custom PyTorch Dataset Class wrapper
 class CustomDataset(Dataset):
-    def __init__(self, data, target, device=None, transform=None):
+    def __init__(self, data, target, device=None, transform=None, isreg=False):
         self.transform = transform
         if device is not None:
             # Push the entire data to given device, eg: cuda:0
             self.data = data.float().to(device)
-            self.targets = target.long().to(device)
+            if isreg:
+                self.targets = target.float().to(device)
+            else:
+                self.targets = target.long().to(device)
+
         else:
             self.data = data.float()
-            self.targets = target.long()
+            if isreg:
+                self.targets = target.float()
+            else:
+                self.targets = target.long()
 
     def __len__(self):
         return len(self.targets)
@@ -401,16 +427,21 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         #train, test = train_test_split(list(range(X.shape[0])), test_size=.3)
         x_trn, x_tst, y_trn, y_tst = train_test_split(x_trn, y_trn, test_size=0.2, random_state=42)
         x_trn, x_val, y_trn, y_val = train_test_split(x_trn, y_trn, test_size=0.1, random_state=42)
+        scaler = standard_scaling()
+        x_trn = scaler.fit_transform(x_trn)
+        x_val = scaler.transform(x_val)
+        x_tst = scaler.transform(x_tst)
+        y_trn = y_trn.reshape((-1, 1))
+        y_val = y_val.reshape((-1, 1))
+        y_tst = y_tst.reshape((-1, 1))
         if isnumpy:
             fullset = (x_trn, y_trn)
             valset = (x_val, y_val)
             testset = (x_tst, y_tst)
-
         else:
-            fullset = CustomDataset(torch.from_numpy(x_trn), torch.from_numpy(y_trn))
-            valset = CustomDataset(torch.from_numpy(x_val), torch.from_numpy(y_val))
-            testset = CustomDataset(torch.from_numpy(x_tst), torch.from_numpy(y_tst))
-
+            fullset = CustomDataset(torch.from_numpy(x_trn), torch.from_numpy(y_trn), isreg=True)
+            valset = CustomDataset(torch.from_numpy(x_val), torch.from_numpy(y_val), isreg=True)
+            testset = CustomDataset(torch.from_numpy(x_tst), torch.from_numpy(y_tst), isreg=True)
         return fullset, valset, testset, num_cls
 
     elif dset_name == "adult":
