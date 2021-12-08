@@ -15,7 +15,7 @@ import torch
 import torchtext.data
 import pickle
 from cords.utils.data.data_utils import WeightedSubset
-
+import pandas as pd
 
 class standard_scaling:
     def __init__(self):
@@ -218,6 +218,23 @@ def libsvm_file_load(path, dim, save_data=False):
         np.save(data_np_path, X_data)
         np.save(target_np_path, Y_label)
     return (X_data, Y_label)
+
+def clean_lawschool_full(path):
+    df = pd.read_csv(path)
+    df = df.dropna()
+    # remove y from df
+    y = df['ugpa']
+    y = y / 4
+    df = df.drop('ugpa', 1)
+    # convert gender variables to 0,1
+    df['gender'] = df['gender'].map({'male': 1, 'female': 0})
+    # add bar1 back to the feature set
+    df_bar = df['bar1']
+    df = df.drop('bar1', 1)
+    df['bar1'] = [int(grade == 'P') for grade in df_bar]
+    # df['race'] = [int(race == 7.0) for race in df['race']]
+    # a = df['race']
+    return df.to_numpy(), y.to_numpy()
 
 
 def census_load(path, dim, save_data=False):
@@ -444,6 +461,81 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
             testset = CustomDataset(torch.from_numpy(x_tst), torch.from_numpy(y_tst), isreg=True)
         return fullset, valset, testset, num_cls
 
+    elif dset_name in ["cadata","abalone","cpusmall",'LawSchool']:
+
+        if dset_name == "cadata":
+            trn_file = os.path.join(datadir, 'cadata.txt')
+            x_trn, y_trn = libsvm_file_load(trn_file, dim=8)
+
+        elif dset_name == "abalone":
+            trn_file = os.path.join(datadir, 'abalone_scale.txt')
+            x_trn, y_trn = libsvm_file_load(trn_file, 8)
+
+        elif dset_name == "cpusmall":
+            trn_file = os.path.join(datadir, 'cpusmall_scale.txt')
+            x_trn, y_trn = libsvm_file_load(trn_file, 12)
+
+        elif dset_name == 'LawSchool':
+            x_trn, y_trn = clean_lawschool_full(os.path.join(datadir, 'lawschool.csv'))
+
+        # create train and test indices
+        #train, test = train_test_split(list(range(X.shape[0])), test_size=.3)
+        x_trn, x_tst, y_trn, y_tst = train_test_split(x_trn, y_trn, test_size=0.2, random_state=42)
+        x_trn, x_val, y_trn, y_val = train_test_split(x_trn, y_trn, test_size=0.1, random_state=42)
+
+        sc = StandardScaler()
+        x_trn = sc.fit_transform(x_trn)
+        x_val = sc.transform(x_val)
+        x_tst = sc.transform(x_tst)
+
+        sc_l = StandardScaler()
+        y_trn = np.reshape(sc_l.fit_transform(np.reshape(y_trn, (-1, 1))), (-1))
+        y_val = np.reshape(sc_l.fit_transform(np.reshape(y_val, (-1, 1))), (-1))
+        y_tst = np.reshape(sc_l.fit_transform(np.reshape(y_tst, (-1, 1))), (-1))
+
+        if isnumpy:
+            fullset = (x_trn, y_trn)
+            valset = (x_val, y_val)
+            testset = (x_tst, y_tst)
+
+        else:
+            fullset = CustomDataset(torch.from_numpy(x_trn), torch.from_numpy(y_trn),if_reg=True)
+            valset = CustomDataset(torch.from_numpy(x_val), torch.from_numpy(y_val),if_reg=True)
+            testset = CustomDataset(torch.from_numpy(x_tst), torch.from_numpy(y_tst),if_reg=True)
+
+        return fullset, valset, testset, 1
+
+    elif dset_name == 'MSD':
+
+        trn_file = os.path.join(datadir, 'YearPredictionMSD')
+        x_trn, y_trn = libsvm_file_load(trn_file, 90)
+
+        tst_file = os.path.join(datadir, 'YearPredictionMSD.t')
+        x_tst, y_tst = libsvm_file_load(tst_file, 90)
+        x_trn, x_val, y_trn, y_val = train_test_split(x_trn, y_trn, test_size=0.005, random_state=42)
+
+        sc = StandardScaler()
+        x_trn = sc.fit_transform(x_trn)
+        x_val = sc.transform(x_val)
+        x_tst = sc.transform(x_tst)
+
+        sc_l = StandardScaler()
+        y_trn = np.reshape(sc_l.fit_transform(np.reshape(y_trn, (-1, 1))), (-1))
+        y_val = np.reshape(sc_l.fit_transform(np.reshape(y_val, (-1, 1))), (-1))
+        y_tst = np.reshape(sc_l.fit_transform(np.reshape(y_tst, (-1, 1))), (-1))
+
+        if isnumpy:
+            fullset = (x_trn, y_trn)
+            valset = (x_val, y_val)
+            testset = (x_tst, y_tst)
+
+        else:
+            fullset = CustomDataset(torch.from_numpy(x_trn), torch.from_numpy(y_trn),if_reg=True)
+            valset = CustomDataset(torch.from_numpy(x_val), torch.from_numpy(y_val),if_reg=True)
+            testset = CustomDataset(torch.from_numpy(x_tst), torch.from_numpy(y_tst),if_reg=True)
+
+        return fullset, valset, testset, 1
+        
     elif dset_name == "adult":
         trn_file = os.path.join(datadir, 'a9a.trn')
         tst_file = os.path.join(datadir, 'a9a.tst')

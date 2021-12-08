@@ -68,8 +68,10 @@ class TrainClassifier:
     ############################## Model Creation ##############################
     """
 
-    def create_model(self):
-        if self.cfg.model.architecture == 'ResNet18':
+    def create_model(self,input_dim=None):
+        if self.configdata.model.architecture == 'RegressionNet':
+            model = RegressionNet(input_dim)
+        elif self.cfg.model.architecture == 'ResNet18':
             model = ResNet18(self.cfg.model.numclasses)
         elif self.cfg.model.architecture == 'MnistNet':
             model = MnistNet()
@@ -99,6 +101,7 @@ class TrainClassifier:
         if self.cfg.loss.type == "CrossEntropyLoss":
             criterion = nn.CrossEntropyLoss()
             criterion_nored = nn.CrossEntropyLoss(reduction='none')
+            
         elif self.cfg.loss.type == "MeanSquaredLoss":
             criterion = nn.MSELoss()
             criterion_nored = nn.MSELoss(reduction='none')
@@ -432,7 +435,7 @@ class TrainClassifier:
                 model.eval()
 
                 if ("trn_loss" in print_args) or ("trn_acc" in print_args):
-                    num_batches = 0
+                    samples =0
                     with torch.no_grad():
                         for _, (inputs, targets) in enumerate(trainloader):
                             inputs, targets = inputs.to(self.cfg.train_args.device), \
@@ -440,19 +443,19 @@ class TrainClassifier:
                             outputs = model(inputs)
                             loss = criterion(outputs, targets)
                             trn_loss += (loss.item() * trainloader.batch_size)
-                            num_batches += 1
+                            samples += targets.shape[0]
                             if "trn_acc" in print_args:
                                 _, predicted = outputs.max(1)
                                 trn_total += targets.size(0)
                                 trn_correct += predicted.eq(targets).sum().item()
-                        trn_loss = trn_loss/num_batches
+                        trn_loss = trn_loss/samples
                         trn_losses.append(trn_loss)
 
                     if "trn_acc" in print_args:
                         trn_acc.append(trn_correct / trn_total)
 
                 if ("val_loss" in print_args) or ("val_acc" in print_args):
-                    num_batches = 0
+                    samples =0
                     with torch.no_grad():
                         for _, (inputs, targets) in enumerate(valloader):
                             inputs, targets = inputs.to(self.cfg.train_args.device), \
@@ -460,19 +463,19 @@ class TrainClassifier:
                             outputs = model(inputs)
                             loss = criterion(outputs, targets)
                             val_loss += (loss.item() * valloader.batch_size)
-                            num_batches += 1
+                            samples += targets.shape[0]
                             if "val_acc" in print_args:
                                 _, predicted = outputs.max(1)
                                 val_total += targets.size(0)
                                 val_correct += predicted.eq(targets).sum().item()
-                        val_loss = val_loss/num_batches
+                        val_loss = val_loss/samples
                         val_losses.append(val_loss)
 
                     if "val_acc" in print_args:
                         val_acc.append(val_correct / val_total)
 
                 if ("tst_loss" in print_args) or ("tst_acc" in print_args):
-                    num_batches = 0
+                    samples =0
                     with torch.no_grad():
                         for _, (inputs, targets) in enumerate(testloader):
                             inputs, targets = inputs.to(self.cfg.train_args.device), \
@@ -480,12 +483,12 @@ class TrainClassifier:
                             outputs = model(inputs)
                             loss = criterion(outputs, targets)
                             tst_loss += (loss.item() * testloader.batch_size)
-                            num_batches += 1
+                            samples += targets.shape[0]
                             if "tst_acc" in print_args:
                                 _, predicted = outputs.max(1)
                                 tst_total += targets.size(0)
                                 tst_correct += predicted.eq(targets).sum().item()
-                        tst_loss = tst_loss/num_batches
+                        tst_loss = tst_loss/samples
                         tst_losses.append(tst_loss)
 
                     if "tst_acc" in print_args:
