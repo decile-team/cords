@@ -8,14 +8,15 @@ subset_config = "configs/SL/config_gradmatchpb_glove_sst2.py",
 
 # parameters for hyper-parameter tuning
 # search space for hyper-parameter tuning
-space = dict(learning_rate=tune.uniform(0.001, 0.01), 
+space = dict(learning_rate=tune.uniform(0.001, 0.1), 
         # optimizer= tune.choice(['sgd', 'adam']),
         hidden_size = tune.choice([64, 128, 256]),
-        trn_batch_size= tune.choice([16, 32, 64]),        
+        trn_batch_size= tune.choice([16, 32, 64]),
+        # num_layers = tune.choice([1, 2, 3])
         ),
 
 # tuning algorithm 
-search_algo = "",
+search_algo = "TPE",
 
 # number of hyper-parameter set to try
 num_evals = 27,
@@ -42,7 +43,7 @@ name = None,
 
 # specify resources to be used per trial
 # i.e {'gpu':1, 'cpu':2}
-resources = {'gpu':0.5, 'cpu':1},
+resources = {'gpu':1, 'cpu':2},
 
 # if True, trains model on Full dataset with the best parameter selected.
 final_train = True

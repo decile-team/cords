@@ -145,15 +145,17 @@ class HyperParamTuning:
     def update_parameters(self, config, new_config):
         # a generic function to update parameters
         if 'learning_rate' in new_config:
-            config.optimizer.lr = new_config.learning_rate
+            config.optimizer.lr = new_config['learning_rate']
         if 'optimizer' in new_config:
-            config.optimizer.type = new_config.optimizer
+            config.optimizer.type = new_config['optimizer']
         if 'epochs' in new_config:
-            config.train_args.num_epochs = new_config.epochs
+            config.train_args.num_epochs = new_config['epochs']
         if 'trn_batch_size' in new_config:
-            config.dataloader.batch_size = new_config.trn_batch_size
+            config.dataloader.batch_size = new_config['trn_batch_size']
         if 'hidden_size' in new_config:
-            config.model.hidden_size = new_config.hidden_size     
+            config.model.hidden_size = new_config['hidden_size']
+        if 'num_layers' in new_config:
+            config.model.num_layers = new_config['num_layers']
         return config
         
 

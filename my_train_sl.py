@@ -12,7 +12,7 @@ from torch.utils.data import Subset
 from cords.utils.config_utils import load_config_data
 from cords.utils.data.data_utils import WeightedSubset
 from cords.utils.data.dataloader.SL.adaptive import GLISTERDataLoader, OLRandomDataLoader, \
-    CRAIGDataLoader, GradMatchDataLoader, RandomDataLoader
+    CRAIGDataLoader, GradMatchDataLoader, RandomDataLoader, AdapWeightsDataLoader
 from cords.utils.data.dataloader.SL.nonadaptive import FacLocDataLoader
 from cords.utils.data.datasets.SL import gen_dataset
 from cords.utils.models import *
@@ -158,7 +158,7 @@ class TrainClassifier:
         file.close()
         return return_val
 
-    def train(self):
+    def train(self, end_before_training = False):
         """
         ############################## General Training Loop with Data Selection Strategies ##############################
         """
@@ -179,7 +179,8 @@ class TrainClassifier:
         val_batch_size = self.cfg.dataloader.batch_size
         tst_batch_size = self.cfg.dataloader.batch_size
 
-        if self.cfg.dataset.name == "sst2_facloc" and self.count_pkl(self.cfg.dataset.ss_path) == 1 and self.cfg.dss_args.type == 'FacLoc':
+        if self.cfg.dataset.name == "sst2_facloc" and self.count_pkl(self.cfg.dataset.ss_path) == 1 \
+            and (self.cfg.dss_args.type == 'FacLoc' or self.cfg.dss_args.type == 'Full'):
             self.cfg.dss_args.type = 'Full'
             file_ss = open(self.cfg.dataset.ss_path, 'rb')
             ss_indices = pickle.load(file_ss)
@@ -311,16 +312,15 @@ class TrainClassifier:
             """
             ############################## Facility Location Dataloader Additional Arguments ##############################
             """
-            wt_trainset = WeightedSubset(trainset, list(range(len(trainset))), [1] * len(trainset))
             self.cfg.dss_args.device = self.cfg.train_args.device
             self.cfg.dss_args.model = model
             self.cfg.dss_args.data_type = self.cfg.dataset.type
             
             dataloader = FacLocDataLoader(trainloader, valloader, self.cfg.dss_args, logger, 
-                                          batch_size=self.cfg.dataloader.batch_size,
-                                          shuffle=self.cfg.dataloader.shuffle,
-                                          pin_memory=self.cfg.dataloader.pin_memory, 
-                                          collate_fn = self.cfg.dss_args.collate_fn)
+                                        batch_size=self.cfg.dataloader.batch_size,
+                                        shuffle=self.cfg.dataloader.shuffle,
+                                        pin_memory=self.cfg.dataloader.pin_memory, 
+                                        collate_fn = self.cfg.dss_args.collate_fn)
             if self.cfg.dataset.name == "sst2_facloc" and self.count_pkl(self.cfg.dataset.ss_path) < 1:
 
                 ss_indices = dataloader.subset_indices
@@ -330,7 +330,49 @@ class TrainClassifier:
                 except EOFError:
                     pass
                 file_ss.close()
+        elif self.cfg.dss_args.type == 'AdapFacLoc':
+            """
+            ############################## Facility Location Dataloader Additional Arguments ##############################
+            """
+            num_contents = self.count_pkl(self.cfg.dataset.ss_path)
+            if num_contents < 1:
+                self.cfg.dss_args.device = self.cfg.train_args.device
+                self.cfg.dss_args.model = model
+                self.cfg.dss_args.data_type = self.cfg.dataset.type
+                
+                facloc_time = time.time()
+                dataloader = FacLocDataLoader(trainloader, valloader, self.cfg.dss_args, logger, 
+                                            batch_size=self.cfg.dataloader.batch_size,
+                                            shuffle=self.cfg.dataloader.shuffle,
+                                            pin_memory=self.cfg.dataloader.pin_memory, 
+                                            collate_fn = self.cfg.dss_args.collate_fn)
+                ss_indices = list(dataloader.subset_indices)
+                facloc_time = time.time() - facloc_time
+                print("Type of ss_indices:", type(ss_indices))
+                file_ss = open(self.cfg.dataset.ss_path, 'wb')
+                try:
+                    pickle.dump(ss_indices, file_ss)
+                except EOFError:
+                    pass
+                file_ss.close()
+            elif num_contents == 1:
+                print("We are here atleast once!")
+                file_ss = open(self.cfg.dataset.ss_path, 'rb')
+                ss_indices = pickle.load(file_ss)
+                file_ss.close()
 
+                self.cfg.dss_args.model = model
+                self.cfg.dss_args.loss = criterion_nored
+                self.cfg.dss_args.eta = self.cfg.optimizer.lr
+                self.cfg.dss_args.num_classes = self.cfg.model.numclasses
+                self.cfg.dss_args.num_epochs = self.cfg.train_args.num_epochs
+                self.cfg.dss_args.device = self.cfg.train_args.device
+                
+                dataloader = AdapWeightsDataLoader(trainloader, valloader, self.cfg.dss_args, logger, ss_indices, 
+                                            batch_size=self.cfg.dataloader.batch_size,
+                                            shuffle=self.cfg.dataloader.shuffle,
+                                            pin_memory=self.cfg.dataloader.pin_memory, 
+                                            collate_fn = self.cfg.dss_args.collate_fn)
         elif self.cfg.dss_args.type == 'Full':
             """
             ############################## Full Dataloader Additional Arguments ##############################
@@ -375,6 +417,12 @@ class TrainClassifier:
         """
         ################################################# Training Loop #################################################
         """
+
+        if end_before_training:
+            if self.cfg.dss_args.type == 'AdapFacLoc':
+                num_contents = self.count_pkl(self.cfg.dataset.ss_path)
+                print("AdapFacLoc takes facloc time of:", facloc_time, ", and num_contents =", num_contents)
+            return
 
         for epoch in range(start_epoch, self.cfg.train_args.num_epochs):
             subtrn_loss = 0

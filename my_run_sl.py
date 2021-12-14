@@ -10,6 +10,7 @@ if __name__ == '__main__':
     parser.add_argument('--lr', type=float, default=0.001, help='learning rate')
     parser.add_argument('--batch_size', type=int, default=16)
     parser.add_argument('--hidden_size', type=int, default=128)
+    parser.add_argument('--num_layers', type=int, default=2)
 
     parser.add_argument('--epochs', type=int, default=20)
     parser.add_argument('--num_classes', type=int, default=2)
@@ -20,9 +21,9 @@ if __name__ == '__main__':
     parser.add_argument('--select_every', type=int, default=5, help='perform subset selection every _ epochs')
     parser.add_argument('--change', type=int, default=1, help='change params mentioned for train class?')
 
-    parser.add_argument('--config_file', type=str, default='/home/kk/cords/configs/SL/config_random_glove_sst2.py')
-    parser.add_argument('--config_hp', type=str, default='/home/kk/cords/configs/SL/config_hp.py')
-    parser.add_argument('--is_hp', type=int, default=0, help='do we perform hyper parameter tuning?')
+    parser.add_argument('--config_file', type=str, default='/home/ayush/Documents/abhishek/cords/configs/SL/config_adapfacloc_glove_sst2.py')
+    parser.add_argument('--config_hp', type=str, default='/home/ayush/Documents/abhishek/cords/configs/SL/config_hp.py')
+    parser.add_argument('--is_hp', type=int, default=1, help='do we perform hyper parameter tuning?')
     parser.add_argument('--final_train', type=int, default=1, help='need final training hyper parameter tuning?')
     args = parser.parse_args()
     weight_path = '/home/ayush/Documents/abhishek/glove.6B/'
@@ -37,6 +38,7 @@ if __name__ == '__main__':
             # train_config_data.optimizer.lr = args.lr
             # train_config_data.dataloader.batchsize = args.batch_size
             # train_config_data.model.hidden_size = args.hidden_size
+            # train_config_data.model.num_layers = args.num_layers
 
             # train_config_data.train_args.num_epochs = args.epochs
             # train_config_data.train_args.print_every = args.print_every
@@ -48,17 +50,20 @@ if __name__ == '__main__':
             train_config_data.dss_args.fraction = args.fraction
             train_config_data.dss_args.select_every = args.select_every
             train_config_data.train_args.device = 'cuda'
-            
 
+        # if train_config_data.dss_args.type == 'AdapFacLoc':
+        #     train_class_ = TrainClassifier(train_config_data)
+        #     train_class_.train(end_before_training=True)
+            
         hyperparamtuning = HyperParamTuning(config_hp_data, train_config_data)
         hyperparamtuning.start_eval()
     else:
-
         config_file_data = load_config_data(args.config_file)
         if bool(args.change):
             # config_file_data.optimizer.lr = args.lr
             # config_file_data.dataloader.batchsize = args.batch_size
             # config_file_data.model.hidden_size = args.hidden_size
+            # config_file_data.model.num_layers = args.num_layers
 
             # config_file_data.train_args.num_epochs = args.epochs
             # config_file_data.train_args.print_every = args.print_every
