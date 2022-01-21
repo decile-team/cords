@@ -16,6 +16,7 @@ import torchtext.data
 import pickle
 from cords.utils.data.data_utils import WeightedSubset
 import pandas as pd
+from datasets import load_dataset
 
 class standard_scaling:
     def __init__(self):
@@ -40,6 +41,26 @@ def clean_data(sentence):
     sentence = re.sub(r"[^A-Za-z0-9(),!?\'\`]", " ", sentence)
     sentence = re.sub(r"\s{2,}", " ", sentence)
     return sentence.strip().lower()
+
+def clean_str(string, TREC=False):
+    """
+    Tokenization/string cleaning for all datasets except for SST.
+    Every dataset is lower cased except for TREC
+    """
+    string = re.sub(r"[^A-Za-z0-9(),!?\'\`]", " ", string)     
+    string = re.sub(r"\'s", " \'s", string) 
+    string = re.sub(r"\'ve", " \'ve", string) 
+    string = re.sub(r"n\'t", " n\'t", string) 
+    string = re.sub(r"\'re", " \'re", string) 
+    string = re.sub(r"\'d", " \'d", string) 
+    string = re.sub(r"\'ll", " \'ll", string) 
+    string = re.sub(r",", " , ", string) 
+    string = re.sub(r"!", " ! ", string) 
+    string = re.sub(r"\(", " \( ", string) 
+    string = re.sub(r"\)", " \) ", string) 
+    string = re.sub(r"\?", " \? ", string) 
+    string = re.sub(r"\s{2,}", " ", string)    
+    return string.strip() if TREC else string.strip().lower()
 
 
 def get_class(sentiment, num_classes):
@@ -112,6 +133,56 @@ class SSTDataset(Dataset):
 
     def __len__(self):
         return len(self.phrase_vec)
+
+class Trec6Dataset(Dataset):
+    def __init__(self, data_path, cls_to_num, num_classes, wordvec_dim, wordvec, device='cpu'):
+        self.phrase_vec = []
+        self.labels = []
+
+        missing_count = 0
+        with open(data_path, 'r', encoding='latin1') as f:
+            for line in f:
+                label = cls_to_num[line.split()[0].split(":")[0]]
+                sentence = clean_str(" ".join(line.split(":")[1:]), True)
+                
+                tmp1 = []
+                for w in sentence.split(' '):
+                    try:
+                        tmp1.append(wordvec.index.get_loc(w))  
+                    except KeyError:
+                        missing_count += 1
+
+                self.phrase_vec.append(torch.tensor(tmp1, dtype=torch.long))
+                self.labels.append(label)
+
+    def __getitem__(self, index):
+        return self.phrase_vec[index], self.labels[index]
+
+    def __len__(self):
+        return len(self.phrase_vec)
+
+class GlueDataset(Dataset):
+    def __init__(self, glue_dataset, num_classes, wordvec_dim, wordvec, device='cpu'):
+        self.len =  glue_dataset.__len__()       
+        self.phrase_vec = []  # word index in glove
+        # label of each sentence
+        self.labels = torch.zeros((self.len,), dtype=torch.long)
+        missing_count = 0
+        for i, p in enumerate(glue_dataset):
+            tmp1 = []
+            for w in clean_data(p['sentence']).split(' '):
+                try:
+                    tmp1.append(wordvec.index.get_loc(w))  
+                except KeyError:
+                    missing_count += 1
+
+            self.phrase_vec.append(torch.tensor(tmp1, dtype=torch.long)) 
+            self.labels[i] = p['label']
+        
+    def __getitem__(self, index):
+        return self.phrase_vec[index], self.labels[index]
+    def __len__(self):
+        return self.len
 
 ## Custom PyTorch Dataset Class wrapper
 class CustomDataset(Dataset):
@@ -1468,7 +1539,8 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
     elif dset_name == "sst2" or dset_name == "sst2_facloc":
         '''
         download data/SST from https://drive.google.com/file/d/14KU6RQJpP6HKKqVGm0OF3MVxtI0NlEcr/view?usp=sharing
-        pass datadir arg in dataset in config appropiriately(...../SST)
+        or get the stanford sst data and make phrase_ids.<dev/test/train>.txt files
+        pass datadir arg in dataset in config appropiriately(should look like ......../SST)
         '''
         num_cls = 2
         wordvec_dim = kwargs['dataset'].wordvec_dim
@@ -1480,3 +1552,49 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         valset = SSTDataset(datadir, 'dev', num_cls, wordvec_dim, wordvec)
 
         return trainset, valset, testset, num_cls
+    elif dset_name == "glue_sst2":
+        num_cls = 2
+        raw = load_dataset("glue", "sst2")
+
+        wordvec_dim = kwargs['dataset'].wordvec_dim
+        weight_path = kwargs['dataset'].weight_path
+        weight_full_path = weight_path+'glove.6B.' + str(wordvec_dim) + 'd.txt'
+        wordvec = loadGloveModel(weight_full_path)
+
+        trainset = GlueDataset(raw['train'], num_cls, wordvec_dim, wordvec)
+        testset = GlueDataset(raw['test'], num_cls, wordvec_dim, wordvec)
+        valset = GlueDataset(raw['validation'], num_cls, wordvec_dim, wordvec)
+
+        return trainset, valset, testset, num_cls
+    elif dset_name == 'trec6':
+        num_cls = 6
+
+        wordvec_dim = kwargs['dataset'].wordvec_dim
+        weight_path = kwargs['dataset'].weight_path
+        weight_full_path = weight_path+'glove.6B.' + str(wordvec_dim) + 'd.txt'
+        wordvec = loadGloveModel(weight_full_path)
+
+        cls_to_num = {"DESC": 0, "ENTY": 1, "HUM": 2, "ABBR": 3, "LOC": 4, "NUM": 5}
+
+        trainset = Trec6Dataset(datadir+'train.txt', cls_to_num, num_cls, wordvec_dim, wordvec)
+        testset = Trec6Dataset(datadir+'test.txt', cls_to_num, num_cls, wordvec_dim, wordvec)
+        valset = Trec6Dataset(datadir+'valid.txt', cls_to_num, num_cls, wordvec_dim, wordvec)
+
+        return trainset, valset, testset, num_cls
+    elif  dset_name == "sst5":
+        '''
+        download data/SST from https://drive.google.com/file/d/14KU6RQJpP6HKKqVGm0OF3MVxtI0NlEcr/view?usp=sharing
+        or get the stanford sst data and make phrase_ids.<dev/test/train>.txt files
+        pass datadir arg in dataset in config appropiriately(should look like ......../SST)
+        '''
+        num_cls = 5
+        wordvec_dim = kwargs['dataset'].wordvec_dim
+        weight_path = kwargs['dataset'].weight_path
+        weight_full_path = weight_path+'glove.6B.' + str(wordvec_dim) + 'd.txt'
+        wordvec = loadGloveModel(weight_full_path)
+        trainset = SSTDataset(datadir, 'train', num_cls, wordvec_dim, wordvec)
+        testset = SSTDataset(datadir, 'test', num_cls, wordvec_dim, wordvec)
+        valset = SSTDataset(datadir, 'dev', num_cls, wordvec_dim, wordvec)
+
+        return trainset, valset, testset, num_cls
+

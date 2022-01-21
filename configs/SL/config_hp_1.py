@@ -12,14 +12,14 @@ space = dict(learning_rate=tune.uniform(0.001, 0.1),
         # optimizer= tune.choice(['sgd', 'adam']),
         hidden_size = tune.choice([64, 128, 256]),
         trn_batch_size= tune.choice([16, 32, 64]),
-        num_layers = tune.choice([1, 2])
+        # num_layers = tune.choice([1, 2])
         ),
 
 # tuning algorithm 
-search_algo = "",
+search_algo = "TPE",
 
 # number of hyper-parameter set to try
-num_evals = 54,
+num_evals = 27,
 
 # metric to be optimized, for 'mean_loss' metric mode should be 'min'
 metric = "mean_accuracy",

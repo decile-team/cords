@@ -179,9 +179,10 @@ class TrainClassifier:
         val_batch_size = self.cfg.dataloader.batch_size
         tst_batch_size = self.cfg.dataloader.batch_size
 
-        if self.cfg.dataset.name == "sst2_facloc" and self.count_pkl(self.cfg.dataset.ss_path) == 1 \
-            and (self.cfg.dss_args.type == 'FacLoc' or self.cfg.dss_args.type == 'Full'):
-            self.cfg.dss_args.type = 'Full'
+        if 'ss_path' in self.cfg.dataset and self.cfg.dataset.use_ss_if_exists and self.count_pkl(self.cfg.dataset.ss_path) == 1:
+        #for performing facloc only once during HP tuning
+        #Better do facloc once(using end_before_training) then start anything other(HP tuning) using the
+        #found indices to avoid multiple parallel facloc computations
             file_ss = open(self.cfg.dataset.ss_path, 'rb')
             ss_indices = pickle.load(file_ss)
             file_ss.close()
@@ -321,8 +322,10 @@ class TrainClassifier:
                                         shuffle=self.cfg.dataloader.shuffle,
                                         pin_memory=self.cfg.dataloader.pin_memory, 
                                         collate_fn = self.cfg.dss_args.collate_fn)
-            if self.cfg.dataset.name == "sst2_facloc" and self.count_pkl(self.cfg.dataset.ss_path) < 1:
 
+            if 'ss_path' in self.cfg.dataset and self.count_pkl(self.cfg.dataset.ss_path) < 1:
+                #save subset indices if a ss_path is provided. Useful in HP tuning to avoid multiple facloc computations.
+                #to avoid multiple parallel facloc computations, do facloc once(using end_before_training) then start HP tuning
                 ss_indices = dataloader.subset_indices
                 file_ss = open(self.cfg.dataset.ss_path, 'wb')
                 try:
@@ -332,7 +335,7 @@ class TrainClassifier:
                 file_ss.close()
         elif self.cfg.dss_args.type == 'AdapFacLoc':
             """
-            ############################## Facility Location Dataloader Additional Arguments ##############################
+            ############################## Adaptive Facility Location Dataloader Additional Arguments ##############################
             """
             num_contents = self.count_pkl(self.cfg.dataset.ss_path)
             if num_contents < 1:
@@ -355,8 +358,9 @@ class TrainClassifier:
                 except EOFError:
                     pass
                 file_ss.close()
+                print("AdapFacLoc takes facloc time of:", facloc_time)
             elif num_contents == 1:
-                print("We are here atleast once!")
+                print("We are in adapfacloc atleast once!")
                 file_ss = open(self.cfg.dataset.ss_path, 'rb')
                 ss_indices = pickle.load(file_ss)
                 file_ss.close()
@@ -419,9 +423,7 @@ class TrainClassifier:
         """
 
         if end_before_training:
-            if self.cfg.dss_args.type == 'AdapFacLoc':
-                num_contents = self.count_pkl(self.cfg.dataset.ss_path)
-                print("AdapFacLoc takes facloc time of:", facloc_time, ", and num_contents =", num_contents)
+            torch.cuda.empty_cache()
             return
 
         for epoch in range(start_epoch, self.cfg.train_args.num_epochs):

@@ -3,12 +3,12 @@ from cords.utils.data.data_utils.collate import *
 
 config = dict(setting="SL",
               is_reg = False,
-              dataset=dict(name="sst2",
+              dataset=dict(name="glue_sst2",
                            datadir="/home/ayush/Documents/abhishek/data/SST/",
                            feature="dss",
                            type="text",
                            wordvec_dim=300,
-                           weight_path='/home/ayush/Documents/abhishek/glove.6B/',),
+                           weight_path='/home/ayush/Documents/abhishek/data/glove.6B/',),
 
               dataloader=dict(shuffle=True,
                               batch_size=16,
@@ -19,7 +19,7 @@ config = dict(setting="SL",
                          type='pre-defined',
                          numclasses=2,
                          wordvec_dim=300,
-                         weight_path='/home/ayush/Documents/abhishek/glove.6B/',
+                         weight_path='/home/ayush/Documents/abhishek/data/glove.6B/',
                          hidden_size=128,
                          num_layers=1),
 
@@ -48,9 +48,10 @@ config = dict(setting="SL",
 
               train_args=dict(num_epochs=20,
                               device="cuda",
-                              print_every=3,
+                              print_every=1,
                               results_dir='results/',
-                              print_args=["trn_loss", "trn_acc", "val_loss", "val_acc", "tst_loss", "tst_acc", "time"],
+                           #   print_args=["trn_loss", "trn_acc", "val_loss", "val_acc", "tst_loss", "tst_acc", "time"],
+                              print_args=["trn_loss", "trn_acc", "val_loss", "val_acc", "time"],
                               return_args=[]
                               )
               )
