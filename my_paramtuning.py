@@ -114,7 +114,8 @@ class HyperParamTuning:
     def get_scheduler(self, method, metric, mode):
 
         if method == "ASHA":
-            scheduler = AsyncHyperBandScheduler(metric = metric, mode = mode, max_t = self.train_class.cfg.train_args.num_epochs)
+            scheduler = AsyncHyperBandScheduler(metric = metric, mode = mode, 
+                                                max_t = self.train_class.cfg.train_args.num_epochs)
         elif method == "hyperband" or method == "HB":
             scheduler = HyperBandScheduler(metric = metric, mode = mode, 
                         max_t = self.train_class.cfg.train_args.num_epochs)
