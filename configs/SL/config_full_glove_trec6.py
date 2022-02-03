@@ -3,7 +3,7 @@ from cords.utils.data.data_utils.collate import *
 
 config = dict(setting="SL",
               is_reg = False,
-              dataset=dict(name="trec6",
+              dataset=dict(name="hf_trec6",
                            datadir="/home/ayush/Documents/abhishek/data/TREC6/",
                            feature="dss",
                            type="text",

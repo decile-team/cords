@@ -114,8 +114,8 @@ class HyperParamTuning:
     def get_scheduler(self, method, metric, mode):
 
         if method == "ASHA":
-            scheduler = AsyncHyperBandScheduler(metric = metric, mode = mode,
-                        max_t = self.train_class.cfg.train_args.num_epochs)
+            scheduler = AsyncHyperBandScheduler(metric = metric, mode = mode, 
+                                                max_t = self.train_class.cfg.train_args.num_epochs)
         elif method == "hyperband" or method == "HB":
             scheduler = HyperBandScheduler(metric = metric, mode = mode, 
                         max_t = self.train_class.cfg.train_args.num_epochs)
@@ -130,17 +130,17 @@ class HyperParamTuning:
         # change strategy to Full (i.e use whole dataset)
         # update (optimized) parameters
         new_config = self.update_parameters(self.train_class.cfg, best_params)
-        new_config.dss_args.type = 'Full'
-        # new_config.dss_args.type = 'GradMatchPB'
-        # new_config.dss_args.fraction = 0.3
-        # new_config.dss_args.select_every = 5
-        # new_config.dss_args.lam = 0
-        # new_config.dss_args.selection_type = 'PerBatch'
-        # new_config.dss_args.v1 = True
-        # new_config.dss_args.valid = False
-        # new_config.dss_args.eps = 1e-100
-        # new_config.dss_args.linear_layer = True
-        # new_config.dss_args.kappa = 0
+        # new_config.dss_args.type = 'Full'
+        new_config.dss_args.type = 'GradMatchPB'
+        new_config.dss_args.fraction = 0.3
+        new_config.dss_args.select_every = 5
+        new_config.dss_args.lam = 0
+        new_config.dss_args.selection_type = 'PerBatch'
+        new_config.dss_args.v1 = True
+        new_config.dss_args.valid = False
+        new_config.dss_args.eps = 1e-100
+        new_config.dss_args.linear_layer = True
+        new_config.dss_args.kappa = 0
         self.train_class.cfg = new_config
         self.train_class.train()
     

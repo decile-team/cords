@@ -36,32 +36,37 @@ class standard_scaling:
         return transformed_data
 
 
-def clean_data(sentence):
+def clean_data(sentence, type = 0, TREC=False):
     # From yoonkim: https://github.com/yoonkim/CNN_sentence/blob/master/process_data.py
-    sentence = re.sub(r"[^A-Za-z0-9(),!?\'\`]", " ", sentence)
-    sentence = re.sub(r"\s{2,}", " ", sentence)
-    return sentence.strip().lower()
-
-def clean_str(string, TREC=False):
-    """
-    Tokenization/string cleaning for all datasets except for SST.
-    Every dataset is lower cased except for TREC
-    """
-    string = re.sub(r"[^A-Za-z0-9(),!?\'\`]", " ", string)     
-    string = re.sub(r"\'s", " \'s", string) 
-    string = re.sub(r"\'ve", " \'ve", string) 
-    string = re.sub(r"n\'t", " n\'t", string) 
-    string = re.sub(r"\'re", " \'re", string) 
-    string = re.sub(r"\'d", " \'d", string) 
-    string = re.sub(r"\'ll", " \'ll", string) 
-    string = re.sub(r",", " , ", string) 
-    string = re.sub(r"!", " ! ", string) 
-    string = re.sub(r"\(", " \( ", string) 
-    string = re.sub(r"\)", " \) ", string) 
-    string = re.sub(r"\?", " \? ", string) 
-    string = re.sub(r"\s{2,}", " ", string)    
-    return string.strip() if TREC else string.strip().lower()
-
+    if type == 0:
+        """
+        Tokenization for SST
+        """
+        sentence = re.sub(r"[^A-Za-z0-9(),!?\'\`]", " ", sentence)
+        sentence = re.sub(r"\s{2,}", " ", sentence)
+        return sentence.strip().lower()
+    elif type == 1:
+        """
+        Tokenization/string cleaning for all datasets except for SST.
+        Every dataset is lower cased except for TREC
+        """
+        sentence = re.sub(r"[^A-Za-z0-9(),!?\'\`]", " ", sentence)     
+        sentence = re.sub(r"\'s", " \'s", sentence) 
+        sentence = re.sub(r"\'ve", " \'ve", sentence) 
+        sentence = re.sub(r"n\'t", " n\'t", sentence) 
+        sentence = re.sub(r"\'re", " \'re", sentence) 
+        sentence = re.sub(r"\'d", " \'d", sentence) 
+        sentence = re.sub(r"\'ll", " \'ll", sentence) 
+        sentence = re.sub(r",", " , ", sentence) 
+        sentence = re.sub(r"!", " ! ", sentence) 
+        sentence = re.sub(r"\(", " \( ", sentence) 
+        sentence = re.sub(r"\)", " \) ", sentence) 
+        sentence = re.sub(r"\?", " \? ", sentence) 
+        sentence = re.sub(r"\s{2,}", " ", sentence)    
+        return sentence.strip() if TREC else sentence.strip().lower() 
+        # if we are using glove uncased, keep TREC = False even for trec6 dataset
+    else:
+        return sentence
 
 def get_class(sentiment, num_classes):
     # Return a label based on the sentiment value
@@ -143,7 +148,7 @@ class Trec6Dataset(Dataset):
         with open(data_path, 'r', encoding='latin1') as f:
             for line in f:
                 label = cls_to_num[line.split()[0].split(":")[0]]
-                sentence = clean_str(" ".join(line.split(":")[1:]), True)
+                sentence = clean_data(" ".join(line.split(":")[1:]), 1, False)
                 
                 tmp1 = []
                 for w in sentence.split(' '):
@@ -162,7 +167,7 @@ class Trec6Dataset(Dataset):
         return len(self.phrase_vec)
 
 class GlueDataset(Dataset):
-    def __init__(self, glue_dataset, num_classes, wordvec_dim, wordvec, device='cpu'):
+    def __init__(self, glue_dataset, sentence_str, label_str, clean_type, num_classes, wordvec_dim, wordvec, device='cpu'):
         self.len =  glue_dataset.__len__()       
         self.phrase_vec = []  # word index in glove
         # label of each sentence
@@ -170,14 +175,14 @@ class GlueDataset(Dataset):
         missing_count = 0
         for i, p in enumerate(glue_dataset):
             tmp1 = []
-            for w in clean_data(p['sentence']).split(' '):
+            for w in clean_data(p[sentence_str], clean_type, False).split(' '): #False since glove used is uncased
                 try:
                     tmp1.append(wordvec.index.get_loc(w))  
                 except KeyError:
                     missing_count += 1
 
             self.phrase_vec.append(torch.tensor(tmp1, dtype=torch.long)) 
-            self.labels[i] = p['label']
+            self.labels[i] = p[label_str]
         
     def __getitem__(self, index):
         return self.phrase_vec[index], self.labels[index]
@@ -1561,9 +1566,26 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         weight_full_path = weight_path+'glove.6B.' + str(wordvec_dim) + 'd.txt'
         wordvec = loadGloveModel(weight_full_path)
 
-        trainset = GlueDataset(raw['train'], num_cls, wordvec_dim, wordvec)
-        testset = GlueDataset(raw['test'], num_cls, wordvec_dim, wordvec)
-        valset = GlueDataset(raw['validation'], num_cls, wordvec_dim, wordvec)
+        clean_type = 0
+        trainset = GlueDataset(raw['train'], 'sentence', 'label', clean_type, num_cls, wordvec_dim, wordvec)
+        testset = GlueDataset(raw['test'], 'sentence', 'label', clean_type, num_cls, wordvec_dim, wordvec)
+        valset = GlueDataset(raw['validation'], 'sentence', 'label', clean_type, num_cls, wordvec_dim, wordvec)
+
+        return trainset, valset, testset, num_cls
+    elif  dset_name == "sst5":
+        '''
+        download data/SST from https://drive.google.com/file/d/14KU6RQJpP6HKKqVGm0OF3MVxtI0NlEcr/view?usp=sharing
+        or get the stanford sst data and make phrase_ids.<dev/test/train>.txt files
+        pass datadir arg in dataset in config appropiriately(should look like ......../SST)
+        '''
+        num_cls = 5
+        wordvec_dim = kwargs['dataset'].wordvec_dim
+        weight_path = kwargs['dataset'].weight_path
+        weight_full_path = weight_path+'glove.6B.' + str(wordvec_dim) + 'd.txt'
+        wordvec = loadGloveModel(weight_full_path)
+        trainset = SSTDataset(datadir, 'train', num_cls, wordvec_dim, wordvec)
+        testset = SSTDataset(datadir, 'test', num_cls, wordvec_dim, wordvec)
+        valset = SSTDataset(datadir, 'dev', num_cls, wordvec_dim, wordvec)
 
         return trainset, valset, testset, num_cls
     elif dset_name == 'trec6':
@@ -1581,20 +1603,26 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         valset = Trec6Dataset(datadir+'valid.txt', cls_to_num, num_cls, wordvec_dim, wordvec)
 
         return trainset, valset, testset, num_cls
-    elif  dset_name == "sst5":
-        '''
-        download data/SST from https://drive.google.com/file/d/14KU6RQJpP6HKKqVGm0OF3MVxtI0NlEcr/view?usp=sharing
-        or get the stanford sst data and make phrase_ids.<dev/test/train>.txt files
-        pass datadir arg in dataset in config appropiriately(should look like ......../SST)
-        '''
-        num_cls = 5
+    elif dset_name == "hf_trec6": # hugging face trec6
+        num_cls = 6
+        raw = load_dataset("trec")
+
         wordvec_dim = kwargs['dataset'].wordvec_dim
         weight_path = kwargs['dataset'].weight_path
         weight_full_path = weight_path+'glove.6B.' + str(wordvec_dim) + 'd.txt'
         wordvec = loadGloveModel(weight_full_path)
-        trainset = SSTDataset(datadir, 'train', num_cls, wordvec_dim, wordvec)
-        testset = SSTDataset(datadir, 'test', num_cls, wordvec_dim, wordvec)
-        valset = SSTDataset(datadir, 'dev', num_cls, wordvec_dim, wordvec)
+
+        clean_type = 1
+        fullset = GlueDataset(raw['train'], 'text', 'label-coarse', clean_type, num_cls, wordvec_dim, wordvec)
+        testset = GlueDataset(raw['test'], 'text', 'label-coarse', clean_type, num_cls, wordvec_dim, wordvec)
+        # valset = GlueDataset(raw['validation'], num_cls, wordvec_dim, wordvec)
+        
+        validation_set_fraction = 0.1
+        seed = 42
+        num_fulltrn = len(fullset)
+        num_val = int(num_fulltrn * validation_set_fraction)
+        num_trn = num_fulltrn - num_val
+        trainset, valset = random_split(fullset, [num_trn, num_val], generator=torch.Generator().manual_seed(seed))
 
         return trainset, valset, testset, num_cls
 
