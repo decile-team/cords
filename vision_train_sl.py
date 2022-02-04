@@ -125,8 +125,10 @@ class TrainClassifier:
         if self.cfg.scheduler.type == 'cosine_annealing':
             scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,
                                                                    T_max=self.cfg.scheduler.T_max)
-        else:
-            scheduler = None
+        elif self.cfg.scheduler.type == 'linear_decay':
+            scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 
+                                                        step_size=self.cfg.scheduler.stepsize, 
+                                                        gamma=self.cfg.scheduler.gamma)
         return optimizer, scheduler
 
     @staticmethod
@@ -198,13 +200,13 @@ class TrainClassifier:
 
         # Creating the Data Loaders
         trainloader = torch.utils.data.DataLoader(trainset, batch_size=trn_batch_size,
-                                                  shuffle=False, pin_memory=True, collate_fn = self.cfg.dataloader.collate_fn)
+                                                  shuffle=False, pin_memory=True)
 
         valloader = torch.utils.data.DataLoader(validset, batch_size=val_batch_size,
-                                                shuffle=False, pin_memory=True, collate_fn = self.cfg.dataloader.collate_fn)
+                                                shuffle=False, pin_memory=True)
 
         testloader = torch.utils.data.DataLoader(testset, batch_size=tst_batch_size,
-                                                 shuffle=False, pin_memory=True, collate_fn = self.cfg.dataloader.collate_fn)
+                                                 shuffle=False, pin_memory=True)
 
         substrn_losses = list()  # np.zeros(configdata['train_args']['num_epochs'])
         trn_losses = list()

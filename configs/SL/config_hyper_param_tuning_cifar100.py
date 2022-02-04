@@ -1,5 +1,4 @@
 from ray import tune
-from ray.tune import schedulers
 
 config = dict(setting= "hyperparamtuning",
 
@@ -50,7 +49,7 @@ name = None,
 
 # specify resources to be used per trial
 # i.e {'gpu':1, 'cpu':2}
-resources = {'gpu' : 1},
+resources = {'gpu':1},
 
 # if True, trains model on Full dataset with the best parameter selected.
 final_train = True

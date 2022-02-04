@@ -1,6 +1,6 @@
 from vision_train_sl import TrainClassifier
 import argparse
-from my_paramtuning import HyperParamTuning
+from vision_paramtuning import HyperParamTuning
 from cords.utils.config_utils import load_config_data
 
 
@@ -29,7 +29,7 @@ if __name__ == '__main__':
         if bool(args.change):
             train_config_data.dss_args.fraction = args.fraction
             train_config_data.dss_args.select_every = args.select_every
-            train_config_data.train_args.device = 'cuda'
+            #train_config_data.train_args.device = 'cuda'
         hyperparamtuning = HyperParamTuning(config_hp_data, train_config_data)
         hyperparamtuning.start_eval()
     else:
@@ -37,6 +37,6 @@ if __name__ == '__main__':
         if bool(args.change):
             config_file_data.dss_args.fraction = args.fraction
             config_file_data.dss_args.select_every = args.select_every
-            config_file_data.train_args.device = 'cuda'
+            #config_file_data.train_args.device = 'cuda'
         classifier = TrainClassifier(config_file_data)
         classifier.train()

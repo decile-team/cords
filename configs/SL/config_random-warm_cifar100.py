@@ -32,7 +32,9 @@ config = dict(setting="SL",
                              weight_decay=5e-4),
 
               scheduler=dict(type="cosine_annealing",
-                             T_max=300),
+                             T_max=300,
+                             stepsize=20,
+                             gamma=0.1),
 
               dss_args=dict(type="Random-Warm",
                                 fraction=0.1,
