@@ -29,6 +29,7 @@ if __name__ == '__main__':
         if bool(args.change):
             train_config_data.dss_args.fraction = args.fraction
             train_config_data.dss_args.select_every = args.select_every
+            train_config_data.report_tune = True
             #train_config_data.train_args.device = 'cuda'
         hyperparamtuning = HyperParamTuning(config_hp_data, train_config_data)
         hyperparamtuning.start_eval()

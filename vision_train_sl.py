@@ -572,7 +572,7 @@ class TrainClassifier:
                         print_str += " , " + "Timing: " + str(timing[-1])
 
                 # report metric to ray for hyperparameter optimization
-                if 'report_tune' in self.cfg and self.cfg.report_tune:
+                if 'report_tune' in self.cfg and self.cfg.report_tune and len(dataloader):
                     tune.report(mean_accuracy=val_acc[-1])
 
                 logger.info(print_str)
