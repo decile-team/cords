@@ -19,6 +19,7 @@ if __name__ == '__main__':
     parser.add_argument('--wordvec_dim', type=int, default=300, help='Dimension of GloVe vectors')
 
     parser.add_argument('--fraction', type=float, default=0.1, help='fraction in subset selection')
+    parser.add_argument('--ft_type', type=str, default='full', help='final_train type after hp tuning. full/gmpb')
     parser.add_argument('--select_every', type=int, default=5, help='perform subset selection every _ epochs')
     parser.add_argument('--change', type=int, default=1, help='change params mentioned for train class?')
 
@@ -35,6 +36,7 @@ if __name__ == '__main__':
     if bool(args.is_hp):
         config_hp_data = load_config_data(args.config_hp)
         config_hp_data.final_train = bool(args.final_train)
+        config_hp_data.final_train_type = args.ft_type
         config_hp_data.subset_config = args.config_file
         
         train_config_data = load_config_data(args.config_file)
