@@ -3,7 +3,7 @@ from cords.utils.data.data_utils.collate import *
 
 config = dict(setting="SL",
               is_reg = False,
-              dataset=dict(name="glue_sst2",
+              dataset=dict(name="sst2",
                            datadir="/home/ayush/Documents/abhishek/data/SST/",
                            feature="dss",
                            type="text",
@@ -43,15 +43,15 @@ config = dict(setting="SL",
               dss_args=dict(type="Random",
                             fraction=0.3,
                             select_every=5,
-                            kappa=0,
+                            kappa=0.5,
                             collate_fn = collate_fn_pad_batch),
 
               train_args=dict(num_epochs=20,
                               device="cuda",
                               print_every=1,
                               results_dir='results/',
-                           #   print_args=["trn_loss", "trn_acc", "val_loss", "val_acc", "tst_loss", "tst_acc", "time"],
-                              print_args=["trn_loss", "trn_acc", "val_loss", "val_acc", "time"],
+                              print_args=["trn_loss", "trn_acc", "val_loss", "val_acc", "tst_loss", "tst_acc", "time"],
+                              # print_args=["trn_loss", "trn_acc", "val_loss", "val_acc", "time"],
                               return_args=[]
                               )
               )

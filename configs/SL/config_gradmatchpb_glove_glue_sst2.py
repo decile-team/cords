@@ -3,7 +3,7 @@ from cords.utils.data.data_utils.collate import *
 
 config = dict(setting="SL",
               is_reg = False,
-              dataset=dict(name="sst2",
+              dataset=dict(name="glue_sst2",
                            datadir="/home/ayush/Documents/abhishek/data/SST/",
                            feature="dss",
                            type="text",

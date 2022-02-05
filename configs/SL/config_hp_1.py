@@ -28,7 +28,8 @@ mode = "max",
 # scheduler to be used (i.e ASHAScheduler)
 # scheduler terminates trials that perform poorly
 # learn more here: https://docs.ray.io/en/releases-0.7.1/tune-schedulers.html
-scheduler = 'hyperband',
+# scheduler = 'hyperband',
+scheduler = 'ASHA',
 
 # where to store logs
 log_dir = "RayLogs/",
@@ -43,9 +44,12 @@ name = None,
 
 # specify resources to be used per trial
 # i.e {'gpu':1, 'cpu':2}
-resources = {'gpu':1, 'cpu':2},
+# resources = {'gpu':1, 'cpu':2},
+resources = {'gpu':0.5, 'cpu':1},
 
 # if True, trains model on Full dataset with the best parameter selected.
-final_train = True
+final_train = True,
+
+final_train_type = 'full' # full, gmpb
 
 )

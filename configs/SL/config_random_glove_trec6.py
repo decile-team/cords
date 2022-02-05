@@ -43,7 +43,7 @@ config = dict(setting="SL",
               dss_args=dict(type="Random",
                             fraction=0.3,
                             select_every=5,
-                            kappa=0,
+                            kappa=0.5,
                             collate_fn = collate_fn_pad_batch),
 
               train_args=dict(num_epochs=20,

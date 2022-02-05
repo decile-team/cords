@@ -1567,9 +1567,16 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         wordvec = loadGloveModel(weight_full_path)
 
         clean_type = 0
-        trainset = GlueDataset(raw['train'], 'sentence', 'label', clean_type, num_cls, wordvec_dim, wordvec)
-        testset = GlueDataset(raw['test'], 'sentence', 'label', clean_type, num_cls, wordvec_dim, wordvec)
+        fullset = GlueDataset(raw['train'], 'sentence', 'label', clean_type, num_cls, wordvec_dim, wordvec)
+        # testset = GlueDataset(raw['test'], 'sentence', 'label', clean_type, num_cls, wordvec_dim, wordvec) # doesn't have gold labels
         valset = GlueDataset(raw['validation'], 'sentence', 'label', clean_type, num_cls, wordvec_dim, wordvec)
+
+        test_set_fraction = 0.05
+        seed = 42
+        num_fulltrn = len(fullset)
+        num_test = int(num_fulltrn * test_set_fraction)
+        num_trn = num_fulltrn - num_test
+        trainset, testset = random_split(fullset, [num_trn, num_test], generator=torch.Generator().manual_seed(seed))
 
         return trainset, valset, testset, num_cls
     elif  dset_name == "sst5":
@@ -1586,6 +1593,7 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         trainset = SSTDataset(datadir, 'train', num_cls, wordvec_dim, wordvec)
         testset = SSTDataset(datadir, 'test', num_cls, wordvec_dim, wordvec)
         valset = SSTDataset(datadir, 'dev', num_cls, wordvec_dim, wordvec)
+
 
         return trainset, valset, testset, num_cls
     elif dset_name == 'trec6':
