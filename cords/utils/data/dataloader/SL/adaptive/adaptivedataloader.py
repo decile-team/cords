@@ -2,6 +2,7 @@ import logging
 from abc import abstractmethod
 from torch.utils.data import DataLoader
 from ..dssdataloader import DSSDataLoader
+from math import ceil
 
 
 class AdaptiveDSSDataLoader(DSSDataLoader):
@@ -24,7 +25,7 @@ class AdaptiveDSSDataLoader(DSSDataLoader):
         if dss_args.kappa > 0:
             assert "num_epochs" in dss_args.keys(), "'num_epochs' is a compulsory argument when warm starting the model(i.e., kappa > 0). Include it as a key in dss_args"
             self.select_after =  int(dss_args.kappa * dss_args.num_epochs)
-            self.warmup_epochs = round(self.select_after * dss_args.fraction)
+            self.warmup_epochs = ceil(self.select_after * dss_args.fraction)
         else:
             self.select_after = 0
             self.warmup_epochs = 0

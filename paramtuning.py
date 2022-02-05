@@ -122,12 +122,32 @@ class HyperParamTuning:
     
     def update_parameters(self, config, new_config):
         # a generic function to update parameters
-        if 'learning_rate' in new_config:
-            config['optimizer']['lr'] = new_config['learning_rate']
-        if 'optimizer' in new_config:
-            config['optimizer']['type'] = new_config['optimizer']
+        # if 'learning_rate' in new_config:
+        #     config['optimizer']['lr'] = new_config['learning_rate']
+        # if 'optimizer' in new_config:
+        #     config['optimizer']['type'] = new_config['optimizer']
         if 'trn_batch_size' in new_config:
             config['dataloader']['batch_size'] = new_config['trn_batch_size']
+        if 'learning_rate' in new_config:
+            config['optimizer']['lr'] = new_config['learning_rate']
+        if 'learning_rate1' in new_config:
+            config['optimizer']['lr1'] = new_config['learning_rate1']
+        if 'learning_rate2' in new_config:
+            config['optimizer']['lr2'] = new_config['learning_rate2']
+        if 'learning_rate3' in new_config:
+            config['optimizer']['lr3'] = new_config['learning_rate3']
+        if 'optimizer' in new_config:
+            config['optimizer']['type'] = new_config['optimizer']
+        if 'nesterov' in new_config:
+            config['optimizer']['nesterov'] = new_config['nesterov']
+        if 'scheduler' in new_config:
+            config['scheduler']['type'] = new_config['scheduler']
+        if 'trn_batch_size' in new_config:
+            config['dataloader']['batch_size'] = new_config['trn_batch_size']
+        if 'gamma' in new_config:
+            config['scheduler']['gamma'] = new_config['gamma']
+        
+        return config
         
         return config
         
