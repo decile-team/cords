@@ -14,6 +14,7 @@ if __name__ == '__main__':
     parser.add_argument('--scheduler', type=str, default='asha')
     parser.add_argument('--search_algo', type=str, default='TPE')
     parser.add_argument('--num_classes', type=int, default=10)
+    parser.add_argument('--kappa', type=float, default=0.35)
     parser.add_argument('--dataset', type=str, default='svhn')
     parser.add_argument('--num_evals', type=int, default=27)
     parser.add_argument('--is_hp', type=int, default=1, help='do we perform hyper parameter tuning?')
@@ -34,6 +35,7 @@ if __name__ == '__main__':
             train_config_data.report_tune = True
             train_config_data.model.numclasses = args.num_classes
             train_config_data.dataset.name = args.dataset
+            train_config_data.dss_args.kappa = args.kappa
             #train_config_data.train_args.device = 'cuda'
         hyperparamtuning = HyperParamTuning(config_hp_data, train_config_data)
         hyperparamtuning.start_eval()
@@ -42,6 +44,9 @@ if __name__ == '__main__':
         if bool(args.change):
             config_file_data.dss_args.fraction = args.fraction
             config_file_data.dss_args.select_every = args.select_every
+            config_file_data.model.numclasses = args.num_classes
+            config_file_data.dataset.name = args.dataset
+            config_file_data.dss_args.kappa = args.kappa
             #config_file_data.train_args.device = 'cuda'
         classifier = TrainClassifier(config_file_data)
         classifier.train()
