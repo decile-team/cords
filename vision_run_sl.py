@@ -13,6 +13,8 @@ if __name__ == '__main__':
     parser.add_argument('--config_hp', type=str, default='/home/kk/cords/configs/SL/config_hyper_param_tuning_cifar100.py')
     parser.add_argument('--scheduler', type=str, default='asha')
     parser.add_argument('--search_algo', type=str, default='TPE')
+    parser.add_argument('--num_classes', type=int, default=10)
+    parser.add_argument('--dataset', type=str, default='svhn')
     parser.add_argument('--num_evals', type=int, default=27)
     parser.add_argument('--is_hp', type=int, default=1, help='do we perform hyper parameter tuning?')
     parser.add_argument('--final_train', type=int, default=1, help='need final training hyper parameter tuning?')
@@ -30,6 +32,8 @@ if __name__ == '__main__':
             train_config_data.dss_args.fraction = args.fraction
             train_config_data.dss_args.select_every = args.select_every
             train_config_data.report_tune = True
+            train_config_data.model.numclasses = args.num_classes
+            train_config_data.dataset.name = args.dataset
             #train_config_data.train_args.device = 'cuda'
         hyperparamtuning = HyperParamTuning(config_hp_data, train_config_data)
         hyperparamtuning.start_eval()
