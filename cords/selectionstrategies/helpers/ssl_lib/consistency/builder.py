@@ -3,6 +3,7 @@ from .mean_squared import MeanSquared
 from .kl_divergence import KLDivergence
 
 def gen_consistency(type, cfg):
+    # doubts: what is this doing?
     if type == "ce":
         return CrossEntropy(True)
     elif type == "ce_red":

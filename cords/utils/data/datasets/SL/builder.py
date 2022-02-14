@@ -96,15 +96,22 @@ class SSTDataset(Dataset):
 
 ## Custom PyTorch Dataset Class wrapper
 class CustomDataset(Dataset):
-    def __init__(self, data, target, device=None, transform=None):
+    def __init__(self, data, target, device=None, transform=None, return_ids=False):
         self.transform = transform
-        if device is not None:
-            # Push the entire data to given device, eg: cuda:0
-            self.data = data.float().to(device)
-            self.targets = target.long().to(device)
+        self.return_ids = return_ids
+        if self.return_ids:
+            self.data = data
+            self.targets = target
+            self.X = self.data
+            self.Y = self.targets
         else:
-            self.data = data.float()
-            self.targets = target.long()
+            if device is not None:
+                # Push the entire data to given device, eg: cuda:0
+                self.data = data.float().to(device)
+                self.targets = target.long().to(device)
+            else:
+                self.data = data.float()
+                self.targets = target.long()
 
     def __len__(self):
         return len(self.targets)
@@ -116,7 +123,10 @@ class CustomDataset(Dataset):
         label = self.targets[idx]
         if self.transform is not None:
             sample_data = self.transform(sample_data)
-        return (sample_data, label)  # .astype('float32')
+        if self.return_ids:
+            return sample_data, label, idx
+        else:
+            return (sample_data, label)  # .astype('float32')
 
 
 class CustomDataset_WithId(Dataset):
@@ -124,8 +134,8 @@ class CustomDataset_WithId(Dataset):
         self.transform = transform
         self.data = data  # .astype('float32')
         self.targets = target
-        self.X = self.data
-        self.Y = self.targets
+        self.X = self.data  # unused
+        self.Y = self.targets # unused
 
     def __len__(self):
         return len(self.targets)

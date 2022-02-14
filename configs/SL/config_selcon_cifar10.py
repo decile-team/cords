@@ -19,26 +19,24 @@ config = dict(setting="SL",
                         dir='results/',
                         save_every=20),
               
-              loss=dict(type='CrossEntropyLoss',
+              loss=dict(type='MSELoss', # was CrossEntropyLoss for others
                         use_sigmoid=False),
 
-              optimizer=dict(type="sgd",
-                             momentum=0.9,
-                             lr=0.01,
-                             weight_decay=5e-4),
+              optimizer=dict(type="adam", 
+                             lr=0.01),
 
-              scheduler=dict(type="cosine_annealing",
-                             T_max=300),
+              scheduler=dict(type="StepLR", # added this new scheduler type
+                             step_size=1,
+                             gamma=0.1),
 
-              dss_args=dict(type="GLISTER-Warm",
+              dss_args=dict(type="SELECON", # todo : modify this to SELCON
                                 fraction=0.1,
                                 select_every=20,
-                                kappa=0.5,
+                                kappa=0,
                                 linear_layer=False,
-                                selection_type='Supervised',
-                                greedy='Stochastic'),
+                                selection_type='Supervised'),
 
-              train_args=dict(num_epochs=10,
+              train_args=dict(num_epochs=300,
                               device="cuda",
                               print_every=10,
                               results_dir='results/',
