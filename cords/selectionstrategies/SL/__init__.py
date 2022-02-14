@@ -5,3 +5,4 @@ from .randomstrategy import RandomStrategy
 from .submodularselectionstrategy import SubmodularSelectionStrategy
 from .gradmatchstrategy import GradMatchStrategy
 from .fixedweightstrategy import FixedWeightStrategy
+from .selconstrategy import SELCONstrategy

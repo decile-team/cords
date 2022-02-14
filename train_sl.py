@@ -7,6 +7,7 @@ import torch
 import numpy as np
 import torch.nn as nn
 import torch.optim as optim
+from cords.utils.data.dataloader.SL.adaptive.selcondataloader import SELCONDataLoader
 from ray import tune
 from torch.utils.data import Subset
 from cords.utils.config_utils import load_config_data
@@ -90,6 +91,9 @@ class TrainClassifier:
         if self.cfg.loss.type == "CrossEntropyLoss":
             criterion = nn.CrossEntropyLoss()
             criterion_nored = nn.CrossEntropyLoss(reduction='none')
+        elif self.cfg.loss.type == "MSELoss":
+            criterion = nn.MSELoss()
+            criterion_nored = nn.MSELoss(reduction='none')
         return criterion, criterion_nored
 
     def optimizer_with_scheduler(self, model):
@@ -106,6 +110,9 @@ class TrainClassifier:
         if self.cfg.scheduler.type == 'cosine_annealing':
             scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,
                                                                    T_max=self.cfg.scheduler.T_max)
+        elif self.cfg.scheduler_type == 'StepLR':
+            scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=self.cfg.scheduler.step_size, gamma=self.cfg.scheduler.gamma)
+
         return optimizer, scheduler
 
     @staticmethod
@@ -275,6 +282,28 @@ class TrainClassifier:
                                                      batch_size=self.cfg.dataloader.batch_size,
                                                      shuffle=self.cfg.dataloader.shuffle,
                                                      pin_memory=self.cfg.dataloader.pin_memory)
+
+        elif self.cfg.dss_args.type in ['SELCON']:
+            """
+            ############################## SELCON Dataloader Additional Arguments ##############################
+            """
+            self.cfg.dss_args.model = model
+            self.cfg.dss_args.loss = criterion_nored # doubt: or criterion
+            self.cfg.dss_args.device = self.cfg.train_args.device
+            self.cfg.dss_args.num_classes = self.cfg.model.numclasses
+            
+            # todo: not done yet
+            self.cfg.dss_args.delta = self.cfg.dss_args.delta
+            # self.cfg.dss_args.linear_layer = self.cfg.dss_args.linear_layer # already there, check glister init
+            # self.cfg.dss_args.num_epochs = self.cfg.train_args.num_epochs # doubt: can we use this as num_sub_epochs
+            
+            dataloader = SELCONDataLoader(trainloader, valloader, self.cfg.dss_args, logger,
+                                           batch_size=self.cfg.dataloader.batch_size,
+                                           shuffle=self.cfg.dataloader.shuffle,
+                                           pin_memory=self.cfg.dataloader.pin_memory)
+
+        else:
+            raise NotImplementedError
 
         """
         ################################################# Checkpoint Loading #################################################
