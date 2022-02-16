@@ -20,6 +20,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--num_classes', type=int, default=10)
     parser.add_argument('--kappa', type=float, default=0.35)
+    parser.add_argument('--device', type=float, default='cuda')
     parser.add_argument('--dataset', type=str, default='svhn')
     parser.add_argument('--lr', type=float, default=0.01, help='lr')
     parser.add_argument('--lr1', type=float, default=0.01, help='lr1')
@@ -52,8 +53,8 @@ if __name__ == '__main__':
             train_config_data.optimizer.lr3 = args.lr3
             train_config_data.optimizer.nesterov = args.nesterov
             train_config_data.scheduler.type = args.train_scheduler
-            train_config_data.scheduler.gamma = args.gamma   
-            #train_config_data.train_args.device = 'cuda'
+            train_config_data.scheduler.gamma = args.gamma
+            train_config_data.train_args.device = args.device
         hyperparamtuning = HyperParamTuning(config_hp_data, train_config_data)
         hyperparamtuning.start_eval()
     else:
@@ -71,6 +72,6 @@ if __name__ == '__main__':
             train_config_data.optimizer.nesterov = args.nesterov
             train_config_data.scheduler.type = args.train_scheduler
             train_config_data.scheduler.gamma = args.gamma
-            #config_file_data.train_args.device = 'cuda'
+            train_config_data.train_args.device = args.device
         classifier = TrainClassifier(train_config_data)
         classifier.train()
