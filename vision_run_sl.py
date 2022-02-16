@@ -18,9 +18,10 @@ if __name__ == '__main__':
     parser.add_argument('--is_hp', type=int, default=1, help='do we perform hyper parameter tuning?')
     parser.add_argument('--final_train', type=int, default=1, help='need final training hyper parameter tuning?')
 
+    parser.add_argument('--dss_algo', type=str, default='GradMatchPB-Warm')
     parser.add_argument('--num_classes', type=int, default=10)
     parser.add_argument('--kappa', type=float, default=0.35)
-    parser.add_argument('--device', type=float, default='cuda')
+    parser.add_argument('--device', type=str, default='cuda')
     parser.add_argument('--dataset', type=str, default='svhn')
     parser.add_argument('--lr', type=float, default=0.01, help='lr')
     parser.add_argument('--lr1', type=float, default=0.01, help='lr1')
@@ -41,6 +42,7 @@ if __name__ == '__main__':
         config_hp_data.num_evals = args.num_evals
         train_config_data = load_config_data(args.config_file)
         if bool(args.change):
+            train_config_data.dss_args.type = args.dss_algo
             train_config_data.dss_args.fraction = args.fraction
             train_config_data.dss_args.select_every = args.select_every
             train_config_data.report_tune = True
@@ -60,6 +62,7 @@ if __name__ == '__main__':
     else:
         train_config_data = load_config_data(args.config_file)
         if bool(args.change):
+            train_config_data.dss_args.type = args.dss_algo
             train_config_data.dss_args.fraction = args.fraction
             train_config_data.dss_args.select_every = args.select_every
             train_config_data.model.numclasses = args.num_classes
