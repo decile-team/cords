@@ -1,10 +1,10 @@
 # Learning setting
 config = dict(setting="SL",
-
+              is_reg = False,
               dataset=dict(name="cifar10",
                            datadir="../data",
                            feature="dss",
-                           type="pre-defined"),
+                           type="image"),
 
               dataloader=dict(shuffle=True,
                               batch_size=20,
