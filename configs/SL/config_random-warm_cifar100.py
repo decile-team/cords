@@ -12,7 +12,7 @@ config = dict(setting="SL",
 
               model=dict(architecture='ResNet18',
                          type='pre-defined',
-                         numclasses=10),
+                         numclasses=100),
               
               ckpt=dict(is_load=False,
                         is_save=True,
