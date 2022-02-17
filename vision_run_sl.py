@@ -28,7 +28,7 @@ if __name__ == '__main__':
     parser.add_argument('--lr2', type=float, default=0.01, help='lr2')
     parser.add_argument('--lr3', type=float, default=0.01, help='lr3')
     parser.add_argument('--train_scheduler', type=str, default='cosine_annealing', help='learning rate scheduler')
-    parser.add_argument('--nesterov', type=bool, help='use nesterov momentum')
+    parser.add_argument('--nesterov', type=bool, default=False, help='use nesterov momentum')
     parser.add_argument('--gamma', type=float, default=0.1, help='step size decay rate')
     args = parser.parse_args()
 
@@ -42,13 +42,13 @@ if __name__ == '__main__':
         config_hp_data.num_evals = args.num_evals
         train_config_data = load_config_data(args.config_file)
         if bool(args.change):
+            train_config_data.dataset.name = args.dataset
             train_config_data.dss_args.type = args.dss_algo
             train_config_data.dss_args.fraction = args.fraction
             train_config_data.dss_args.select_every = args.select_every
+            train_config_data.dss_args.kappa = args.kappa
             train_config_data.report_tune = True
             train_config_data.model.numclasses = args.num_classes
-            train_config_data.dataset.name = args.dataset
-            train_config_data.dss_args.kappa = args.kappa
             train_config_data.optimizer.lr = args.lr
             train_config_data.optimizer.lr1 = args.lr1
             train_config_data.optimizer.lr2 = args.lr2
@@ -56,7 +56,8 @@ if __name__ == '__main__':
             train_config_data.optimizer.nesterov = args.nesterov
             train_config_data.scheduler.type = args.train_scheduler
             train_config_data.scheduler.gamma = args.gamma
-            train_config_data.train_args.device = args.device
+            #train_config_data.train_args.device = args.device
+        print(train_config_data)
         hyperparamtuning = HyperParamTuning(config_hp_data, train_config_data)
         hyperparamtuning.start_eval()
     else:

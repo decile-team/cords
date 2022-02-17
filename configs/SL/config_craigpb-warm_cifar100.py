@@ -36,10 +36,14 @@ config = dict(setting="SL",
                              stepsize=20,
                              gamma=0.1),
 
-              dss_args=dict(type="Random-Warm",
+              dss_args=dict(type="CRAIGPB-Warm",
                                 fraction=0.1,
                                 select_every=20,
-                                kappa=0.5),
+                                kappa=0.5,
+                                linear_layer=False,
+                                optimizer='lazy',
+                                selection_type='PerBatch'
+                                ),
 
               train_args=dict(num_epochs=300,
                               device="cuda",
