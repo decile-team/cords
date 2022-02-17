@@ -18,7 +18,7 @@ if __name__ == '__main__':
     parser.add_argument('--is_hp', type=int, default=1, help='do we perform hyper parameter tuning?')
     parser.add_argument('--final_train', type=int, default=1, help='need final training hyper parameter tuning?')
 
-    parser.add_argument('--dss_algo', type=str, default='GradMatchPB-Warm')
+    parser.add_argument('--dss_algo', type=str, default='CRAIGPB-Warm')
     parser.add_argument('--num_classes', type=int, default=10)
     parser.add_argument('--kappa', type=float, default=0.35)
     parser.add_argument('--device', type=str, default='cuda')
