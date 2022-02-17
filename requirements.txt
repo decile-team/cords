@@ -2,7 +2,7 @@ apricot-select>=0.6.0
 numba>=0.43.0
 scipy>=1.0.0
 scikit-learn
-torch>=1.4.0
+torch>=1.8.0
 torchvision
 tqdm>=4.24.0
 sphinxcontrib-napoleon
@@ -24,3 +24,4 @@ ray~=1.7.0
 setuptools~=58.0.4
 ray[tune]
 ray[default]
+datasets

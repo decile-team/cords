@@ -24,9 +24,8 @@ import sys
 
 
 class TrainClassifier:
-    def __init__(self, config_file):
-        self.config_file = config_file
-        self.cfg = load_config_data(self.config_file)
+    def __init__(self, config_file_data):
+        self.cfg = config_file_data
         results_dir = osp.abspath(osp.expanduser(self.cfg.train_args.results_dir))
         all_logs_dir = os.path.join(results_dir, self.cfg.setting,
                                     self.cfg.dss_args.type,
