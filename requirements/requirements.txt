@@ -9,7 +9,7 @@ sphinxcontrib-napoleon
 sphinxcontrib-bibtex
 sphinx-rtd-theme
 matplotlib
-numpy>=1.21
+numpy>=1.19.0
 torchvision~=0.10.1
 pillow>=9.0.0
 pandas~=1.3.3
