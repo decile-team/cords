@@ -7,7 +7,21 @@ import time, copy
 
 # CRAIG
 class CRAIGDataLoader(NonAdaptiveDSSDataLoader):
+    """
+    Implements of CRAIGDataLoader that serves as the dataloader for the nonadaptive CRAIG subset selection strategy for semi-supervised learning
+    and is an adapted version from the paper :footcite:`pmlr-v119-mirzasoleiman20a`.
 
+    Parameters
+    -----------
+    train_loader: torch.utils.data.DataLoader class
+        Dataloader of the training dataset
+    val_loader: torch.utils.data.DataLoader class
+        Dataloader of the validation dataset
+    dss_args: dict
+        Data subset selection arguments dictionary required for CRAIG subset selection strategy
+    logger: class
+        Logger for logging the information
+    """
     def __init__(self, train_loader, val_loader, dss_args, logger, *args, **kwargs):
         """
          Arguments assertion check
@@ -39,6 +53,9 @@ class CRAIGDataLoader(NonAdaptiveDSSDataLoader):
         self.loss = copy.deepcopy(dss_args.loss)
 
     def _init_subset_loader(self):
+        """
+        Function that initializes the initial subset loader.
+        """
         # All strategies start with random selection
         self.subset_indices, self.subset_weights = self._init_subset_indices()
         self.subset_loader = DataLoader(WeightedSubset(self.dataset, self.subset_indices, self.subset_weights), 
@@ -47,6 +64,10 @@ class CRAIGDataLoader(NonAdaptiveDSSDataLoader):
         self.curr_loader = self.subset_loader
 
     def _init_subset_indices(self):
+        """
+        Function that initializes the initial subset indices by calling the CRAIG subset selection strategy to sample 
+        new subset indices and the corresponding subset weights.
+        """
         start = time.time()
         self.logger.debug('Iteration: {0:d}, requires subset selection. '.format(self.cur_iter))
         cached_state_dict = copy.deepcopy(self.train_model.state_dict())

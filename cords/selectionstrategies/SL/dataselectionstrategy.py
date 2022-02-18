@@ -6,24 +6,24 @@ class DataSelectionStrategy(object):
     Implementation of Data Selection Strategy class which serves as base class for other
     dataselectionstrategies for general learning frameworks.
     Parameters
-        ----------
-        trainloader: class
-            Loading the training data using pytorch dataloader
-        valloader: class
-            Loading the validation data using pytorch dataloader
-        model: class
-            Model architecture used for training
-        num_classes: int
-            Number of target classes in the dataset
-        linear_layer: bool
-            If True, we use the last fc layer weights and biases gradients
-            If False, we use the last fc layer biases gradients
-        loss: class
-            PyTorch Loss function
-        device: str
-            The device being utilized - cpu | cuda
-        logger: class
-            logger object for logging the information
+    ----------
+    trainloader: class
+        Loading the training data using pytorch dataloader
+    valloader: class
+        Loading the validation data using pytorch dataloader
+    model: class
+        Model architecture used for training
+    num_classes: int
+        Number of target classes in the dataset
+    linear_layer: bool
+        If True, we use the last fc layer weights and biases gradients
+        If False, we use the last fc layer biases gradients
+    loss: class
+        PyTorch Loss function
+    device: str
+        The device being utilized - cpu | cuda
+    logger: class
+        logger object for logging the information
     """
 
     def __init__(self, trainloader, valloader, model, num_classes, linear_layer, loss, device, logger):

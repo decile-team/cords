@@ -4,7 +4,20 @@ import time, copy, torch
 
 
 class GradMatchDataLoader(AdaptiveDSSDataLoader):
-
+    """
+    Implements of GradMatchDataLoader that serves as the dataloader for the adaptive GradMatch subset selection strategy for 
+    semi-supervised learning and is an adapted version of the one given in the paper :footcite:`pmlr-v139-killamsetty21a`.
+    Parameters
+    -----------
+    train_loader: torch.utils.data.DataLoader class
+        Dataloader of the training dataset
+    val_loader: torch.utils.data.DataLoader class
+        Dataloader of the validation dataset
+    dss_args: dict
+        Data subset selection arguments dictionary required for GradMatch subset selection strategy
+    logger: class
+        Logger for logging the information
+    """
     def __init__(self, train_loader, val_loader, dss_args, logger, *args, **kwargs):
         
         """
@@ -36,6 +49,9 @@ class GradMatchDataLoader(AdaptiveDSSDataLoader):
         self.logger.info('Grad-match dataloader initialized.')
 
     def _resample_subset_indices(self):
+        """
+        Function that calls the GradMatch subset selection strategy to sample new subset indices and the corresponding subset weights.
+        """
         start = time.time()
         self.logger.debug('Iteration: {0:d}, requires subset selection. '.format(self.cur_iter))
         cached_state_dict = copy.deepcopy(self.train_model.state_dict())

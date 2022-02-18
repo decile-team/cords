@@ -5,7 +5,20 @@ import time, copy
 
 # CRAIG
 class CRAIGDataLoader(AdaptiveDSSDataLoader):
+    """
+    Implements of CRAIGDataLoader that serves as the dataloader for the adaptive CRAIG subset selection strategy from the paper :footcite:`pmlr-v119-mirzasoleiman20a`.
 
+    Parameters
+    -----------
+    train_loader: torch.utils.data.DataLoader class
+        Dataloader of the training dataset
+    val_loader: torch.utils.data.DataLoader class
+        Dataloader of the validation dataset
+    dss_args: dict
+        Data subset selection arguments dictionary required for CRAIG subset selection strategy
+    logger: class
+        Logger for logging the information
+    """
     def __init__(self, train_loader, val_loader, dss_args, logger, *args, **kwargs):
         """
          Arguments assertion check
@@ -29,6 +42,9 @@ class CRAIGDataLoader(AdaptiveDSSDataLoader):
         self.logger.info('CRAIG dataloader initialized. ')
 
     def _resample_subset_indices(self):
+        """
+        Function that calls the CRAIG subset selection strategy to sample new subset indices and the corresponding subset weights.
+        """
         
         start = time.time()
         self.logger.info('Epoch: {0:d}, requires subset selection. '.format(self.cur_epoch))

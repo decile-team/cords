@@ -6,6 +6,21 @@ from math import ceil
 
 
 class AdaptiveDSSDataLoader(DSSDataLoader):
+    """
+    Implementation of AdaptiveDSSDataLoader class which serves as base class for dataloaders of other
+    adaptive subset selection strategies for supervised learning framework.
+
+    Parameters
+    -----------
+    train_loader: torch.utils.data.DataLoader class
+        Dataloader of the training dataset
+    val_loader: torch.utils.data.DataLoader class
+        Dataloader of the validation dataset
+    dss_args: dict
+        Data subset selection arguments dictionary
+    logger: class
+        Logger for logging the information
+    """
     def __init__(self, train_loader, val_loader, dss_args, logger, *args,
                  **kwargs):
         super(AdaptiveDSSDataLoader, self).__init__(train_loader.dataset, dss_args,
@@ -33,6 +48,10 @@ class AdaptiveDSSDataLoader(DSSDataLoader):
         
     
     def __iter__(self):
+        """
+        Iter function that returns the iterator of full data loader or data subset loader or empty loader based on the 
+        warmstart kappa value.
+        """
         self.initialized = True
         if self.warmup_epochs < self.cur_epoch <= self.select_after:
             self.logger.debug(
@@ -54,6 +73,9 @@ class AdaptiveDSSDataLoader(DSSDataLoader):
         return loader.__iter__()
 
     def __len__(self) -> int:
+        """
+        Returns the length of the current data loader
+        """
         if self.warmup_epochs < self.cur_epoch <= self.select_after:
             self.logger.debug(
                 "Skipping epoch {0:d} due to warm-start option. ".format(self.cur_epoch, self.warmup_epochs))
@@ -71,6 +93,9 @@ class AdaptiveDSSDataLoader(DSSDataLoader):
             return len(loader)
             
     def resample(self):
+        """
+        Function that resamples the subset indices and recalculates the subset weights
+        """
         self.subset_indices, self.subset_weights = self._resample_subset_indices()
         self.logger.debug("Subset indices length: %d", len(self.subset_indices))
         self._refresh_subset_loader()
@@ -80,4 +105,8 @@ class AdaptiveDSSDataLoader(DSSDataLoader):
 
     @abstractmethod
     def _resample_subset_indices(self):
+        """
+        Abstract function that needs to be implemented in the child classes. 
+        Needs implementation of subset selection implemented in child classes.
+        """
         raise Exception('Not implemented.')

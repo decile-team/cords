@@ -6,6 +6,19 @@ import numpy as np
 
 # Base objects
 class DSSDataLoader:
+    """
+    Implementation of DSSDataLoader class which serves as base class for dataloaders of other
+    selection strategies for semi-supervised learning framework.
+
+    Parameters
+    -----------
+    full_data: torch.utils.data.Dataset Class
+        Full dataset from which data subset needs to be selected.
+    dss_args: dict 
+        Data subset selection arguments dictionary
+    logger: class
+        Logger class for logging the information
+    """
     def __init__(self, full_data, dss_args, logger, *args, **kwargs):
         super(DSSDataLoader, self).__init__()
         # TODO: Integrate verbose in logging
@@ -37,6 +50,9 @@ class DSSDataLoader:
         return object.__getattribute__(self, "curr_loader").__getattribute__(item)
 
     def _init_subset_loader(self):
+        """
+        Function that initializes the random data subset loader
+        """
         # All strategies start with random selection
         self.subset_indices = self._init_subset_indices()
         self.logger.debug("Length of the data subset: %d", len(self.subset_indices))
@@ -48,9 +64,15 @@ class DSSDataLoader:
 
     # Default subset indices comes from random selection
     def _init_subset_indices(self):
+        """
+        Function that initializes the subset indices randomly
+        """
         return np.random.choice(self.len_full, size=self.budget, replace=False)
 
     def _refresh_subset_loader(self):
+        """
+        Function that regenerates the data subset loader using new subset indices and subset weights
+        """
         self.subset_loader = DataLoader(WeightedSubset(self.dataset, self.subset_indices, self.subset_weights), 
                                         *self.loader_args, **self.loader_kwargs)
         self.logger.debug("Subset Loader Refreshed")

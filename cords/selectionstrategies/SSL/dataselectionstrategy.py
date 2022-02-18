@@ -8,28 +8,28 @@ class DataSelectionStrategy(object):
     Implementation of Data Selection Strategy class which serves as base class for other
     dataselectionstrategies for semi-supervised learning frameworks.
     Parameters
-        ----------
-        trainloader: class
-            Loading the training data using pytorch dataloader
-        valloader: class
-            Loading the validation data using pytorch dataloader
-        model: class
-            Model architecture used for training
-        tea_model: class
-            Teacher model architecture used for training
-        ssl_alg: class
-            SSL algorithm class
-        num_classes: int
-            Number of target classes in the dataset
-        linear_layer: bool
-            If True, we use the last fc layer weights and biases gradients
-            If False, we use the last fc layer biases gradients
-        loss: class
-            Consistency loss function for unlabeled data with no reduction
-        device: str
-            The device being utilized - cpu | cuda
-        logger : class
-            logger file for printing the info
+    ----------
+    trainloader: class
+        Loading the training data using pytorch dataloader
+    valloader: class
+        Loading the validation data using pytorch dataloader
+    model: class
+        Model architecture used for training
+    tea_model: class
+        Teacher model architecture used for training
+    ssl_alg: class
+        SSL algorithm class
+    num_classes: int
+        Number of target classes in the dataset
+    linear_layer: bool
+        If True, we use the last fc layer weights and biases gradients
+        If False, we use the last fc layer biases gradients
+    loss: class
+        Consistency loss function for unlabeled data with no reduction
+    device: str
+        The device being utilized - cpu | cuda
+    logger : class
+        logger file for printing the info
     """
 
     def __init__(self, trainloader, valloader, model, tea_model, ssl_alg, num_classes, linear_layer, loss, device, logger):
