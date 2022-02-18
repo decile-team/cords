@@ -1,34 +1,33 @@
 Supervised Learning Data Selection Strategies
 ==============================================
-In this section, we consider different data selection strategies available for standard supervised learning framework.
+In this section, we consider different data selection strategies geared towards efficient and robust learning 
+in standard supervised learning framework.
 
-Data Selection Strategy
+Data Selection Strategy (Base Class)
 -----------------------------------------------
 
-.. automodule:: cords.selectionstrategies.supervisedlearning.dataselectionstrategy
+.. automodule:: cords.selectionstrategies.SL.dataselectionstrategy
    :members:
    :undoc-members:
    :show-inheritance:
 
-GLISTER
+GLISTER (:footcite:`killamsetty2021glister`)
 ------------------------------------------------
-
-.. automodule:: cords.selectionstrategies.supervisedlearning.glisterstrategy
+.. automodule:: cords.selectionstrategies.SL.glisterstrategy
    :members:
    :show-inheritance:
 
-CRAIG
+CRAIG (:footcite:`pmlr-v119-mirzasoleiman20a`)
 ----------------------------------------------------
 
-.. automodule:: cords.selectionstrategies.supervisedlearning.craigstrategy
+.. automodule:: cords.selectionstrategies.SL.craigstrategy
    :members:
    :undoc-members:
    :show-inheritance:
 
-OMPGradMatch
+GradMatch (:footcite:`pmlr-v139-killamsetty21a`)
 ------------------------------------------------------------
-
-.. automodule:: cords.selectionstrategies.supervisedlearning.ompgradmatchstrategy
+.. automodule:: cords.selectionstrategies.SL.gradmatchstrategy
    :members:
    :undoc-members:
    :show-inheritance:
@@ -36,7 +35,7 @@ OMPGradMatch
 Random Strategy
 ---------------------------------------------------------------------
 
-.. automodule:: cords.selectionstrategies.supervisedlearning.randomstrategy
+.. automodule:: cords.selectionstrategies.SL.randomstrategy
    :members:
    :undoc-members:
    :show-inheritance:
@@ -44,7 +43,7 @@ Random Strategy
 Submodular Selection Strategy
 --------------------------------------------------
 
-.. automodule:: cords.selectionstrategies.supervisedlearning.submodularselectionstrategy
+.. automodule:: cords.selectionstrategies.SL.submodularselectionstrategy
    :members:
    :show-inheritance:
 

@@ -9,7 +9,7 @@ from torch.utils.data import Subset, DataLoader
 
 class GradMatchStrategy(DataSelectionStrategy):
     """
-    Implementation of GradMatch Strategy from the paper :footcite:`sivasubramanian2020gradmatch` for supervised learning frameworks.
+    Implementation of GradMatch Strategy from the paper :footcite:`pmlr-v139-killamsetty21a` for supervised learning frameworks.
 
     GradMatch strategy tries to solve the optimization problem given below:
 

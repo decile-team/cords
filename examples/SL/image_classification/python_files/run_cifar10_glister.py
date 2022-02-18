@@ -1,11 +1,14 @@
+"""
+This run file shows how to use the default SL train loop provided in CORDS and 
+run it with default arguments using the configuration files provided in CORDS.
+"""
+
+
 from train_sl import TrainClassifier
 from cords.utils.config_utils import load_config_data
 
-#config_file = "configs/SL/config_glister_cifar10.py"
-#config_file = "configs/SL/Regression/config_glister_Cadata.py"
-#config_file = "configs/SL/Regression/config_craig_Cadata.py"
-
-config_file = "configs/SL/Regression/config_craig_boston.py"
+#CORDS comes with some predefined configuration files that mentiones the format of 
+config_file = "configs/SL/config_glister-warm_cifar10.py"
 #config_file = "configs/SL/config_glister_boston.py"
 #config_file = "configs/SL/config_full_boston.py"
 

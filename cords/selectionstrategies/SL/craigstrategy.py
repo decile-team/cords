@@ -10,7 +10,7 @@ from .dataselectionstrategy import DataSelectionStrategy
 
 class CRAIGStrategy(DataSelectionStrategy):
     """
-    Implementation of CRAIG Strategy from the paper :footcite:`mirzasoleiman2020coresets` for supervised learning frameworks.
+    Implementation of CRAIG Strategy from the paper :footcite:`pmlr-v119-mirzasoleiman20a` for supervised learning frameworks.
 
     CRAIG strategy tries to solve the optimization problem given below for convex loss functions:
 

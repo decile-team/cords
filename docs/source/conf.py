@@ -22,7 +22,7 @@ copyright = '2021, Krishnateja Killamsetty, Dheeraj Bhat, Rishabh Iyer'
 author = 'Krishnateja Killamsetty, Dheeraj Bhat, Rishabh Iyer'
 
 # The full version, including alpha/beta/rc tags
-release = 'v0.1'
+release = 'v1.0'
 master_doc = 'index'
 
 import sys
