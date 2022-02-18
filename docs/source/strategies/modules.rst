@@ -5,4 +5,6 @@ CORDS
    :maxdepth: 5
 
    cords.selection_strategies
-   cords.utils
+   cords.datasets
+   cords.models
+

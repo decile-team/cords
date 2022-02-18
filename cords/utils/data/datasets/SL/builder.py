@@ -470,6 +470,24 @@ def create_noisy(y_trn, num_cls, noise_ratio=0.8):
 
 
 def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
+    """
+    Generate train, val, and test datasets for supervised learning setting.
+
+    Parameters
+    --------
+    datadir: str
+        Dataset directory in which the data is present or needs to be downloaded.
+    dset_name: str
+        dataset name, ['cifar10', 'cifar100', 'svhn', 'stl10']
+    feature: str
+        if 'classimb', generate datasets wth class imbalance
+            - Needs keyword argument 'classimb_ratio'
+        elif 'noise', generate datasets with label noise
+        otherwise, generate standard datasets 
+    isnumpy: bool
+        if True, return datasets in numpy format instead of tensor format
+    """
+    
     if feature == 'classimb':
         if 'classimb_ratio' in kwargs:
             pass

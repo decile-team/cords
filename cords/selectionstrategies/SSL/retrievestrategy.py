@@ -29,7 +29,7 @@ class RETRIEVEStrategy(DataSelectionStrategy):
     The optimization problem after the approximation is as follows:
 
     .. math::
-        \\mathcal{S}_{t} = \\underset{\\mathcal{S} \\subseteq \\mathcal{U}:|\\mathcal{S}| \\leq k}{\\operatorname{argmin\hspace{0.7mm}}}L_S(\\mathcal{D}, \\theta_t - \\alpha_t \\nabla_{\\theta}L_S(\\mathcal{D}, \\theta_t) - \\alpha_t \\lambda_t \\underset{j \\in \\mathcal{S}}{\\sum} \\mathbf{m}_{jt} \\nabla_{\\theta}l_u(x_j, \\theta_t))\\text{\hspace{1.7cm}}
+        \\mathcal{S}_{t} = \\underset{\\mathcal{S} \\subseteq \\mathcal{U}:|\\mathcal{S}| \\leq k}{\\operatorname{argmin\hspace{0.7mm}}}L_S(\\mathcal{D}, \\theta_t - \\alpha_t \\nabla_{\\theta}L_S(\\mathcal{D}, \\theta_t) - \\alpha_t \\lambda_t \\underset{j \\in \\mathcal{S}}{\\sum} \\mathbf{m}_{jt} \\nabla_{\\theta}l_u(x_j, \\theta_t))\\text{\\hspace{1.7cm}}
 
     In the above equation, :math:`\\alpha_t` denotes the step-size used for one-step gradient update.
 
@@ -37,7 +37,7 @@ class RETRIEVEStrategy(DataSelectionStrategy):
     The Taylor series approximation is as follows:
 
     .. math::
-        L_S(\\mathcal{D}, \\theta_t - \\alpha_t \\nabla_{\\theta}L_S(\\mathcal{D}, \\theta_t) - \\alpha_t \\lambda_t \\underset{j \\in \\mathcal{S}}{\\sum} \\mathbf{m}_{jt} \\nabla_{\\theta}l_u(x_j, \\theta_t)) \\approx L_S(\Dcal, \\theta^{S}) - \\alpha_t \\lambda_t  {\\nabla_{\\theta}L_S(\\mathcal{D}, \\theta^S)}^T  \\mathbf{m}_{et} \\nabla_{\\theta}l_u(x_e, \\theta_t)
+        L_S(\\mathcal{D}, \\theta_t - \\alpha_t \\nabla_{\\theta}L_S(\\mathcal{D}, \\theta_t) - \\alpha_t \\lambda_t \\underset{j \\in \\mathcal{S}}{\\sum} \\mathbf{m}_{jt} \\nabla_{\\theta}l_u(x_j, \\theta_t)) \\approx L_S(\\mathcal{D}, \\theta^{S}) - \\alpha_t \\lambda_t  {\\nabla_{\\theta}L_S(\\mathcal{D}, \\theta^S)}^T  \\mathbf{m}_{et} \\nabla_{\\theta}l_u(x_e, \\theta_t)
 
     Taylor's series approximation reduces the time complexity by reducing the need of calculating the labeled set loss for each element during greedy selection step which
     means reducing the number of forward passes required.
