@@ -23,14 +23,16 @@ class AdaptiveDSSDataLoader(DSSDataLoader):
     """
     def __init__(self, train_loader, val_loader, dss_args, logger, *args,
                  **kwargs):
+        
+        """
+        Constructor function
+        """
         super(AdaptiveDSSDataLoader, self).__init__(train_loader.dataset, dss_args,
                                                     logger, *args, **kwargs)
         self.train_loader = train_loader
         self.val_loader = val_loader
         
-        """
-         Arguments assertion check
-        """
+        # Arguments assertion check
         assert "select_every" in dss_args.keys(), "'select_every' is a compulsory argument. Include it as a key in dss_args"
         assert "device" in dss_args.keys(), "'device' is a compulsory argument. Include it as a key in dss_args"
         assert "kappa" in dss_args.keys(), "'kappa' is a compulsory argument. Include it as a key in dss_args"

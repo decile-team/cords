@@ -24,6 +24,11 @@ class SubmodDataLoader(NonAdaptiveDSSDataLoader):
     """
     def __init__(self, train_loader, val_loader, dss_args, logger, *args,
                  **kwargs):
+        
+        """
+        Constructor function
+        """
+        # Arguments assertion
         assert "size_chunk" in dss_args.keys(), "'size_chunk' is a compulsory agument for submodular dataloader"
         self.size_chunk = dss_args.size_chunk
         self.dss_args = dss_args

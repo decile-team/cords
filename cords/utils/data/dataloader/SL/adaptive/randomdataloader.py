@@ -17,6 +17,9 @@ class RandomDataLoader(AdaptiveDSSDataLoader):
         Logger for logging the information
     """
     def __init__(self, train_loader, dss_args, logger, *args, **kwargs):
+        """
+        Constructor function
+        """
         super(RandomDataLoader, self).__init__(train_loader, train_loader, dss_args, 
                                                     logger, *args, **kwargs)
         self.strategy = RandomStrategy(train_loader, online=False)

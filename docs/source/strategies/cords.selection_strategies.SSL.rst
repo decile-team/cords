@@ -1,7 +1,7 @@
 Semi-supervised Learning Data Selection Strategies
 ===================================================
 In this section, we consider different data selection strategies geared towards efficient and robust learning 
-in standard semi-supervised learning framework.
+in standard semi-supervised learning setting.
 
 Data Selection Strategy - Base Class
 -------------------------------------

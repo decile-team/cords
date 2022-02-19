@@ -20,12 +20,13 @@ class DSSDataLoader:
         Logger class for logging the information
     """
     def __init__(self, full_data, dss_args, logger, *args, **kwargs):
+        """
+        Constructor function
+        """
         super(DSSDataLoader, self).__init__()
         # TODO: Integrate verbose in logging
         self.len_full = len(full_data)
-        """
-         Arguments assertion check
-        """
+        # Arguments assertion check
         assert "fraction" in dss_args.keys(), "'fraction' is a compulsory argument. Include it as a key in dss_args"
         if (dss_args.fraction > 1) or (dss_args.fraction<0):
              raise ValueError("'fraction' should lie between 0 and 1")

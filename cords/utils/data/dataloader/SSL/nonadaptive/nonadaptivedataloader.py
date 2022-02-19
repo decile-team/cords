@@ -22,9 +22,13 @@ class NonAdaptiveDSSDataLoader(DSSDataLoader):
     """
     def __init__(self, train_loader, val_loader, dss_args, 
                 logger, *args, **kwargs):
+
+        """
+        Constructor function
+        """
         super(NonAdaptiveDSSDataLoader, self).__init__(train_loader.dataset, dss_args,
                                                        logger, *args, **kwargs)
-
+        # Arguments assertion check
         assert "device" in dss_args.keys(), "'device' is a compulsory argument. Include it as a key in dss_args"
         assert "num_iters" in dss_args.keys(), "'num_iters' is a compulsory argument. Include it as a key in dss_args"
         self.train_loader = train_loader

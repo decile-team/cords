@@ -1,7 +1,7 @@
 Supervised Learning Data Selection Strategies
 ==============================================
 In this section, we consider different data selection strategies geared towards efficient and robust learning 
-in standard supervised learning framework.
+in standard supervised learning setting.
 
 Data Selection Strategy (Base Class)
 -----------------------------------------------
@@ -15,6 +15,7 @@ GLISTER :footcite:`killamsetty2021glister`
 ------------------------------------------------
 .. automodule:: cords.selectionstrategies.SL.glisterstrategy
    :members:
+   :undoc-members:
    :show-inheritance:
 
 CRAIG :footcite:`pmlr-v119-mirzasoleiman20a`

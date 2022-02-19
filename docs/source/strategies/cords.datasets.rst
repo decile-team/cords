@@ -38,7 +38,6 @@ In the Semi-supervised learning setting, below given is a list of datasets suppo
  - cifarImbalance
  
 .. toctree::
-   :maxdepth: 5
    
    cords.datasets.SL.builder
    cords.datasets.SSL.builder

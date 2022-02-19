@@ -24,10 +24,13 @@ class SubmodDataLoader(NonAdaptiveDSSDataLoader):
     """
     def __init__(self, train_loader, val_loader, dss_args, logger, *args,
                  **kwargs):
-        
+        """
+        Constructor function
+        """
+
         super(SubmodDataLoader, self).__init__(train_loader, val_loader, dss_args, 
                                                logger, *args, **kwargs)
-
+        # Arguments assertion check
         assert "size_chunk" in dss_args.keys(), "'size_chunk' is a compulsory agument for submodular dataloader"
         if dss_args.size_chunk:
             self.logger.info("You are using max_chunk: %s" % dss_args.size_chunk)
