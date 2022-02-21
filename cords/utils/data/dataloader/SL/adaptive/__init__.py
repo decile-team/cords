@@ -4,4 +4,3 @@ from .gradmatchdataloader import GradMatchDataLoader
 from .craigdataloader import CRAIGDataLoader
 from .olrandomdataloader import OLRandomDataLoader
 from .randomdataloader import RandomDataLoader
-from .adapweightsdataloader import AdapWeightsDataLoader
