@@ -472,13 +472,13 @@ class TrainClassifier:
                                     mean_raw_acc)
                         test_acc_list.append(mean_test_acc)
                         raw_acc_list.append(mean_raw_acc)
-                    torch.save(model.state_dict(), os.path.join(self.cfg.train_args.out_dir, "model_checkpoint.pth"))
+                    torch.save(model.state_dict(), os.path.join(self.cfg.train_args.results_dir, "model_checkpoint.pth"))
                     torch.save(optimizer.state_dict(),
-                               os.path.join(self.cfg.train_args.out_dir, "optimizer_checkpoint.pth"))
+                               os.path.join(self.cfg.train_args.results_dir, "optimizer_checkpoint.pth"))
                 iter_count += 1
 
-        numpy.save(os.path.join(self.cfg.train_args.out_dir, "results"), test_acc_list)
-        numpy.save(os.path.join(self.cfg.train_args.out_dir, "raw_results"), raw_acc_list)
+        numpy.save(os.path.join(self.cfg.train_args.results_dir, "evaluation_results"), test_acc_list)
+        numpy.save(os.path.join(self.cfg.train_args.results_dir, "raw_results"), raw_acc_list)
         logger.info("Total Time taken: %f", training_time + subset_selection_time)
         logger.info("Subset Selection Time: %f", subset_selection_time)
         accuracies = {}
@@ -487,7 +487,7 @@ class TrainClassifier:
             logger.info("mean test acc. for raw model over last %d checkpoints: %f", i, numpy.median(raw_acc_list[-i:]))
             accuracies[f"last{i}"] = numpy.median(test_acc_list[-i:])
 
-        with open(os.path.join(self.cfg.train_args.out_dir, "results.json"), "w") as f:
+        with open(os.path.join(self.cfg.train_args.results_dir, "results.json"), "w") as f:
             json.dump(accuracies, f, sort_keys=True)
 
 if __name__ == "__main__":
