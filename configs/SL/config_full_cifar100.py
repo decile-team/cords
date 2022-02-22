@@ -34,7 +34,7 @@ config = dict(setting="SL",
               scheduler=dict(type="cosine_annealing",
                              T_max=300),
 
-              dss_strategy=dict(type="Full"),
+              dss_args=dict(type="Full"),
 
               train_args=dict(num_epochs=300,
                               device="cuda",
