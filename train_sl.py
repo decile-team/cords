@@ -75,7 +75,7 @@ class TrainClassifier:
     """
 
     def create_model(self,input_dim=None):
-        if self.configdata.model.architecture == 'RegressionNet':
+        if self.cfg.model.architecture == 'RegressionNet':
             model = RegressionNet(input_dim)
         elif self.cfg.model.architecture == 'ResNet18':
             model = ResNet18(self.cfg.model.numclasses)
@@ -229,16 +229,16 @@ class TrainClassifier:
         testloader = torch.utils.data.DataLoader(testset, batch_size=tst_batch_size,
                                                  shuffle=False, pin_memory=True, collate_fn = collate_fn)
 
-        substrn_losses = list()  # np.zeros(configdata['train_args']['num_epochs'])
+        substrn_losses = list()  # np.zeros(cfg['train_args']['num_epochs'])
         trn_losses = list()
-        val_losses = list()  # np.zeros(configdata['train_args']['num_epochs'])
+        val_losses = list()  # np.zeros(cfg['train_args']['num_epochs'])
         tst_losses = list()
         subtrn_losses = list()
         timing = list()
         trn_acc = list()
-        val_acc = list()  # np.zeros(configdata['train_args']['num_epochs'])
-        tst_acc = list()  # np.zeros(configdata['train_args']['num_epochs'])
-        subtrn_acc = list()  # np.zeros(configdata['train_args']['num_epochs'])
+        val_acc = list()  # np.zeros(cfg['train_args']['num_epochs'])
+        tst_acc = list()  # np.zeros(cfg['train_args']['num_epochs'])
+        subtrn_acc = list()  # np.zeros(cfg['train_args']['num_epochs'])
 
         # Checkpoint file
         checkpoint_dir = osp.abspath(osp.expanduser(self.cfg.ckpt.dir))
