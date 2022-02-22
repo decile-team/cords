@@ -116,15 +116,8 @@ class TrainClassifier:
     def optimizer_with_scheduler(self, model):
         if self.cfg.optimizer.type == 'sgd':
             if 'ResNet' in self.cfg.model.architecture:
-                optimizer = optim.SGD( [
-                                    {"params": model.linear.parameters(), "lr": self.cfg.optimizer.lr1},
-                                    {"params": model.layer4.parameters(), "lr": self.cfg.optimizer.lr2},
-                                    {"params": model.layer3.parameters(), "lr": self.cfg.optimizer.lr2},
-                                    {"params": model.layer2.parameters(), "lr": self.cfg.optimizer.lr2},
-                                    {"params": model.layer1.parameters(), "lr": self.cfg.optimizer.lr2},
-                                    {"params": model.conv1.parameters(), "lr": self.cfg.optimizer.lr3},
-                                    ],
-                                    lr=self.cfg.optimizer.lr,
+                optimizer = optim.SGD(
+                                  lr=self.cfg.optimizer.lr,
                                   momentum=self.cfg.optimizer.momentum,
                                   weight_decay=self.cfg.optimizer.weight_decay,
                                   nesterov=self.cfg.optimizer.nesterov)

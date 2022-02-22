@@ -12,7 +12,7 @@ config = dict(setting="SL",
 
               model=dict(architecture='ResNet18',
                          type='pre-defined',
-                         numclasses=10),
+                         numclasses=100),
               
               ckpt=dict(is_load=False,
                         is_save=True,
@@ -28,7 +28,7 @@ config = dict(setting="SL",
                              lr1=0.01,
                              lr2=0.01,
                              lr3=0.01,
-                             nesterov = True,
+                             nesterov=False,
                              weight_decay=5e-4),
 
               scheduler=dict(type="cosine_annealing",
