@@ -386,11 +386,12 @@ class TrainClassifier:
 
         if self.cfg.optimizer.type == "sgd":
             optimizer = optim.SGD(
-                model.parameters(), self.cfg.optimizer.lr, self.cfg.optimizer.momentum, weight_decay=0, nesterov=True)
+                model.parameters(), self.cfg.optimizer.lr, self.cfg.optimizer.momentum, 
+                weight_decay=self.cfg.optimizer.weight_decay, nesterov=self.cfg.optimizer.nesterov)
         elif self.cfg.optimizer.type == "adam":
             optimizer = optim.Adam(
-                model.parameters(), self.cfg.optimizer.lr, (self.cfg.optimizer, 0.999), weight_decay=0
-            )
+                model.parameters(), self.cfg.optimizer.lr, (self.cfg.optimizer.momentum, 0.999), 
+                weight_decay=self.cfg.optimizer.weight_decay)
         else:
             raise NotImplementedError
 
