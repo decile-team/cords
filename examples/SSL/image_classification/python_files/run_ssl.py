@@ -1,9 +1,10 @@
 from train_ssl import TrainClassifier
-
+from cords.utils.config_utils import load_config_data
 
 def main():
     config_file = "configs/SSL/config_gradmatch_vat_cifar10.py"
-    classifier = TrainClassifier(config_file)
+    config_data = load_config_data(config_file)
+    classifier = TrainClassifier(config_data)
     classifier.cfg.dss_args.fraction = 0.1
     classifier.cfg.dss_args.select_every = 1
     classifier.cfg.train_args.device = 'cuda'
