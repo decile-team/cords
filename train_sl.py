@@ -26,11 +26,17 @@ class TrainClassifier:
         #self.cfg = load_config_data(self.config_file)
         self.cfg = config_file_data
         results_dir = osp.abspath(osp.expanduser(self.cfg.train_args.results_dir))
-        all_logs_dir = os.path.join(results_dir, self.cfg.setting,
-                                    self.cfg.dss_args.type,
-                                    self.cfg.dataset.name,
-                                    str(self.cfg.dss_args.fraction),
-                                    str(self.cfg.dss_args.select_every))
+        
+        if self.cfg.dss_args.type != "Full":
+            all_logs_dir = os.path.join(results_dir, self.cfg.setting,
+                                        self.cfg.dss_args.type,
+                                        self.cfg.dataset.name,
+                                        str(self.cfg.dss_args.fraction),
+                                        str(self.cfg.dss_args.select_every))
+        else:
+            all_logs_dir = os.path.join(results_dir, self.cfg.setting,
+                                        self.cfg.dss_args.type,
+                                        self.cfg.dataset.name)
 
         os.makedirs(all_logs_dir, exist_ok=True)
         # setup logger
