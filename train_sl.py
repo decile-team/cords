@@ -22,8 +22,6 @@ import pickle
 
 class TrainClassifier:
     def __init__(self, config_file_data):
-        #self.config_file = config_file
-        #self.cfg = load_config_data(self.config_file)
         self.cfg = config_file_data
         results_dir = osp.abspath(osp.expanduser(self.cfg.train_args.results_dir))
         
@@ -74,9 +72,9 @@ class TrainClassifier:
     ############################## Model Creation ##############################
     """
 
-    def create_model(self,input_dim=None):
+    def create_model(self):
         if self.cfg.model.architecture == 'RegressionNet':
-            model = RegressionNet(input_dim)
+            model = RegressionNet(self.cfg.model.input_dim)
         elif self.cfg.model.architecture == 'ResNet18':
             model = ResNet18(self.cfg.model.numclasses)
         elif self.cfg.model.architecture == 'MnistNet':
@@ -92,7 +90,8 @@ class TrainClassifier:
         elif self.cfg.model.architecture == 'HyperParamNet':
             model = HyperParamNet(self.cfg.model.l1, self.cfg.model.l2)
         elif self.cfg.model.architecture == 'ThreeLayerNet':
-            model = ThreeLayerNet(self.cfg.model.input_dim, self.cfg.model.numclasses, self.cfg.model.h1, self.cfg.model.h2)
+            model = ThreeLayerNet(self.cfg.model.input_dim, self.cfg.model.numclasses, 
+	    self.cfg.model.h1, self.cfg.model.h2)
         elif self.cfg.model.architecture == 'LSTM':
             model = LSTMClassifier(self.cfg.model.numclasses, self.cfg.model.wordvec_dim, \
                  self.cfg.model.weight_path, self.cfg.model.num_layers, self.cfg.model.hidden_size)
@@ -238,7 +237,6 @@ class TrainClassifier:
 
         # Model Creation
         model = self.create_model()
-        # model1 = self.create_model()
 
         # Loss Functions
         criterion, criterion_nored = self.loss_function()
