@@ -37,7 +37,7 @@ config = dict(setting="SL",
                              gamma=0.1),
 
               dss_args=dict(type="GradMatchPB-Warm",
-                            fraction=0.1,
+                            fraction=0.3,
                             select_every=20,
                             lam=0,
                             selection_type='PerBatch',
