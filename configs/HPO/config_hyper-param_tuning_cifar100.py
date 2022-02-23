@@ -1,11 +1,9 @@
 from ray import tune
 
 config = dict(setting= "hyperparamtuning",
-
 # parameter for subset selection
 # all settings for subset selection will be fetched from here
 subset_config = "configs/SL/config_gradmatchpb-warm_cifar100.py",
-
 # parameters for hyper-parameter tuning
 # search space for hyper-parameter tuning
 space = dict(
@@ -13,13 +11,10 @@ space = dict(
         learning_rate1=tune.uniform(0.001, 0.01),
         learning_rate2=tune.uniform(0.001, 0.01),
         learning_rate3=tune.uniform(0.001, 0.01),
-        # optimizer= tune.choice(['sgd', 'adam']),
         scheduler= tune.choice(['cosine_annealing', 'linear_decay']),
         nesterov= tune.choice([True, False]),
         gamma= tune.uniform(0.05, 0.5),    
         ),
-
-
 
 # tuning algorithm 
 search_algo = "TPE",
@@ -53,5 +48,4 @@ resources = {'gpu':1},
 
 # if True, trains model on Full dataset with the best parameter selected.
 final_train = True
-
 )

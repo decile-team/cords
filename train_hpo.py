@@ -102,7 +102,7 @@ class HyperParamTuning:
         elif method == "hebo" or method == "HEBO":
             search = HEBOSearch(space, metric = metric, mode = mode)
         else:
-            return None
+            search = None
 
         return search
 
@@ -117,8 +117,7 @@ class HyperParamTuning:
         elif method == "BOHB":
             scheduler = HyperBandForBOHB(metric = metric, mode = mode)
         else:
-            return None
-        
+            scheduler = None
         return scheduler
     
     def final_train(self, best_params):
