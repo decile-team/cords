@@ -20,7 +20,7 @@ space = dict(
 search_algo = "TPE",
 
 # number of hyper-parameter set to try
-num_evals = 20,
+num_evals = 27,
 
 # metric to be optimized, for 'mean_loss' metric mode should be 'min'
 metric = "mean_accuracy",
@@ -29,7 +29,7 @@ mode = "max",
 # scheduler to be used (i.e ASHAScheduler)
 # scheduler terminates trials that perform poorly
 # learn more here: https://docs.ray.io/en/releases-0.7.1/tune-schedulers.html
-scheduler = 'hyperband',
+scheduler = 'asha',
 
 # where to store logs
 log_dir = "RayLogs/",
@@ -44,7 +44,7 @@ name = None,
 
 # specify resources to be used per trial
 # i.e {'gpu':1, 'cpu':2}
-resources = {'gpu':1},
+resources = {'gpu':0.5},
 
 # if True, trains model on Full dataset with the best parameter selected.
 final_train = True
