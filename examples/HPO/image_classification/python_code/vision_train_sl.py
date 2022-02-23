@@ -428,7 +428,8 @@ class TrainClassifier:
                     subtrn_total += targets.size(0)
                     subtrn_correct += predicted.eq(targets).sum().item()
             epoch_time = time.time() - start_time
-            subtrn_loss = subtrn_loss/cum_weights
+            if cum_weights != 0:
+                subtrn_loss = subtrn_loss/cum_weights
             if not scheduler == None:
                 scheduler.step()
             timing.append(epoch_time)
