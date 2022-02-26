@@ -69,79 +69,150 @@ Configuration files for SL
     #. Data subset selection Arguments (dss_args)
     #. Training Arguments (train_args)
 
+    You can refer to various configuration examples in the configs/ folders of the CORDS repository.
 
-    **Symbol (%) represents mandatory arguments**
+Configuration files for SSL
+---------------------------
+    .. code-block:: python
+    
+        # Learning setting
+        config = dict(setting="SSL",
+              dataset=dict(name="cifar10",
+                           root="../data",
+                           feature="dss",
+                           type="pre-defined",
+                           num_labels=4000,
+                           val_ratio=0.1,
+                           ood_ratio=0.5,
+                           random_split=False,
+                           whiten=False,
+                           zca=True,
+                           labeled_aug='WA',
+                           unlabeled_aug='WA',
+                           wa='t.t.f',
+                           strong_aug=False),
 
-    **model**
+              dataloader=dict(shuffle=True,
+                              pin_memory=True,
+                              num_workers=8,
+                              l_batch_size=50,
+                              ul_batch_size=50),
 
-    #. architecture % 
-        * Model architecture to be used, Presently it supports the below mentioned architectures.
-            #. resnet18
-            #. two_layer_net
-    #. target_classes %
-        * Number of output classes for prediction. 
-    #. input_dim
-        * Input dimension of the dataset. To be mentioned while using two layer net.
-    #. hidden_units_1
-        * Number of hidden units to be used in the first layer. To be mentioned while using two layer net.
+              model=dict(architecture='wrn',
+                         type='pre-defined',
+                         numclasses=10),
 
-    **train_parameters**
+              ckpt=dict(is_load=False,
+                        is_save=True,
+                        checkpoint_model='model.ckpt',
+                        checkpoint_optimizer='optimizer.ckpt',
+                        start_iter=None,
+                        checkpoint=10000),
 
-    #. lr %
-        * Learning rate to be used for training.
-    #. batch_size %
-        * Batch size to be used for training.
-    #. n_epoch %
-        * Maximum number of epochs for the model to train.
-    #. max_accuracy
-        * Maximum training accuracy after which training should be stopped.
-    #. isreset
-        * Reset weight whenever the model training starts.
-            #. True
-            #. False
-    #. islogs
-        * Log training output.
-            #. True
-            #. False
-    #. logs_location %
-        * Location where logs should be saved.
+              loss=dict(type='CrossEntropyLoss',
+                        use_sigmoid=False),
 
-    **active_learning**
+              optimizer=dict(type="sgd",
+                             momentum=0.9,
+                             lr=0.03,
+                             weight_decay=0,
+                             nesterov=True,
+                             tsa=False,
+                             tsa_schedule='linear'),
 
-    #. strategy %
-        * Active learning strategy to be used.
-            #. badge
-            #. glister
-            #. entropy_sampling
-            #. margin_sampling
-            #. least_confidence
-            #. core_set
-            #. random_sampling
-            #. fass
-            #. bald_dropout
-            #. adversarial_bim
-            #. kmeans_sampling
-            #. baseline_sampling
-            #. adversarial_deepfool
-    #. budget %
-        * Number of points to be selected by the active learning strategy.
-    #. rounds %
-        * Total number of rounds to run active learning for.
-    #. initial_points
-        * Initial number of points to start training with.
-    #. strategy_args
-        * Arguments to pass to the strategy. It varies from strategy to strategy. Please refer to the documentation of the strategy that is being used.
+              scheduler=dict(lr_decay="cos",
+                             warmup_iter=0),
 
-    **dataset**
+              ssl_args=dict(alg='vat',
+                            coef=0.3,
+                            ema_teacher=False,
+                            ema_teacher_warmup=False,
+                            ema_teacher_factor=0.999,
+                            ema_apply_wd=False,
+                            em=0,
+                            threshold=None,
+                            sharpen=None,
+                            temp_softmax=None,
+                            consis='ce',
+                            eps=6,
+                            xi=1e-6,
+                            vat_iter=1
+                            ),
 
-    #. name
-        * Name of the dataset to be used. It presently supports following datasets.
-            #. cifar10
-            #. mnist
-            #. fmnist
-            #. svhn
-            #. cifar100
-            #. satimage
-            #. ijcnn1
+              ssl_eval_args=dict(weight_average=False,
+                                 wa_ema_factor=0.999,
+                                 wa_apply_wd=False),
 
-    You can refer to various configuration examples in the configs/ folders of the DISTIL repository.
+              dss_args=dict(type="RETRIEVE",
+                            fraction=0.1,
+                            select_every=20,
+                            kappa=0,
+                            linear_layer=False,
+                            selection_type='Supervised',
+                            greedy='Stochastic',
+                            valid=True),
+
+              train_args=dict(iteration=500000,
+                              max_iter=-1,
+                              device="cuda",
+                              results_dir='results/',
+                              disp=256,
+                              seed=96)
+              )
+
+
+Configuration files for HPO
+----------------------------
+    .. code-block:: python
+    
+        from ray import tune
+
+        config = dict(setting= "hyperparamtuning",
+            # parameter for subset selection
+            # all settings for subset selection will be fetched from here
+            subset_config = "configs/SL/config_gradmatchpb-warm_cifar100.py",
+            # parameters for hyper-parameter tuning
+            # search space for hyper-parameter tuning
+            space = dict(
+                    learning_rate=tune.uniform(0.001, 0.01), 
+                    learning_rate1=tune.uniform(0.001, 0.01),
+                    learning_rate2=tune.uniform(0.001, 0.01),
+                    learning_rate3=tune.uniform(0.001, 0.01),
+                    scheduler= tune.choice(['cosine_annealing', 'linear_decay']),
+                    nesterov= tune.choice([True, False]),
+                    gamma= tune.uniform(0.05, 0.5),    
+                    ),
+
+            # tuning algorithm 
+            search_algo = "TPE",
+
+            # number of hyper-parameter set to try
+            num_evals = 27,
+
+            # metric to be optimized, for 'mean_loss' metric mode should be 'min'
+            metric = "mean_accuracy",
+            mode = "max",
+
+            # scheduler to be used (i.e ASHAScheduler)
+            # scheduler terminates trials that perform poorly
+            # learn more here: https://docs.ray.io/en/releases-0.7.1/tune-schedulers.html
+            scheduler = 'asha',
+
+            # where to store logs
+            log_dir = "RayLogs/",
+
+            # resume hyper-parameter tuning from previous log
+            # specify 'name' (i.e main_2021-03-09_18-33-56) below
+            resume = False,
+
+            # only required if you want to resume from previous checkpoint
+            # it can also be specified if you don't want to resume
+            name = None,
+
+            # specify resources to be used per trial
+            # i.e {'gpu':1, 'cpu':2}
+            resources = {'gpu':0.5},
+
+            # if True, trains model on Full dataset with the best parameter selected.
+            final_train = True
+            )
