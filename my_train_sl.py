@@ -267,7 +267,8 @@ class TrainClassifier:
             dataloader = GLISTERDataLoader(trainloader, valloader, self.cfg.dss_args, logger,
                                            batch_size=self.cfg.dataloader.batch_size,
                                            shuffle=self.cfg.dataloader.shuffle,
-                                           pin_memory=self.cfg.dataloader.pin_memory)
+                                           pin_memory=self.cfg.dataloader.pin_memory,
+                                           collate_fn = self.cfg.dss_args.collate_fn)
 
         elif self.cfg.dss_args.type in ['CRAIG', 'CRAIG-Warm', 'CRAIGPB', 'CRAIGPB-Warm']:
             """
@@ -282,7 +283,8 @@ class TrainClassifier:
             dataloader = CRAIGDataLoader(trainloader, valloader, self.cfg.dss_args, logger,
                                          batch_size=self.cfg.dataloader.batch_size,
                                          shuffle=self.cfg.dataloader.shuffle,
-                                         pin_memory=self.cfg.dataloader.pin_memory)
+                                         pin_memory=self.cfg.dataloader.pin_memory,
+                                         collate_fn = self.cfg.dss_args.collate_fn)
 
         elif self.cfg.dss_args.type in ['Random', 'Random-Warm']:
             """
