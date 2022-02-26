@@ -37,7 +37,8 @@ config = dict(setting="SL",
                                 kappa=0,
                                 linear_layer=False,
                                 optimizer='lazy',
-                                selection_type='PerClass'
+                                selection_type='PerClass',
+                                if_convex=False
                                 ),
 
               train_args=dict(num_epochs=300,
