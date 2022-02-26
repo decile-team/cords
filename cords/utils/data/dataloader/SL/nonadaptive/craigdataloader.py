@@ -32,6 +32,7 @@ class CRAIGDataLoader(NonAdaptiveDSSDataLoader):
         assert "linear_layer" in dss_args.keys(), "'linear_layer' is a compulsory argument for CRAIG. Include it as a key in dss_args"
         assert "selection_type" in dss_args.keys(), "'selection_type' is a compulsory argument for CRAIG. Include it as a key in dss_args"
         assert "optimizer" in dss_args.keys(), "'optimizer' is a compulsory argument for CRAIG. Include it as a key in dss_args"
+        assert "if_convex" in dss_args.keys(), "'if_convex' is a compulsory argument for CRAIG. Include it as a key in dss_args"
         
         super(CRAIGDataLoader, self).__init__(train_loader, val_loader, dss_args,
                                               logger, *args, **kwargs)
