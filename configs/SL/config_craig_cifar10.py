@@ -35,6 +35,7 @@ config = dict(setting="SL",
                                 select_every=20,
                                 kappa=0,
                                 linear_layer=False,
+                                if_convex=False,
                                 optimizer='lazy',
                                 selection_type='PerClass'
                                 ),

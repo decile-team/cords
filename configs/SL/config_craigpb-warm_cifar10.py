@@ -32,6 +32,7 @@ config = dict(setting="SL",
 
               dss_args=dict(type="CRAIGPB-Warm",
                                 fraction=0.1,
+                                if_convex=False,
                                 select_every=20,
                                 kappa=0.5,
                                 linear_layer=False,
