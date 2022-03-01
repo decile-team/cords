@@ -18,13 +18,14 @@ if __name__ == '__main__':
     parser.add_argument('--print_every', type=int, default=1)
     parser.add_argument('--wordvec_dim', type=int, default=300, help='Dimension of GloVe vectors')
 
-    parser.add_argument('--fraction', type=float, default=0.1, help='fraction in subset selection')
+    parser.add_argument('--fraction', type=float, default=0.01, help='fraction in subset selection')
     parser.add_argument('--ft_type', type=str, default='full', help='final_train type after hp tuning. full/gmpb')
     parser.add_argument('--select_every', type=int, default=5, help='perform subset selection every _ epochs')
+    parser.add_argument('--kappa', type=float, default=0, help='kappa value for warm start. include kappa in Full config too')
     parser.add_argument('--change', type=int, default=1, help='change params mentioned for train class?')
 
-    parser.add_argument('--config_file', type=str, default='/home/ayush/Documents/abhishek/cords/configs/SL/config_full_glove_trec6.py')
-    parser.add_argument('--config_hp', type=str, default='/home/ayush/Documents/abhishek/cords/configs/SL/config_hp.py')
+    parser.add_argument('--config_file', type=str, default='/home/ayush/Documents/abhishek/cords/configs/SL/config_craigpb_glove_trec6.py')
+    parser.add_argument('--config_hp', type=str, default='/home/ayush/Documents/abhishek/cords/configs/SL/config_hp_tpe_hb.py')
     parser.add_argument('--is_hp', type=int, default=1, help='do we perform hyper parameter tuning?')
     parser.add_argument('--final_train', type=int, default=1, help='need final training hyper parameter tuning?')
 
@@ -45,6 +46,8 @@ if __name__ == '__main__':
             # train_config_data.dataloader.batchsize = args.batch_size
             # train_config_data.model.hidden_size = args.hidden_size
             # train_config_data.model.num_layers = args.num_layers
+            train_config_data.dss_args.kappa = args.kappa
+            print('CHECK if kappa is set properly(default is 0.5, set in my_run_sl.py)')
 
             # train_config_data.train_args.num_epochs = args.epochs
             # train_config_data.train_args.print_every = args.print_every
@@ -76,6 +79,7 @@ if __name__ == '__main__':
             # config_file_data.dataloader.batchsize = args.batch_size
             # config_file_data.model.hidden_size = args.hidden_size
             # config_file_data.model.num_layers = args.num_layers
+            # train_config_data.dss_args.kappa = args.kappa
 
             config_file_data.train_args.num_epochs = args.epochs
             # config_file_data.train_args.print_every = args.print_every

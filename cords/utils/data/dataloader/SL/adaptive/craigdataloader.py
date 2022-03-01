@@ -18,13 +18,13 @@ class CRAIGDataLoader(AdaptiveDSSDataLoader):
         assert "linear_layer" in dss_args.keys(), "'linear_layer' is a compulsory argument for CRAIG. Include it as a key in dss_args"
         assert "selection_type" in dss_args.keys(), "'selection_type' is a compulsory argument for CRAIG. Include it as a key in dss_args"
         assert "optimizer" in dss_args.keys(), "'optimizer' is a compulsory argument for CRAIG. Include it as a key in dss_args"
-        
+        assert "if_convex" in dss_args.keys(), "'if_convex' is a compulsory argument for CRAIG. Include it as a key in dss_args"
         super(CRAIGDataLoader, self).__init__(train_loader, val_loader, dss_args,
                                                 logger, *args, **kwargs)
         
         self.strategy = CRAIGStrategy(train_loader, val_loader, copy.deepcopy(dss_args.model), dss_args.loss, 
                                      dss_args.device, dss_args.num_classes, dss_args.linear_layer,  
-                                     True, dss_args.selection_type, logger, dss_args.optimizer)
+                                     dss_args.if_convex, dss_args.selection_type, logger, dss_args.optimizer)
         self.train_model = dss_args.model        
         self.logger.info('CRAIG dataloader initialized. ')
 
