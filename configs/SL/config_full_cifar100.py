@@ -2,7 +2,7 @@
 config = dict(setting="SL",
               is_reg = False,
               dataset=dict(name="cifar100",
-                           datadir="../data",
+                           datadir="/home/kk/data",
                            feature="dss",
                            type="image"),
 
@@ -12,7 +12,7 @@ config = dict(setting="SL",
 
               model=dict(architecture='ResNet18',
                          type='pre-defined',
-                         numclasses=10),
+                         numclasses=100),
               
               ckpt=dict(is_load=False,
                         is_save=True,

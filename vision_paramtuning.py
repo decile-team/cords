@@ -130,17 +130,22 @@ class HyperParamTuning:
         # change strategy to Full (i.e use whole dataset)
         # update (optimized) parameters
         new_config = self.update_parameters(self.train_class.cfg, best_params)
-        new_config.dss_args.type = 'Full'
-        # new_config.dss_args.type = 'GradMatchPB'
-        # new_config.dss_args.fraction = 0.3
-        # new_config.dss_args.select_every = 20
-        # new_config.dss_args.lam = 0
-        # new_config.dss_args.selection_type = 'PerBatch'
-        # new_config.dss_args.v1 = True
-        # new_config.dss_args.valid = False
-        # new_config.dss_args.eps = 1e-100
-        # new_config.dss_args.linear_layer = True
-        # new_config.dss_args.kappa = 0
+        if self.cfg.final_train_type == 'full':
+            new_config.dss_args.type = 'Full'
+        elif self.cfg.final_train_type == 'gmpb':
+            new_config.dss_args.type = 'GradMatchPB'
+            new_config.dss_args.fraction = 0.3
+            new_config.dss_args.kappa = 0.5
+            new_config.dss_args.select_every = 5
+            new_config.dss_args.lam = 0
+            new_config.dss_args.selection_type = 'PerBatch'
+            new_config.dss_args.v1 = True
+            new_config.dss_args.valid = False
+            new_config.dss_args.eps = 1e-100
+            new_config.dss_args.linear_layer = True
+        else:
+            print('Unknow final_train_type in Hyperparameter tuning class. Exiting...')
+            exit(1)
         self.train_class.cfg = new_config
         self.train_class.train()
     
@@ -160,18 +165,18 @@ class HyperParamTuning:
             config.optimizer.nesterov = new_config['nesterov']
         if 'scheduler' in new_config:
             config.scheduler.type = new_config['scheduler']
-        # if 'trn_batch_size' in new_config:
-        #     config.dataloader.batch_size = new_config['trn_batch_size']
+        if 'trn_batch_size' in new_config:
+            config.dataloader.batch_size = new_config['trn_batch_size']
         if 'gamma' in new_config:
             config.scheduler.gamma = new_config['gamma']
-        # if 'epochs' in new_config:
-        #     config.train_args.num_epochs = new_config['epochs']
-        # if 'trn_batch_size' in new_config:
-        #     config.dataloader.batch_size = new_config['trn_batch_size']
-        # if 'hidden_size' in new_config:
-        #     config.model.hidden_size = new_config['hidden_size']
-        # if 'num_layers' in new_config:
-        #     config.model.num_layers = new_config['num_layers']
+        if 'epochs' in new_config:
+            config.train_args.num_epochs = new_config['epochs']
+        if 'trn_batch_size' in new_config:
+            config.dataloader.batch_size = new_config['trn_batch_size']
+        if 'hidden_size' in new_config:
+            config.model.hidden_size = new_config['hidden_size']
+        if 'num_layers' in new_config:
+            config.model.num_layers = new_config['num_layers']
         return config
         
 

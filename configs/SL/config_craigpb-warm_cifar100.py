@@ -1,8 +1,8 @@
 # Learning setting
 config = dict(setting="SL",
               is_reg = False,
-              dataset=dict(name="cifar10",
-                           datadir="../data",
+              dataset=dict(name="cifar100",
+                           datadir="/home/kk/data",
                            feature="dss",
                            type="image"),
 
@@ -12,7 +12,7 @@ config = dict(setting="SL",
 
               model=dict(architecture='ResNet18',
                          type='pre-defined',
-                         numclasses=10),
+                         numclasses=100),
               
               ckpt=dict(is_load=False,
                         is_save=True,
@@ -25,19 +25,25 @@ config = dict(setting="SL",
               optimizer=dict(type="sgd",
                              momentum=0.9,
                              lr=0.01,
+                             lr1=0.01,
+                             lr2=0.01,
+                             lr3=0.01,
+                             nesterov = True,
                              weight_decay=5e-4),
 
               scheduler=dict(type="cosine_annealing",
-                             T_max=300),
+                             T_max=300,
+                             stepsize=20,
+                             gamma=0.1),
 
-              dss_args=dict(type="CRAIG",
+              dss_args=dict(type="CRAIGPB-Warm",
                                 fraction=0.1,
                                 select_every=20,
-                                kappa=0,
-                                linear_layer=False,
                                 if_convex=False,
+                                kappa=0.5,
+                                linear_layer=False,
                                 optimizer='lazy',
-                                selection_type='PerClass'
+                                selection_type='PerBatch'
                                 ),
 
               train_args=dict(num_epochs=300,
