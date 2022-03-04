@@ -2,7 +2,7 @@
 config = dict(setting="SL",
               is_reg = False,
               dataset=dict(name="cifar100",
-                           datadir="/home/kk/data",
+                           datadir="/data",
                            feature="dss",
                            type="image"),
 
