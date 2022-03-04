@@ -37,7 +37,6 @@ class standard_scaling:
 
 
 def clean_data(sentence, type = 0, TREC=False):
-    # From yoonkim: https://github.com/yoonkim/CNN_sentence/blob/master/process_data.py
     if type == 0:
         """
         Tokenization for SST
