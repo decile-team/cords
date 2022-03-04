@@ -10,6 +10,8 @@ authors:
   - family-names: "Iyer"
     given-names: "Rishabh"
     orcid: "https://orcid.org/0000-0001-9851-463X"  
-title: CORDS: COResets and Data Subset selection for Efficient Learning
+title: "CORDS: COResets and Data Subset selection for Efficient Learning"
 version: v0.0.0
-date-released: 2017-12-18
+date-released: 2021-03-04
+url: "https://github.com/decile-team/cords"
+
