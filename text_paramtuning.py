@@ -18,7 +18,7 @@ from ray.tune.suggest import BasicVariantGenerator
 from ray import tune
 import ray
 import sys
-from my_train_sl import TrainClassifier
+from text_train_sl import TrainClassifier
 
 # @ray.remote(num_gpus=1)
 class HyperParamTuning:

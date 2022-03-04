@@ -1,6 +1,6 @@
-from my_train_sl import TrainClassifier
+from text_train_sl import TrainClassifier
 import argparse
-from my_paramtuning import HyperParamTuning
+from text_paramtuning import HyperParamTuning
 from cords.utils.config_utils import load_config_data
 import torch
 

@@ -19,7 +19,7 @@ space = dict(learning_rate=tune.uniform(0.001, 0.1),
 search_algo = "",
 
 # number of hyper-parameter set to try
-num_evals = 54,
+num_evals = 27,
 
 # metric to be optimized, for 'mean_loss' metric mode should be 'min'
 metric = "mean_accuracy",
@@ -44,8 +44,8 @@ name = None,
 
 # specify resources to be used per trial
 # i.e {'gpu':1, 'cpu':2}
-# resources = {'gpu':1, 'cpu':2},
-resources = {'gpu':0.5, 'cpu':1},
+resources = {'gpu':1, 'cpu':2},
+# resources = {'gpu':0.5, 'cpu':1},
 
 # if True, trains model on Full dataset with the best parameter selected.
 final_train = True,

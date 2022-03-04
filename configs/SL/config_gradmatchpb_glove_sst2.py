@@ -49,7 +49,7 @@ config = dict(setting="SL",
                             valid=False,
                             eps=1e-100,
                             linear_layer=True,
-                            kappa=0.5,
+                            kappa=0,
                             collate_fn = collate_fn_pad_batch),
 
               train_args=dict(num_epochs=20,
