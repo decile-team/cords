@@ -25,24 +25,24 @@ class SELCONstrategy(DataSelectionStrategy):
         self.validset = validset
         self.num_epochs = num_epochs
         self.sub_epoch = num_epochs // 20  # doubt : what to take as sub epoch? a param?
-        self.x_trn, self.y_trn, self.x_val, self.y_val = self.get_train_val()
+        # self.x_trn, self.y_trn, self.x_val, self.y_val = self.get_train_val()
         # int(num_epochs/4),sub_epoch,torch.randn_like(deltas,device=device)
         self.__precompute(self.num_epochs//4, self.sub_epoch, torch.randn_like(self.delta))     # doubt: no other algo (in cords) do a precomputation
 
-    def reshape(self, data):
-        sp = data.shape
-        ret_data = copy.deepcopy(data)
-        # ret_data = ret_data.reshape((sp[0], sp[2], sp[3], sp[1]))
-        return ret_data
+    # def reshape(self, data):
+    #     sp = data.shape
+    #     ret_data = copy.deepcopy(data)
+    #     # ret_data = ret_data.reshape((sp[0], sp[2], sp[3], sp[1]))
+    #     return ret_data
 
-    def get_train_val(self):
-        # doubt: To check
-        # print(self.trainset.dataset.data.shape)
-        x_trn = self.reshape(self.trainset.dataset.data)
-        y_trn = np.array(self.trainset.dataset.targets)
-        x_val = self.reshape(self.validset.dataset.data)
-        y_val = np.array(self.validset.dataset.targets)
-        return x_trn, y_trn, x_val, y_val
+    # def get_train_val(self):
+    #     # doubt: To check
+    #     # print(self.trainset.dataset.data.shape)
+    #     x_trn = self.reshape(self.trainset.dataset.data)
+    #     y_trn = np.array(self.trainset.dataset.targets)
+    #     x_val = self.reshape(self.validset.dataset.data)
+    #     y_val = np.array(self.validset.dataset.targets)
+    #     return x_trn, y_trn, x_val, y_val
 
     def __precompute(self, f_pi_epoch, p_epoch, alphas): # TODO: alphas?
         main_optimizer = torch.optim.Adam([
@@ -55,11 +55,12 @@ class SELCONstrategy(DataSelectionStrategy):
         # loader_val = torch.utils.data.DataLoader(CustomDataset(self.x_val, self.y_val,transform=None),\
         #     shuffle=False,batch_size=self.batch_size, pin_memory=False)
         loader_val = self.valloader
+        loader_tr = self.trainloader
+        # todo: update len(loader_val)
 
         # for batch_idx, (inputs, targets) in enumerate(loader_val):
         #     print(inputs.shape)
         #     exit(1)
-
 
         prev_loss = 1000
         stop_count = 0
@@ -89,7 +90,7 @@ class SELCONstrategy(DataSelectionStrategy):
             constraint = 0.
 
             # for batch_idx in list(loader_val.batch_sampler):
-            for batch_idx, (inputs, targets) in enumerate(loader_val):
+            for batch_idx, (inputs, targets, _) in enumerate(loader_val):
                 # inputs, targets = loader_val.dataset[batch_idx]
                 inputs, targets = inputs.to(self.device), targets.to(self.device)
                 val_out = self.model(input)
@@ -128,18 +129,19 @@ class SELCONstrategy(DataSelectionStrategy):
         l = [torch.flatten(p) for p in self.model.state_dict().values()]
         flat = torch.cat(l).detach().clone()
 
-        self.F_values = torch.zeros(len(self.x_trn), device=self.device)
+        self.F_values = torch.zeros(self.x_trn.shape[0], device=self.device) # change len(x_trn) to x_trn.shape[0]
 
         beta1, beta2 = main_optimizer.param_groups[0]['betas']
 
-        loader_tr = torch.utils.data.DataLoader(CustomDataset_WithId(self.x_trn, self.y_trn,\
-            transform=None), device = self.device, shuffle=False,batch_size=self.batch_size*20)
+        # loader_tr = torch.utils.data.DataLoader(CustomDataset_WithId(self.x_trn, self.y_trn,\
+        #     transform=None), device = self.device, shuffle=False,batch_size=self.batch_size*20)
 
-        loader_val = torch.utils.data.DataLoader(CustomDataset(self.x_val, self.y_val,device = self.device,transform=None),\
-            shuffle=False,batch_size=self.batch_size*20)    
+        # loader_val = torch.utils.data.DataLoader(CustomDataset(self.x_val, self.y_val,device = self.device,transform=None),\
+        #     shuffle=False,batch_size=self.batch_size*20)    
 
-        for batch_idx in list(loader_tr.batch_sampler):
-            inputs, targets, idxs = loader_tr.dataset[batch_idx]
+        # for batch_idx in list(loader_tr.batch_sampler):
+        for _, (inputs, targets, idxs) in enumerate(loader_tr):
+            # inputs, targets, idxs = loader_tr.dataset[batch_idx]
             inputs, targets = inputs.to(self.device), targets.to(self.device)
 
             ele_delta = self.delta.repeat(targets.shape[0]).to(self.device)
@@ -173,13 +175,13 @@ class SELCONstrategy(DataSelectionStrategy):
                 weights.addcdiv_(-step_size, exp_avg_w, denom)
             
             val_losses = 0.
-            for batch_idx_val in list(loader_val.batch_sampler):
-                # doubt: what's going on here?
-                inputs, targets = loader_val.dataset[batch_idx_val]
-                inputs, targets = inputs.to(self.device), targets.to(self.device)
+            # for batch_idx_val in list(loader_val.batch_sampler):
+            for batch_idx_val, (inputs_val, targets_val, _) in enumerate(loader_val):
+                inputs_val, targets_val = loader_val.dataset[batch_idx_val]
+                inputs_val, targets_val = inputs_val.to(self.device), targets_val.to(self.device)
 
-                exten_val = torch.cat((inputs, torch.ones(inputs.shape[0], device=self.device).view(-1,1)), dim=1)
-                exten_val_y = torch.mean(targets).repeat(min(self.batch_size*20, targets.shape[0]))
+                exten_val = torch.cat((inputs_val, torch.ones(inputs_val.shape[0], device=self.device).view(-1,1)), dim=1)
+                exten_val_y = torch.mean(targets_val).repeat(min(self.batch_size*20, targets_val.shape[0]))
 
                 val_loss = torch.sum(weights*torch.mean(exten_val,dim=0),dim=1) - exten_val_y
 
@@ -199,18 +201,18 @@ class SELCONstrategy(DataSelectionStrategy):
         m_values = self.F_values.detach().clone()
         self.model.load_state_dict(theta_init) # todo: use this, update theta_init before calling this function
 
-        loader_tr = torch.utils.data.DataLoader(CustomDataset_WithId(self.x_trn[curr_subset], self.y_trn[curr_subset],\
-            transform=None),shuffle=False,batch_size=batch)
+        # loader_tr = torch.utils.data.DataLoader(CustomDataset_WithId(self.x_trn[curr_subset], self.y_trn[curr_subset],\
+        #     transform=None),shuffle=False,batch_size=batch)
+        loader_tr = self.trainloader
 
         sum_error = torch.nn.MSELoss(reduction='sum') # doubt: why not use self.criterion here, also check the reduction here and nored
 
         with torch.no_grad():
             F_curr = 0.
-            for batch_idx in list(loader_tr.batch_sampler):
-
-                inputs, targets, _ = loader_tr.dataset[batch_idx]
+            # for batch_idx in list(loader_tr.batch_sampler):
+            for batch_idx, (inputs, targets, _) in enumerate(loader_tr):
+                # inputs, targets, _ = loader_tr.dataset[batch_idx]
                 inputs, targets = inputs.to(self.device), targets.to(self.device)
-
                 scores = self.model(inputs)
                 F_curr += sum_error(scores, targets).item() 
 
@@ -234,9 +236,9 @@ class SELCONstrategy(DataSelectionStrategy):
         device_new = self.device
 
 
-        for batch_idx in list(loader_tr.batch_sampler):
-
-            inputs, targets, _ = loader_tr.dataset[batch_idx]
+        # for batch_idx in list(loader_tr.batch_sampler):
+        for batch_idx, (inputs, targets, _) in enumerate(loader_tr):
+            # inputs, targets, _ = loader_tr.dataset[batch_idx]
             inputs, targets = inputs.to(self.device), targets.to(self.device)
         
             weights = flat.repeat(targets.shape[0], 1)
@@ -249,12 +251,12 @@ class SELCONstrategy(DataSelectionStrategy):
             bias_correction1 = beta1**step#1.0 
             bias_correction2 = beta2**step#1.0 
 
-            for i in range(p_epoch):
+            for _ in range(p_epoch):
 
                 sum_fin_trn_loss_g = torch.zeros_like(weights).to(device_new)
-                for batch_idx_trn in list(loader_tr.batch_sampler):
-                    
-                    inputs_trn, targets_trn,_ = loader_tr.dataset[batch_idx_trn]
+                # for batch_idx_trn in list(loader_tr.batch_sampler):
+                for batch_idx_trn, (inputs_trn, targets_trn, _) in enumerate(loader_tr):
+                    # inputs_trn, targets_trn,_ = loader_tr.dataset[batch_idx_trn]
                     inputs_trn, targets_trn = inputs_trn.to(self.device), targets_trn.to(self.device)
 
                     exten_trn = torch.cat((inputs_trn,torch.ones(inputs_trn.shape[0]\
@@ -292,9 +294,9 @@ class SELCONstrategy(DataSelectionStrategy):
             reg = torch.sum(weights[:,:-1]*weights[:,:-1],dim=1)
 
             trn_losses = 0.
-            for batch_idx_trn in list(loader_tr.batch_sampler):
-                    
-                inputs_trn, targets_trn,_ = loader_tr.dataset[batch_idx_trn]
+            # for batch_idx_trn in list(loader_tr.batch_sampler):
+            for batch_idx_trn, (inputs_trn, targets_trn, _) in enumerate(loader_tr):
+                # inputs_trn, targets_trn,_ = loader_tr.dataset[batch_idx_trn]
                 inputs_trn, targets_trn = inputs_trn.to(self.device), targets_trn.to(self.device)
 
                 exten_trn = torch.cat((inputs_trn,torch.ones(inputs_trn.shape[0],device=self.device).view(-1,1)),dim=1)
@@ -312,7 +314,7 @@ class SELCONstrategy(DataSelectionStrategy):
             m_values[torch.tensor(curr_subset)[b_idxs*self.batch_size:(b_idxs+1)*self.batch_size]] = abs_value
             b_idxs +=1
 
-        values,indices =m_values.topk(budget,largest=False)
+        values,indices = m_values.topk(budget,largest=False)
 
         return list(indices.cpu().numpy()), list(values.cpu().numpy())
 

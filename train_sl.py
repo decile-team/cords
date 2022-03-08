@@ -1,6 +1,7 @@
 import logging
 import os
 import os.path as osp
+from random import sample
 import sys
 import time
 import torch
@@ -138,6 +139,15 @@ class TrainClassifier:
         metrics = checkpoint['metrics']
         return start_epoch, model, optimizer, loss, metrics
 
+    def dataset_with_indices(cls):
+        def __getitem__(self, index):
+            data, target = cls.__getitem__(self, index)
+            return data, target, index
+
+        return type(cls.__name__, (cls,), {
+            '__getitem__': __getitem__,
+        })
+
     def train(self):
         """
         ############################## General Training Loop with Data Selection Strategies ##############################
@@ -158,15 +168,33 @@ class TrainClassifier:
         val_batch_size = self.cfg.dataloader.batch_size
         tst_batch_size = 1000
 
+        if self.cfg.dss_arg.type == 'SELCON':
+            if self.cfg.dss_arg.batch_sampler == 'sequential':
+                batch_sampler = lambda dataset, bs : torch.data.utils.BatchSampler(
+                    torch.data.utils.SequentialSampler(dataset), batch_size=bs, drop_last=False
+                )   # sequential
+            else:
+                batch_sampler = lambda dataset, bs : torch.data.utils.BatchSampler(
+                    torch.data.utils.RandomSampler(dataset), batch_size=bs, drop_last=False
+                )   # random
+            
+            trainset = self.dataset_with_indices(trainset)
+            validset = self.dataset_with_indices(validset)
+            testset = self.dataset_with_indices(testset)
+        else:
+            batch_sampler = lambda _, __ : None
+
+        
+
         # Creating the Data Loaders
         trainloader = torch.utils.data.DataLoader(trainset, batch_size=trn_batch_size,
-                                                  shuffle=False, pin_memory=True)
+                                                  shuffle=False, pin_memory=True, sampler=batch_sampler(trainset, trn_batch_size))
 
         valloader = torch.utils.data.DataLoader(validset, batch_size=val_batch_size,
-                                                shuffle=False, pin_memory=True)
+                                                shuffle=False, pin_memory=True, sampler=batch_sampler(validset, val_batch_size))
 
         testloader = torch.utils.data.DataLoader(testset, batch_size=tst_batch_size,
-                                                 shuffle=False, pin_memory=True)
+                                                 shuffle=False, pin_memory=True, sampler=batch_sampler(testset, tst_batch_size))
 
         substrn_losses = list()  # np.zeros(configdata['train_args']['num_epochs'])
         trn_losses = list()

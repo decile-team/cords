@@ -35,6 +35,7 @@ config = dict(setting="SL",
                                 kappa=0,
                                 delta=0.4,
                                 linear_layer=False,
+                                batch_sampler='sequential',
                                 selection_type='Supervised'),
 
               train_args=dict(num_epochs=10,
