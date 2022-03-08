@@ -110,7 +110,7 @@ class TrainClassifier:
         if self.cfg.scheduler.type == 'cosine_annealing':
             scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,
                                                                    T_max=self.cfg.scheduler.T_max)
-        elif self.cfg.scheduler_type == 'StepLR':
+        elif self.cfg.scheduler.type == 'StepLR':
             scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=self.cfg.scheduler.step_size, gamma=self.cfg.scheduler.gamma)
 
         return optimizer, scheduler
@@ -288,16 +288,20 @@ class TrainClassifier:
             ############################## SELCON Dataloader Additional Arguments ##############################
             """
             self.cfg.dss_args.model = model
+            self.cfg.dss_args.lr = self.cfg.optimizer.lr
             self.cfg.dss_args.loss = criterion_nored # doubt: or criterion
             self.cfg.dss_args.device = self.cfg.train_args.device
+            self.cfg.dss_args.optimizer = self.cfg.optimizer.type
+            self.cfg.dss_args.criterion = criterion_nored
             self.cfg.dss_args.num_classes = self.cfg.model.numclasses
+            self.cfg.dss_args.batch_size = self.cfg.dataloader.batch_size
             
             # todo: not done yet
-            self.cfg.dss_args.delta = self.cfg.dss_args.delta
+            self.cfg.dss_args.delta = torch.tensor(self.cfg.dss_args.delta)
             # self.cfg.dss_args.linear_layer = self.cfg.dss_args.linear_layer # already there, check glister init
-            # self.cfg.dss_args.num_epochs = self.cfg.train_args.num_epochs # doubt: can we use this as num_sub_epochs
+            self.cfg.dss_args.num_epochs = self.cfg.train_args.num_epochs
             
-            dataloader = SELCONDataLoader(trainloader, valloader, self.cfg.dss_args, logger,
+            dataloader = SELCONDataLoader(trainset, validset, trainloader, valloader, self.cfg.dss_args, logger,
                                            batch_size=self.cfg.dataloader.batch_size,
                                            shuffle=self.cfg.dataloader.shuffle,
                                            pin_memory=self.cfg.dataloader.pin_memory)
@@ -515,7 +519,7 @@ class TrainClassifier:
 
                 # save checkpoint
                 self.save_ckpt(ckpt_state, checkpoint_path)
-                logger.info("Model checkpoint saved at epoch: %d".format(epoch + 1))
+                logger.info(f"Model checkpoint saved at epoch: {epoch+1}")
 
         """
         ################################################# Results Summary #################################################

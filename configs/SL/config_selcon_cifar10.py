@@ -7,7 +7,7 @@ config = dict(setting="SL",
                            type="pre-defined"),
 
               dataloader=dict(shuffle=True,
-                              batch_size=20,
+                              batch_size=100,
                               pin_memory=True),
 
               model=dict(architecture='ResNet18',
@@ -29,14 +29,15 @@ config = dict(setting="SL",
                              step_size=1,
                              gamma=0.1),
 
-              dss_args=dict(type="SELECON", # todo : modify this to SELCON
+              dss_args=dict(type="SELCON", # todo : modify this to SELCON
                                 fraction=0.1,
                                 select_every=20,
                                 kappa=0,
+                                delta=0.4,
                                 linear_layer=False,
                                 selection_type='Supervised'),
 
-              train_args=dict(num_epochs=300,
+              train_args=dict(num_epochs=10,
                               device="cuda",
                               print_every=10,
                               results_dir='results/',

@@ -5,7 +5,7 @@ import time, copy
 
 # SELCONstrategy
 class SELCONDataLoader(AdaptiveDSSDataLoader):
-    def __init__(self, train_loader, val_loader, dss_args, logger, *args, **kwargs):
+    def __init__(self, trainset, validset, train_loader, val_loader, dss_args, logger, *args, **kwargs):
         """
          Arguments assertion check
         """
@@ -28,8 +28,8 @@ class SELCONDataLoader(AdaptiveDSSDataLoader):
         super(SELCONDataLoader, self).__init__(train_loader, val_loader, dss_args,
                                                 logger, *args, **kwargs)
         
-        self.strategy = SELCONstrategy(train_loader, val_loader, copy.deepcopy(dss_args.model), dss_args.loss, dss_args.device,
-                                        dss_args.num_classes, dss_args.delta, dss_args.linear_layer, dss_args.lam, dss_args.lr, 
+        self.strategy = SELCONstrategy(trainset, validset, train_loader, val_loader, copy.deepcopy(dss_args.model), dss_args.loss, dss_args.device,
+                                        dss_args.num_classes, dss_args.delta, dss_args.num_epochs, dss_args.linear_layer, dss_args.lam, dss_args.lr, 
                                         dss_args.logger, dss_args.optimizer, dss_args.batch_size, dss_args.criterion)
         self.train_model = dss_args.model
         self.logger.debug('SELCON dataloader initialized. ')

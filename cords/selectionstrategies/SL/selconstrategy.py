@@ -1,14 +1,14 @@
 import math
 import torch
+import copy
 from .dataselectionstrategy import DataSelectionStrategy
-from cords.utils.data.datasets.SL.builder import CustomDataset
-from torch.utils.data import  DataLoader
+from cords.utils.data.datasets.SL.custom_dataset_selcon import CustomDataset, CustomDataset_WithId
 import numpy as np
 
 
 class SELCONstrategy(DataSelectionStrategy):
-    def __init__(self, trainloader, valloader, model, 
-                loss_func, device, num_classes, delta, 
+    def __init__(self, trainset, validset, trainloader, valloader, model, 
+                loss_func, device, num_classes, delta, num_epochs,
                 linear_layer, lam, lr, logger, optimizer, 
                 batch_size, criterion):
         """
@@ -21,16 +21,27 @@ class SELCONstrategy(DataSelectionStrategy):
         self.optimizer = optimizer
         self.batch_size = batch_size
         self.criterion = criterion
-        # self.sub_epoch sub_epoch
+        self.trainset = trainset
+        self.validset = validset
+        self.num_epochs = num_epochs
+        self.sub_epoch = num_epochs // 20  # doubt : what to take as sub epoch? a param?
         self.x_trn, self.y_trn, self.x_val, self.y_val = self.get_train_val()
-        self.__precompute()     # doubt: no other algo (in cords) do a precomputation
+        # int(num_epochs/4),sub_epoch,torch.randn_like(deltas,device=device)
+        self.__precompute(self.num_epochs//4, self.sub_epoch, torch.randn_like(self.delta))     # doubt: no other algo (in cords) do a precomputation
+
+    def reshape(self, data):
+        sp = data.shape
+        ret_data = copy.deepcopy(data)
+        # ret_data = ret_data.reshape((sp[0], sp[2], sp[3], sp[1]))
+        return ret_data
 
     def get_train_val(self):
         # doubt: To check
-        x_trn = self.trainloader.dataset.data
-        y_trn = self.trainloader.dataset.labels
-        x_val = self.valloader.dataset.data
-        y_val = self.valloader.dataset.labels
+        # print(self.trainset.dataset.data.shape)
+        x_trn = self.reshape(self.trainset.dataset.data)
+        y_trn = np.array(self.trainset.dataset.targets)
+        x_val = self.reshape(self.validset.dataset.data)
+        y_val = np.array(self.validset.dataset.targets)
         return x_trn, y_trn, x_val, y_val
 
     def __precompute(self, f_pi_epoch, p_epoch, alphas): # TODO: alphas?
@@ -41,9 +52,14 @@ class SELCONstrategy(DataSelectionStrategy):
 
         print("SELCON: starting pre compute")
 
-        loader_val = DataLoader(CustomDataset(self.x_val, self.y_val,transform=None),\
-            shuffle=False,batch_size=self.batch_size)
-        # loader_val = self.valloader # todo
+        # loader_val = torch.utils.data.DataLoader(CustomDataset(self.x_val, self.y_val,transform=None),\
+        #     shuffle=False,batch_size=self.batch_size, pin_memory=False)
+        loader_val = self.valloader
+
+        # for batch_idx, (inputs, targets) in enumerate(loader_val):
+        #     print(inputs.shape)
+        #     exit(1)
+
 
         prev_loss = 1000
         stop_count = 0
@@ -53,12 +69,13 @@ class SELCONstrategy(DataSelectionStrategy):
             main_optimizer.zero_grad()
             constraint = 0.
 
-            for batch_idx in list(loader_val.batch_sampler):
-                inputs, targets = loader_val.dataset[batch_idx]
+            # for batch_idx in list(loader_val.batch_sampler):
+            for batch_idx, (inputs, targets) in enumerate(loader_val):
+                # inputs, targets = loader_val.dataset[batch_idx]
                 inputs, targets = inputs.to(self.device), targets.to(self.device)
                 val_out = self.model(inputs)
-                constraint += self.criterion(val_out, targets)
-            
+                constraint += self.criterion(val_out, targets.view(-1,1)) # to discuss this
+
             constraint /= len(loader_val.batch_sampler)
             constraint = constraint - self.delta
             multiplier = alphas * constraint # todo: try torch.dot(alphas, constraint)
@@ -71,14 +88,14 @@ class SELCONstrategy(DataSelectionStrategy):
             dual_optimizer.zero_grad()
             constraint = 0.
 
-            for batch_idx in list(loader_val.batch_sampler):
-                inputs, targets = loader_val.dataset[batch_idx]
+            # for batch_idx in list(loader_val.batch_sampler):
+            for batch_idx, (inputs, targets) in enumerate(loader_val):
+                # inputs, targets = loader_val.dataset[batch_idx]
                 inputs, targets = inputs.to(self.device), targets.to(self.device)
-                
                 val_out = self.model(input)
                 constraint += self.criterion(val_out, targets)
             
-            constraint /= len(loader_val.batch_sampler)
+            constraint /= len(loader_val.batch_sampler) # tc if batch_samples = batch size
             constraint = constraint - self.delta
             multiplier = -1. * alphas * constraint # todo: try -1.*torch.dot(alphas, constraint)
 
@@ -115,10 +132,10 @@ class SELCONstrategy(DataSelectionStrategy):
 
         beta1, beta2 = main_optimizer.param_groups[0]['betas']
 
-        loader_tr = DataLoader(CustomDataset(self.x_trn, self.y_trn,\
-            transform=None, return_ids=True), device = self.device, shuffle=False,batch_size=self.batch_size*20)
+        loader_tr = torch.utils.data.DataLoader(CustomDataset_WithId(self.x_trn, self.y_trn,\
+            transform=None), device = self.device, shuffle=False,batch_size=self.batch_size*20)
 
-        loader_val = DataLoader(CustomDataset(self.x_val, self.y_val,device = self.device,transform=None),\
+        loader_val = torch.utils.data.DataLoader(CustomDataset(self.x_val, self.y_val,device = self.device,transform=None),\
             shuffle=False,batch_size=self.batch_size*20)    
 
         for batch_idx in list(loader_tr.batch_sampler):
@@ -182,8 +199,8 @@ class SELCONstrategy(DataSelectionStrategy):
         m_values = self.F_values.detach().clone()
         self.model.load_state_dict(theta_init) # todo: use this, update theta_init before calling this function
 
-        loader_tr = DataLoader(CustomDataset(self.x_trn[curr_subset], self.y_trn[curr_subset],\
-            transform=None, return_ids=True),shuffle=False,batch_size=batch)
+        loader_tr = torch.utils.data.DataLoader(CustomDataset_WithId(self.x_trn[curr_subset], self.y_trn[curr_subset],\
+            transform=None),shuffle=False,batch_size=batch)
 
         sum_error = torch.nn.MSELoss(reduction='sum') # doubt: why not use self.criterion here, also check the reduction here and nored
 
@@ -208,8 +225,8 @@ class SELCONstrategy(DataSelectionStrategy):
         l = [torch.flatten(p) for p in self.model.state_dict().values()]
         flat = torch.cat(l).detach()
 
-        loader_tr = DataLoader(CustomDataset(self.x_trn[curr_subset], self.y_trn[curr_subset],\
-            transform=None, return_ids=True),shuffle=False,batch_size=self.batch_size)
+        loader_tr = torch.utils.data.DataLoader(CustomDataset_WithId(self.x_trn[curr_subset], self.y_trn[curr_subset],\
+            transform=None),shuffle=False,batch_size=self.batch_size)
 
         beta1,beta2 = main_optimizer.param_groups[0]['betas']
         rem_len = (len(curr_subset)-1)

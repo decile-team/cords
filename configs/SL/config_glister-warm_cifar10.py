@@ -38,7 +38,7 @@ config = dict(setting="SL",
                                 selection_type='Supervised',
                                 greedy='Stochastic'),
 
-              train_args=dict(num_epochs=10,
+              train_args=dict(num_epochs=100,
                               device="cuda",
                               print_every=10,
                               results_dir='results/',
