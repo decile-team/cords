@@ -1,5 +1,5 @@
 import math
-import apricot
+from submodlib.functions.facilityLocation import FacilityLocationFunction
 import numpy as np
 import time
 import torch
@@ -59,12 +59,14 @@ class CRAIGStrategy(DataSelectionStrategy):
     logger : class
         - logger object for logging the information
     optimizer: str
-        Type of Greedy Algorithm
+        The optimizer used to compute the optimal subset. Can be 'NaiveGreedy', 'StochasticGreedy', 'LazyGreedy', or 'LazierThanLazyGreedy'.
+    num_neighbors: int, default=5
+        Number of neighbors applicable for the sparse similarity kernel.
     """
 
     def __init__(self, trainloader, valloader, model, loss,
                  device, num_classes, linear_layer, if_convex,
-                 selection_type, logger, optimizer='lazy'):
+                 selection_type, logger, optimizer='NaiveGreedy', num_neighbors=5):
         """
         Constructer method
         """
@@ -73,6 +75,7 @@ class CRAIGStrategy(DataSelectionStrategy):
         self.selection_type = selection_type
         self.logger = logger
         self.optimizer = optimizer
+        self.num_neighbors = num_neighbors
 
     def distance(self, x, y, exp=2):
         """
@@ -259,13 +262,11 @@ class CRAIGStrategy(DataSelectionStrategy):
         if self.selection_type == 'PerClass':
             for i in range(self.num_classes):
                 idxs = torch.where(labels == i)[0]
+                N = len(idxs)
                 self.compute_score(model_params, idxs)
-                fl = apricot.functions.facilityLocation.FacilityLocationSelection(random_state=0, metric='precomputed',
-                                                                                  n_samples=math.ceil(
-                                                                                      budget * len(idxs) / self.N_trn),
-                                                                                  optimizer=self.optimizer)
-                sim_sub = fl.fit_transform(self.dist_mat)
-                greedyList = list(np.argmax(sim_sub, axis=1))
+                n_samples = math.ceil(budget * len(idxs) / self.N_trn)
+                fl = FacilityLocationFunction(n=N, mode='dense', separate_rep=False, sijs=self.dist_mat)
+                greedyList = [idx for idx, _ in fl.maximize(n_samples, optimizer=self.optimizer)]
                 gamma = self.compute_gamma(greedyList)
                 total_greedy_list.extend(idxs[greedyList])
                 gammas.extend(gamma)
@@ -281,22 +282,16 @@ class CRAIGStrategy(DataSelectionStrategy):
             data = self.dist_mat.flatten()
             sparse_simmat = csr_matrix((data, (row.numpy(), col.numpy())), shape=(self.N_trn, self.N_trn))
             self.dist_mat = sparse_simmat
-            fl = apricot.functions.facilityLocation.FacilityLocationSelection(random_state=0, metric='precomputed',
-                                                                              n_samples=budget,
-                                                                              optimizer=self.optimizer)
-            sim_sub = fl.fit_transform(sparse_simmat)
-            total_greedy_list = list(np.array(np.argmax(sim_sub, axis=1)).reshape(-1))
+            n_samples=budget
+            fl = FacilityLocationFunction(n=N, mode='sparse', sijs=sparse_simmat, num_neighbors=self.num_neighbors)
+            total_greedy_list = [idx for idx, _ in fl.maximize(n_samples, optimizer=self.optimizer)]
             gammas = self.compute_gamma(total_greedy_list)
         elif self.selection_type == 'PerBatch':
             idxs = torch.arange(self.N_trn)
-            N = len(idxs)
             self.compute_score(model_params, idxs)
-            fl = apricot.functions.facilityLocation.FacilityLocationSelection(random_state=0, metric='precomputed',
-                                                                              n_samples=math.ceil(
-                                                                                  budget / self.trainloader.batch_size),
-                                                                              optimizer=self.optimizer)
-            sim_sub = fl.fit_transform(self.dist_mat)
-            temp_list = list(np.array(np.argmax(sim_sub, axis=1)).reshape(-1))
+            n_samples = math.ceil(budget / self.trainloader.batch_size)
+            fl = FacilityLocationFunction(n=self.dist_mat.shape[0], mode='dense', separate_rep=False, sijs=self.dist_mat)
+            temp_list = [idx for idx, _ in fl.maximize(n_samples, optimizer=self.optimizer)]
             gammas_temp = self.compute_gamma(temp_list)
             batch_wise_indices = list(self.trainloader.batch_sampler)
             for i in range(len(temp_list)):

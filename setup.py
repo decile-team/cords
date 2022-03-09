@@ -12,7 +12,6 @@ setup(
     packages=setuptools.find_packages(),
     description='cords is a package for data subset selection for efficient and robust machine learning.',
     install_requires=[
-        "apricot-select>=0.6.0",
         "numba>=0.43.0",
         "scipy>=1.5.0",
         "scikit-learn",
@@ -34,6 +33,7 @@ setup(
         "setuptools>=58.0.4",
         "ray[tune]",
         "ray[default]",
-        "datasets"
+        "datasets",
+        "submodlib"
             ],
 )
