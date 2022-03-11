@@ -9,6 +9,7 @@ from torch.utils.data import Dataset, random_split, TensorDataset
 from torchvision import transforms
 import PIL.Image as Image
 from sklearn.datasets import load_boston
+from cords.utils.data.data_utils import *
 import re
 import pandas as pd
 import torch
@@ -1349,3 +1350,20 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
                     subset_idxs.extend(batch_subset_idxs)
             trainset = torch.utils.data.Subset(trainset, subset_idxs)
         return trainset, valset, testset, num_cls
+
+    elif dset_name == "Community_Crime":
+        x_trn, y_trn = clean_communities_full(os.path.join(datadir, 'communities.csv'))
+        fullset = (x_trn, y_trn)
+        data_dims = x_trn.shape[1]
+        device = 'cuda'
+
+        x_trn, y_trn, x_val_list, y_val_list, val_classes,x_tst_list, y_tst_list, tst_classes\
+            = get_slices(dset_name, fullset[0], fullset[1], device, 3)
+
+        assert(val_classes == tst_classes)
+
+        trainset = ( torch.from_numpy(x_trn).float().to(device),torch.from_numpy(y_trn).float().to(device) )
+        valset = (torch.cat(x_val_list,dim=0), torch.cat(y_val_list,dim=0))
+        testset = (torch.cat(x_tst_list,dim=0), torch.cat(y_tst_list,dim=0))
+
+        return trainset, valset, testset, val_classes

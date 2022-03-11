@@ -1,7 +1,7 @@
 # Learning setting
 config = dict(setting="SL",
 
-              dataset=dict(name="cifar10",
+              dataset=dict(name="Community_Crime",
                            datadir="../data",
                            feature="dss",
                            type="pre-defined"),
@@ -10,9 +10,9 @@ config = dict(setting="SL",
                               batch_size=100,
                               pin_memory=True),
 
-              model=dict(architecture='ResNet18',
+              model=dict(architecture='RegressionNet',
                          type='pre-defined',
-                         numclasses=10),
+                         numclasses=10), # verify
               
               ckpt=dict(is_load=False,
                         is_save=True,

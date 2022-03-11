@@ -45,3 +45,4 @@ from .shakenet import ShakeNet
 from .cnn import CNN
 from .cnn13 import CNN13
 from .lstmclassifier import LSTMClassifier
+from .linear_regression import RegressionNet, LogisticNet, DualNet

@@ -81,6 +81,8 @@ class TrainClassifier:
             model = MobileNet2(output_size=self.cfg.model.numclasses)
         elif self.cfg.model.architecture == 'HyperParamNet':
             model = HyperParamNet(self.cfg.model.l1, self.cfg.model.l2)
+        elif self.cfg.mode.architecture == 'RegressionNet':
+            model = RegressionNet(self.cfg.model.numclasses)
         model = model.to(self.cfg.train_args.device)
         return model
 
