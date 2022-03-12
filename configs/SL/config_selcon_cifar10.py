@@ -31,7 +31,7 @@ config = dict(setting="SL",
 
               dss_args=dict(type="SELCON", # todo : modify this to SELCON
                                 fraction=0.1,
-                                select_every=20,
+                                select_every=1,
                                 kappa=0,
                                 delta=0.4,
                                 linear_layer=False,

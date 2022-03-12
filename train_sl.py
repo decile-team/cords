@@ -27,7 +27,6 @@ def dataset_with_indices(cls):
         data, target = cls.__getitem__(self, index)
         return data, target, index
 
-    print(cls)
     return type(cls.__name__, (cls,), {
         '__getitem__': __getitem__,
     })
@@ -349,6 +348,12 @@ class TrainClassifier:
         else:
             raise NotImplementedError
 
+        if self.cfg.dss_args.type in ['SELCON']:        
+            is_selcon = True
+        else:
+            is_selcon = False
+
+
         """
         ################################################# Checkpoint Loading #################################################
         """
@@ -388,7 +393,11 @@ class TrainClassifier:
             subtrn_total = 0
             model.train()
             start_time = time.time()
-            for _, (inputs, targets, weights) in enumerate(dataloader):
+            for _, data in enumerate(dataloader):
+                if is_selcon:
+                    inputs, targets, _, weights = data  # dataloader also returns id in case of selcon algorithm
+                else:
+                    inputs, targets, weights = data
                 inputs = inputs.to(self.cfg.train_args.device)
                 targets = targets.to(self.cfg.train_args.device, non_blocking=True)
                 weights = weights.to(self.cfg.train_args.device)
@@ -399,7 +408,10 @@ class TrainClassifier:
                 loss.backward()
                 subtrn_loss += loss.item()
                 optimizer.step()
-                _, predicted = outputs.max(1)
+                if is_selcon:
+                    predicted = outputs     # linaer regression in selcon
+                else:
+                    _, predicted = outputs.max(1)
                 subtrn_total += targets.size(0)
                 subtrn_correct += predicted.eq(targets).sum().item()
             epoch_time = time.time() - start_time
@@ -423,6 +435,7 @@ class TrainClassifier:
                 tst_loss = 0
                 model.eval()
 
+
                 if ("trn_loss" in print_args) or ("trn_acc" in print_args):
                     with torch.no_grad():
                         for _, (inputs, targets) in enumerate(trainloader):
@@ -442,14 +455,19 @@ class TrainClassifier:
 
                 if ("val_loss" in print_args) or ("val_acc" in print_args):
                     with torch.no_grad():
-                        for _, (inputs, targets) in enumerate(valloader):
+                        for _, data in enumerate(valloader):
+                            if is_selcon:
+                                inputs, targets, _ = data
+                            else:
+                                inputs, targets = data
                             inputs, targets = inputs.to(self.cfg.train_args.device), \
                                               targets.to(self.cfg.train_args.device, non_blocking=True)
                             outputs = model(inputs)
                             loss = criterion(outputs, targets)
                             val_loss += loss.item()
                             if "val_acc" in print_args:
-                                _, predicted = outputs.max(1)
+                                if is_selcon:   predicted = outputs
+                                else:           _, predicted = outputs.max(1)
                                 val_total += targets.size(0)
                                 val_correct += predicted.eq(targets).sum().item()
                         val_losses.append(val_loss)
@@ -459,14 +477,19 @@ class TrainClassifier:
 
                 if ("tst_loss" in print_args) or ("tst_acc" in print_args):
                     with torch.no_grad():
-                        for _, (inputs, targets) in enumerate(testloader):
+                        for _, data in enumerate(testloader):
+                            if is_selcon:
+                                inputs, targets, _ = data
+                            else:
+                                inputs, targets = data
                             inputs, targets = inputs.to(self.cfg.train_args.device), \
                                               targets.to(self.cfg.train_args.device, non_blocking=True)
                             outputs = model(inputs)
                             loss = criterion(outputs, targets)
                             tst_loss += loss.item()
                             if "tst_acc" in print_args:
-                                _, predicted = outputs.max(1)
+                                if is_selcon:   predicted = outputs
+                                else:           _, predicted = outputs.max(1)
                                 tst_total += targets.size(0)
                                 tst_correct += predicted.eq(targets).sum().item()
                         tst_losses.append(tst_loss)
@@ -566,7 +589,7 @@ class TrainClassifier:
         """
 
         logger.info(self.cfg.dss_args.type + " Selection Run---------------------------------")
-        logger.info("Final SubsetTrn: %f".format(subtrn_loss))
+        logger.info(f"Final SubsetTrn: {subtrn_loss}")
         if "val_loss" in print_args:
             if "val_acc" in print_args:
                 logger.info("Validation Loss: %.2f , Validation Accuracy: %.2f", val_loss, val_acc[-1])

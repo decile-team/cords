@@ -24,25 +24,10 @@ class SELCONstrategy(DataSelectionStrategy):
         self.trainset = trainset
         self.validset = validset
         self.num_epochs = num_epochs
+        self.logger = logger
         self.sub_epoch = num_epochs // 20  # doubt : what to take as sub epoch? a param?
-        # self.x_trn, self.y_trn, self.x_val, self.y_val = self.get_train_val()
-        # int(num_epochs/4),sub_epoch,torch.randn_like(deltas,device=device)
-        self.__precompute(self.num_epochs//4, self.sub_epoch, torch.randn_like(self.delta))     # doubt: no other algo (in cords) do a precomputation
+        self.__precompute(self.num_epochs//4, self.sub_epoch, torch.randn_like(self.delta))
 
-    # def reshape(self, data):
-    #     sp = data.shape
-    #     ret_data = copy.deepcopy(data)
-    #     # ret_data = ret_data.reshape((sp[0], sp[2], sp[3], sp[1]))
-    #     return ret_data
-
-    # def get_train_val(self):
-    #     # doubt: To check
-    #     # print(self.trainset.dataset.data.shape)
-    #     x_trn = self.reshape(self.trainset.dataset.data)
-    #     y_trn = np.array(self.trainset.dataset.targets)
-    #     x_val = self.reshape(self.validset.dataset.data)
-    #     y_val = np.array(self.validset.dataset.targets)
-    #     return x_trn, y_trn, x_val, y_val
 
     def __precompute(self, f_pi_epoch, p_epoch, alphas): # TODO: alphas?
         main_optimizer = torch.optim.Adam([
@@ -50,7 +35,7 @@ class SELCONstrategy(DataSelectionStrategy):
                 
         dual_optimizer = torch.optim.Adam([{'params': alphas}], lr=self.lr)
 
-        print("SELCON: starting pre compute")
+        self.logger.info("SELCON: starting pre compute")
 
         # loader_val = torch.utils.data.DataLoader(CustomDataset(self.x_val, self.y_val,transform=None),\
             # shuffle=False,batch_size=self.batch_size, pin_memory=False)
@@ -117,7 +102,7 @@ class SELCONstrategy(DataSelectionStrategy):
             prev_loss = loss.item()
             i += 1
         
-        print("SELCON: Finishing F phi")
+        self.logger.info("SELCON: Finishing F phi")
 
         if loss.item() <= 0.:
             alphas = torch.zeros_like(alphas)
@@ -125,7 +110,7 @@ class SELCONstrategy(DataSelectionStrategy):
         l = [torch.flatten(p) for p in self.model.state_dict().values()]
         flat = torch.cat(l).detach().clone()
 
-        self.F_values = torch.zeros(len(loader_tr), device=self.device) # change len(x_trn) to x_trn.shape[0]
+        self.F_values = torch.zeros(len(loader_tr.dataset), device=self.device) # change len(x_trn) to x_trn.shape[0]
 
         beta1, beta2 = main_optimizer.param_groups[0]['betas']
         # loader_tr = torch.utils.data.DataLoader(CustomDataset_WithId(self.x_trn, self.y_trn,\
@@ -185,11 +170,11 @@ class SELCONstrategy(DataSelectionStrategy):
             reg = torch.sum(weights[:,:-1]*weights[:,:-1], dim=1)
             trn_loss = torch.sum(exten_inp*weights, dim=1) - targets
 
-            self.F_values[idxs] = trn_loss*trn_loss+ self.lam*reg +torch.max(torch.zeros_like(ele_alphas),\
-                (val_losses/len(loader_val.batch_sampler)-ele_delta)*ele_alphas)
-
-            print("SELCON: Finishing element wise F")
-            exit(0)
+            add_term = torch.max( torch.zeros_like(ele_alphas), (val_losses/len(loader_val)-ele_delta)*ele_alphas )
+            F_new = torch.square(trn_loss) + self.lam*reg + add_term
+            self.F_values[idxs] = F_new
+            
+        self.logger.info("SELCON: Finishing element wise F")
 
     def __return_subset(self, theta_init, p_epoch, curr_subset, budget, 
                         batch, step, w_exp_avg, w_exp_avg_sq):
