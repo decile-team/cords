@@ -53,14 +53,10 @@ class SELCONstrategy(DataSelectionStrategy):
         print("SELCON: starting pre compute")
 
         # loader_val = torch.utils.data.DataLoader(CustomDataset(self.x_val, self.y_val,transform=None),\
-        #     shuffle=False,batch_size=self.batch_size, pin_memory=False)
+            # shuffle=False,batch_size=self.batch_size, pin_memory=False)
         loader_val = self.valloader
         loader_tr = self.trainloader
         # todo: update len(loader_val)
-
-        # for batch_idx, (inputs, targets) in enumerate(loader_val):
-        #     print(inputs.shape)
-        #     exit(1)
 
         prev_loss = 1000
         stop_count = 0
@@ -71,13 +67,13 @@ class SELCONstrategy(DataSelectionStrategy):
             constraint = 0.
 
             # for batch_idx in list(loader_val.batch_sampler):
-            for batch_idx, (inputs, targets) in enumerate(loader_val):
+            for batch_idx, (inputs, targets, _) in enumerate(loader_val):
                 # inputs, targets = loader_val.dataset[batch_idx]
                 inputs, targets = inputs.to(self.device), targets.to(self.device)
                 val_out = self.model(inputs)
-                constraint += self.criterion(val_out, targets.view(-1,1)) # to discuss this
+                constraint += self.criterion(val_out, targets.view(-1)) # to discuss this
 
-            constraint /= len(loader_val.batch_sampler)
+            constraint /= len(loader_val)
             constraint = constraint - self.delta
             multiplier = alphas * constraint # todo: try torch.dot(alphas, constraint)
 
@@ -93,10 +89,10 @@ class SELCONstrategy(DataSelectionStrategy):
             for batch_idx, (inputs, targets, _) in enumerate(loader_val):
                 # inputs, targets = loader_val.dataset[batch_idx]
                 inputs, targets = inputs.to(self.device), targets.to(self.device)
-                val_out = self.model(input)
-                constraint += self.criterion(val_out, targets)
+                val_out = self.model(inputs)
+                constraint += self.criterion(val_out, targets.view(-1))
             
-            constraint /= len(loader_val.batch_sampler) # tc if batch_samples = batch size
+            constraint /= len(loader_val)
             constraint = constraint - self.delta
             multiplier = -1. * alphas * constraint # todo: try -1.*torch.dot(alphas, constraint)
 
@@ -129,10 +125,9 @@ class SELCONstrategy(DataSelectionStrategy):
         l = [torch.flatten(p) for p in self.model.state_dict().values()]
         flat = torch.cat(l).detach().clone()
 
-        self.F_values = torch.zeros(self.x_trn.shape[0], device=self.device) # change len(x_trn) to x_trn.shape[0]
+        self.F_values = torch.zeros(len(loader_tr), device=self.device) # change len(x_trn) to x_trn.shape[0]
 
         beta1, beta2 = main_optimizer.param_groups[0]['betas']
-
         # loader_tr = torch.utils.data.DataLoader(CustomDataset_WithId(self.x_trn, self.y_trn,\
         #     transform=None), device = self.device, shuffle=False,batch_size=self.batch_size*20)
 
@@ -177,7 +172,7 @@ class SELCONstrategy(DataSelectionStrategy):
             val_losses = 0.
             # for batch_idx_val in list(loader_val.batch_sampler):
             for batch_idx_val, (inputs_val, targets_val, _) in enumerate(loader_val):
-                inputs_val, targets_val = loader_val.dataset[batch_idx_val]
+                # inputs_val, targets_val = loader_val.dataset[batch_idx_val]
                 inputs_val, targets_val = inputs_val.to(self.device), targets_val.to(self.device)
 
                 exten_val = torch.cat((inputs_val, torch.ones(inputs_val.shape[0], device=self.device).view(-1,1)), dim=1)
@@ -194,6 +189,7 @@ class SELCONstrategy(DataSelectionStrategy):
                 (val_losses/len(loader_val.batch_sampler)-ele_delta)*ele_alphas)
 
             print("SELCON: Finishing element wise F")
+            exit(0)
 
     def __return_subset(self, theta_init, p_epoch, curr_subset, budget, 
                         batch, step, w_exp_avg, w_exp_avg_sq):

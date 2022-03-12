@@ -1,14 +1,14 @@
 # Learning setting
 config = dict(setting="SL",
 
-              dataset=dict(name="Community_Crime",
+              dataset=dict(name="LawSchool",
                            datadir="../data",
                            feature="dss",
                            type="pre-defined"),
 
               dataloader=dict(shuffle=True,
                               batch_size=100,
-                              pin_memory=True),
+                              pin_memory=False),
 
               model=dict(architecture='RegressionNet',
                          type='pre-defined',
@@ -35,6 +35,7 @@ config = dict(setting="SL",
                                 kappa=0,
                                 delta=0.4,
                                 linear_layer=False,
+                                lam=1e-5,
                                 batch_sampler='sequential',
                                 selection_type='Supervised'),
 

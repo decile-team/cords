@@ -1351,8 +1351,14 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
             trainset = torch.utils.data.Subset(trainset, subset_idxs)
         return trainset, valset, testset, num_cls
 
-    elif dset_name == "Community_Crime":
-        x_trn, y_trn = clean_communities_full(os.path.join(datadir, 'communities.csv'))
+    elif dset_name in ["Community_Crime", "LawSchool"]:
+        if dset_name == "Community_Crime":
+            x_trn, y_trn = clean_communities_full(os.path.join(datadir, 'communities.scv'))
+        elif dset_name == "LawSchool":
+            x_trn, y_trn = clean_lawschool_full(os.path.join(datadir, 'lawschool.csv'))
+        else:
+            raise NotImplementedError
+
         fullset = (x_trn, y_trn)
         data_dims = x_trn.shape[1]
         device = 'cuda'
@@ -1362,8 +1368,11 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
 
         assert(val_classes == tst_classes)
 
-        trainset = ( torch.from_numpy(x_trn).float().to(device),torch.from_numpy(y_trn).float().to(device) )
-        valset = (torch.cat(x_val_list,dim=0), torch.cat(y_val_list,dim=0))
-        testset = (torch.cat(x_tst_list,dim=0), torch.cat(y_tst_list,dim=0))
+        trainset = CustomDataset_WithId(torch.from_numpy(x_trn).float().to(device),torch.from_numpy(y_trn).float().to(device))
+        valset = CustomDataset_WithId(torch.cat(x_val_list,dim=0), torch.cat(y_val_list,dim=0))
+        testset = CustomDataset_WithId(torch.cat(x_tst_list,dim=0), torch.cat(y_tst_list,dim=0))
 
         return trainset, valset, testset, val_classes
+
+    else:
+        raise NotImplementedError

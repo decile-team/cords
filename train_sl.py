@@ -18,6 +18,20 @@ from cords.utils.data.dataloader.SL.adaptive import GLISTERDataLoader, OLRandomD
 from cords.utils.data.datasets.SL import gen_dataset
 from cords.utils.models import *
 
+def dataset_with_indices(cls):
+    """
+    Modifies the given Dataset class to return a tuple data, target, index
+    instead of just data, target.
+    """
+    def __getitem__(self, index):
+        data, target = cls.__getitem__(self, index)
+        return data, target, index
+
+    print(cls)
+    return type(cls.__name__, (cls,), {
+        '__getitem__': __getitem__,
+    })
+
 
 class TrainClassifier:
     def __init__(self, config_file):
@@ -81,8 +95,10 @@ class TrainClassifier:
             model = MobileNet2(output_size=self.cfg.model.numclasses)
         elif self.cfg.model.architecture == 'HyperParamNet':
             model = HyperParamNet(self.cfg.model.l1, self.cfg.model.l2)
-        elif self.cfg.mode.architecture == 'RegressionNet':
+        elif self.cfg.model.architecture == 'RegressionNet':
             model = RegressionNet(self.cfg.model.numclasses)
+        else:
+            raise(NotImplementedError)
         model = model.to(self.cfg.train_args.device)
         return model
 
@@ -141,15 +157,6 @@ class TrainClassifier:
         metrics = checkpoint['metrics']
         return start_epoch, model, optimizer, loss, metrics
 
-    def dataset_with_indices(cls):
-        def __getitem__(self, index):
-            data, target = cls.__getitem__(self, index)
-            return data, target, index
-
-        return type(cls.__name__, (cls,), {
-            '__getitem__': __getitem__,
-        })
-
     def train(self):
         """
         ############################## General Training Loop with Data Selection Strategies ##############################
@@ -170,33 +177,36 @@ class TrainClassifier:
         val_batch_size = self.cfg.dataloader.batch_size
         tst_batch_size = 1000
 
-        if self.cfg.dss_arg.type == 'SELCON':
+        if self.cfg.dss_args.type in ['SELCON']:
+            assert(self.cfg.dataset.name in ['LawSchool'])
             if self.cfg.dss_arg.batch_sampler == 'sequential':
-                batch_sampler = lambda dataset, bs : torch.data.utils.BatchSampler(
-                    torch.data.utils.SequentialSampler(dataset), batch_size=bs, drop_last=False
+                # todo: not working 
+                batch_sampler = lambda dataset, bs : torch.utils.data.BatchSampler(
+                    torch.utils.data.SequentialSampler(dataset), batch_size=bs, drop_last=True
                 )   # sequential
-            else:
-                batch_sampler = lambda dataset, bs : torch.data.utils.BatchSampler(
-                    torch.data.utils.RandomSampler(dataset), batch_size=bs, drop_last=False
+            elif self.cfg.dss_arg.batch_sampler == 'random':
+                # todo: not working 
+                batch_sampler = lambda dataset, bs : torch.utils.data.BatchSampler(
+                    torch.utils.data.RandomSampler(dataset), batch_size=bs, drop_last=True
                 )   # random
-            
-            trainset = self.dataset_with_indices(trainset)
-            validset = self.dataset_with_indices(validset)
-            testset = self.dataset_with_indices(testset)
+            else:
+                batch_sampler = lambda _, __ : None
+
+            pin_mem = False
         else:
             batch_sampler = lambda _, __ : None
+            pin_mem = True
 
-        
 
         # Creating the Data Loaders
         trainloader = torch.utils.data.DataLoader(trainset, batch_size=trn_batch_size,
-                                                  shuffle=False, pin_memory=True, sampler=batch_sampler(trainset, trn_batch_size))
+                                                  shuffle=False, pin_memory=pin_mem, sampler=batch_sampler(trainset, trn_batch_size), drop_last=True)
 
         valloader = torch.utils.data.DataLoader(validset, batch_size=val_batch_size,
-                                                shuffle=False, pin_memory=True, sampler=batch_sampler(validset, val_batch_size))
+                                                shuffle=False, pin_memory=pin_mem, sampler=batch_sampler(validset, val_batch_size), drop_last=True)
 
         testloader = torch.utils.data.DataLoader(testset, batch_size=tst_batch_size,
-                                                 shuffle=False, pin_memory=True, sampler=batch_sampler(testset, tst_batch_size))
+                                                 shuffle=False, pin_memory=pin_mem, sampler=batch_sampler(testset, tst_batch_size), drop_last=True)
 
         substrn_losses = list()  # np.zeros(configdata['train_args']['num_epochs'])
         trn_losses = list()
@@ -322,7 +332,7 @@ class TrainClassifier:
             self.cfg.dss_args.loss = criterion_nored # doubt: or criterion
             self.cfg.dss_args.device = self.cfg.train_args.device
             self.cfg.dss_args.optimizer = self.cfg.optimizer.type
-            self.cfg.dss_args.criterion = criterion_nored
+            self.cfg.dss_args.criterion = criterion
             self.cfg.dss_args.num_classes = self.cfg.model.numclasses
             self.cfg.dss_args.batch_size = self.cfg.dataloader.batch_size
             

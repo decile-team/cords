@@ -67,12 +67,12 @@ def clean_lawschool_full(path):
     # remove y from df
     y = df['ugpa']
     y = y / 4
-    df = df.drop('ugpa', 1)
+    df = df.drop('ugpa', axis=1)
     # convert gender variables to 0,1
     df['gender'] = df['gender'].map({'male': 1, 'female': 0})
     # add bar1 back to the feature set
     df_bar = df['bar1']
-    df = df.drop('bar1', 1)
+    df = df.drop('bar1', axis=1)
     df['bar1'] = [int(grade == 'P') for grade in df_bar]
     #df['race'] = [int(race == 7.0) for race in df['race']]
     #a = df['race']
@@ -106,7 +106,7 @@ def clean_communities_full(path):
 
     # creating labels using crime rate
     Y = df['ViolentCrimesPerPop']
-    df = df.drop('ViolentCrimesPerPop', 1)
+    df = df.drop('ViolentCrimesPerPop', axis=1)
 
     maj = majority_pop(df_sens)
 
@@ -114,10 +114,10 @@ def clean_communities_full(path):
     a = maj.map({B : 0, W : 1, A : 2, H : 3})
    
     df['race'] = a
-    df = df.drop(H, 1)
-    df = df.drop(B, 1)
-    df = df.drop(W, 1)
-    df = df.drop(A, 1)
+    df = df.drop(H, axis=1)
+    df = df.drop(B, axis=1)
+    df = df.drop(W, axis=1)
+    df = df.drop(A, axis=1)
 
     #print(df.head())
 
