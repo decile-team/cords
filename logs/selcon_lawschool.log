@@ -1,64 +1,64 @@
-[03/15 12:09:12] train_sl INFO: DotMap(setting='SL', dataset=DotMap(name='LawSchool', datadir='../data', feature='dss', type='pre-defined'), dataloader=DotMap(shuffle=True, batch_size=100, pin_memory=False), model=DotMap(architecture='RegressionNet', type='pre-defined', numclasses=10), ckpt=DotMap(is_load=False, is_save=True, dir='results/', save_every=20), loss=DotMap(type='MSELoss', use_sigmoid=False), optimizer=DotMap(type='adam', lr=0.01), scheduler=DotMap(type='StepLR', step_size=1, gamma=0.1), dss_args=DotMap(type='SELCON', fraction=0.1, select_every=5, kappa=0, delta=0.4, linear_layer=False, lam=1e-05, batch_sampler='sequential', selection_type='Supervised'), train_args=DotMap(num_epochs=40, device='cuda', print_every=10, results_dir='results/', print_args=['val_loss', 'val_acc', 'tst_loss', 'tst_acc', 'time'], return_args=[]))
-[03/15 12:09:17] train_sl INFO: SELCON: starting pre compute
-[03/15 12:09:25] train_sl INFO: SELCON: Finishing F phi
-[03/15 12:09:28] train_sl INFO: SELCON: Finishing element wise F
-[03/15 12:09:28] train_sl INFO: Epoch: 1 , Validation Loss: 2270.7655487060547 , Validation Accuracy: 0.0 , Test Loss: 227.14148712158203 , Test Accuracy: 0.0 , Timing: 0.004399776458740234
-[03/15 12:09:28] train_sl INFO: Epoch: 2 , Validation Loss: 2135.709762573242 , Validation Accuracy: 0.0 , Test Loss: 213.6602325439453 , Test Accuracy: 0.0 , Timing: 0.003884553909301758
-[03/15 12:09:28] train_sl INFO: Epoch: 3 , Validation Loss: 2122.5635681152344 , Validation Accuracy: 0.0 , Test Loss: 212.347900390625 , Test Accuracy: 0.0 , Timing: 0.003931283950805664
-[03/15 12:09:28] train_sl INFO: Epoch: 4 , Validation Loss: 2121.255729675293 , Validation Accuracy: 0.0 , Test Loss: 212.21735382080078 , Test Accuracy: 0.0 , Timing: 0.0037403106689453125
-[03/15 12:09:28] train_sl INFO: Epoch: 5 , Validation Loss: 2121.1252212524414 , Validation Accuracy: 0.0 , Test Loss: 212.20431518554688 , Test Accuracy: 0.0 , Timing: 0.003701925277709961
-[03/15 12:09:28] train_sl INFO: Epoch: 6, SELCON dataloader subset selection finished, takes 0.0241. 
-[03/15 12:09:28] train_sl INFO: Epoch: 6 , Validation Loss: 2121.1131744384766 , Validation Accuracy: 0.0 , Test Loss: 212.20311737060547 , Test Accuracy: 0.0 , Timing: 0.027730464935302734
-[03/15 12:09:28] train_sl INFO: Epoch: 7 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.003476381301879883
-[03/15 12:09:28] train_sl INFO: Epoch: 8 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.0036652088165283203
-[03/15 12:09:28] train_sl INFO: Epoch: 9 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.0032329559326171875
-[03/15 12:09:28] train_sl INFO: Epoch: 10 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.002956390380859375
-[03/15 12:09:28] train_sl INFO: Epoch: 11, SELCON dataloader subset selection finished, takes 0.0244. 
-[03/15 12:09:28] train_sl INFO: Epoch: 11 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.02825617790222168
-[03/15 12:09:28] train_sl INFO: Epoch: 12 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.0035712718963623047
-[03/15 12:09:28] train_sl INFO: Epoch: 13 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.0041692256927490234
-[03/15 12:09:29] train_sl INFO: Epoch: 14 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.003675222396850586
-[03/15 12:09:29] train_sl INFO: Epoch: 15 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.003580331802368164
-[03/15 12:09:29] train_sl INFO: Epoch: 16, SELCON dataloader subset selection finished, takes 0.0245. 
-[03/15 12:09:29] train_sl INFO: Epoch: 16 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.028383493423461914
-[03/15 12:09:29] train_sl INFO: Epoch: 17 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.0033512115478515625
-[03/15 12:09:29] train_sl INFO: Epoch: 18 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.0033142566680908203
-[03/15 12:09:29] train_sl INFO: Epoch: 19 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.0036516189575195312
-[03/15 12:09:29] train_sl INFO: Epoch: 20 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.003598451614379883
-[03/15 12:09:29] train_sl INFO: Model checkpoint saved at epoch: 20
-[03/15 12:09:29] train_sl INFO: Epoch: 21, SELCON dataloader subset selection finished, takes 0.0246. 
-[03/15 12:09:29] train_sl INFO: Epoch: 21 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.0286099910736084
-[03/15 12:09:29] train_sl INFO: Epoch: 22 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.0033431053161621094
-[03/15 12:09:29] train_sl INFO: Epoch: 23 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.002937793731689453
-[03/15 12:09:29] train_sl INFO: Epoch: 24 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.0029213428497314453
-[03/15 12:09:29] train_sl INFO: Epoch: 25 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.0030493736267089844
-[03/15 12:09:29] train_sl INFO: Epoch: 26, SELCON dataloader subset selection finished, takes 0.0239. 
-[03/15 12:09:29] train_sl INFO: Epoch: 26 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.0269010066986084
-[03/15 12:09:29] train_sl INFO: Epoch: 27 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.0030367374420166016
-[03/15 12:09:29] train_sl INFO: Epoch: 28 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.0029125213623046875
-[03/15 12:09:29] train_sl INFO: Epoch: 29 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.0030701160430908203
-[03/15 12:09:29] train_sl INFO: Epoch: 30 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.003090381622314453
-[03/15 12:09:29] train_sl INFO: Epoch: 31, SELCON dataloader subset selection finished, takes 0.0245. 
-[03/15 12:09:29] train_sl INFO: Epoch: 31 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.027701139450073242
-[03/15 12:09:29] train_sl INFO: Epoch: 32 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.0028047561645507812
-[03/15 12:09:29] train_sl INFO: Epoch: 33 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.002857685089111328
-[03/15 12:09:29] train_sl INFO: Epoch: 34 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.003171682357788086
-[03/15 12:09:29] train_sl INFO: Epoch: 35 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.0029973983764648438
-[03/15 12:09:29] train_sl INFO: Epoch: 36, SELCON dataloader subset selection finished, takes 0.0244. 
-[03/15 12:09:29] train_sl INFO: Epoch: 36 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.027554750442504883
-[03/15 12:09:29] train_sl INFO: Epoch: 37 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.002813100814819336
-[03/15 12:09:29] train_sl INFO: Epoch: 38 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.002830028533935547
-[03/15 12:09:29] train_sl INFO: Epoch: 39 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.0028188228607177734
-[03/15 12:09:29] train_sl INFO: Epoch: 40 , Validation Loss: 2121.111785888672 , Validation Accuracy: 0.0 , Test Loss: 212.2029800415039 , Test Accuracy: 0.0 , Timing: 0.0030841827392578125
-[03/15 12:09:29] train_sl INFO: Model checkpoint saved at epoch: 40
-[03/15 12:09:29] train_sl INFO: SELCON Selection Run---------------------------------
-[03/15 12:09:29] train_sl INFO: Final SubsetTrn: 176.1908073425293
-[03/15 12:09:29] train_sl INFO: Validation Loss: 2121.11 , Validation Accuracy: 0.00
-[03/15 12:09:29] train_sl INFO: Test Loss: 212.20, Test Accuracy: 0.00
-[03/15 12:09:29] train_sl INFO: ---------------------------------------------------------------------
-[03/15 12:09:29] train_sl INFO: SELCON
-[03/15 12:09:29] train_sl INFO: ---------------------------------------------------------------------
-[03/15 12:09:29] train_sl INFO: Validation Accuracy,  , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0
-[03/15 12:09:29] train_sl INFO: Test Accuracy,  , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0
-[03/15 12:09:29] train_sl INFO: [0.004399776458740234, 0.003884553909301758, 0.003931283950805664, 0.0037403106689453125, 0.003701925277709961, 0.027730464935302734, 0.003476381301879883, 0.0036652088165283203, 0.0032329559326171875, 0.002956390380859375, 0.02825617790222168, 0.0035712718963623047, 0.0041692256927490234, 0.003675222396850586, 0.003580331802368164, 0.028383493423461914, 0.0033512115478515625, 0.0033142566680908203, 0.0036516189575195312, 0.003598451614379883, 0.0286099910736084, 0.0033431053161621094, 0.002937793731689453, 0.0029213428497314453, 0.0030493736267089844, 0.0269010066986084, 0.0030367374420166016, 0.0029125213623046875, 0.0030701160430908203, 0.003090381622314453, 0.027701139450073242, 0.0028047561645507812, 0.002857685089111328, 0.003171682357788086, 0.0029973983764648438, 0.027554750442504883, 0.002813100814819336, 0.002830028533935547, 0.0028188228607177734, 0.0030841827392578125]
-[03/15 12:09:29] train_sl INFO: Total time taken by SELCON = 0.0001 
+[03/15 16:17:47] train_sl INFO: DotMap(setting='SL', dataset=DotMap(name='LawSchool', datadir='../data', feature='dss', type='pre-defined'), dataloader=DotMap(shuffle=True, batch_size=100, pin_memory=False), model=DotMap(architecture='RegressionNet', type='pre-defined', numclasses=10), ckpt=DotMap(is_load=False, is_save=True, dir='results/', save_every=20), loss=DotMap(type='MSELoss', use_sigmoid=False), optimizer=DotMap(type='adam', lr=0.01), scheduler=DotMap(type='StepLR', step_size=1, gamma=0.1), dss_args=DotMap(type='SELCON', fraction=0.01, select_every=5, kappa=0, delta=0.4, linear_layer=False, lam=1e-05, batch_sampler='sequential', selection_type='Supervised'), train_args=DotMap(num_epochs=40, device='cuda', print_every=1, results_dir='results/', print_args=['val_loss', 'val_acc', 'tst_loss', 'tst_acc', 'time'], return_args=[]))
+[03/15 16:17:52] train_sl INFO: SELCON: starting pre compute
+[03/15 16:17:52] train_sl INFO: SELCON: Finishing F phi
+[03/15 16:17:54] train_sl INFO: SELCON: Finishing element wise F
+[03/15 16:17:54] train_sl INFO: Epoch: 1 , Validation Loss: 17.73196915537119 , Validation Accuracy: 0.0 , Test Loss: 17.50397729128599 , Test Accuracy: 0.0 , Timing: 0.003949880599975586
+[03/15 16:17:54] train_sl INFO: Epoch: 2 , Validation Loss: 17.409267380833626 , Validation Accuracy: 0.0 , Test Loss: 17.186426252126694 , Test Accuracy: 0.0 , Timing: 0.0038056373596191406
+[03/15 16:17:54] train_sl INFO: Epoch: 3 , Validation Loss: 16.968297757208347 , Validation Accuracy: 0.0 , Test Loss: 16.75080617517233 , Test Accuracy: 0.0 , Timing: 0.004236936569213867
+[03/15 16:17:54] train_sl INFO: Epoch: 4 , Validation Loss: 16.90523774176836 , Validation Accuracy: 0.0 , Test Loss: 16.688512474298477 , Test Accuracy: 0.0 , Timing: 0.0035178661346435547
+[03/15 16:17:54] train_sl INFO: Epoch: 5 , Validation Loss: 16.89797166734934 , Validation Accuracy: 0.0 , Test Loss: 16.681334674358368 , Test Accuracy: 0.0 , Timing: 0.0036916732788085938
+[03/15 16:17:55] train_sl INFO: Epoch: 6, SELCON dataloader subset selection finished, takes 0.0240. 
+[03/15 16:17:55] train_sl INFO: Epoch: 6 , Validation Loss: 16.897143803536892 , Validation Accuracy: 0.0 , Test Loss: 16.680516622960567 , Test Accuracy: 0.0 , Timing: 0.027815580368041992
+[03/15 16:17:55] train_sl INFO: Epoch: 7 , Validation Loss: 16.89705093204975 , Validation Accuracy: 0.0 , Test Loss: 16.680424824357033 , Test Accuracy: 0.0 , Timing: 0.0034644603729248047
+[03/15 16:17:55] train_sl INFO: Epoch: 8 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.003401517868041992
+[03/15 16:17:55] train_sl INFO: Epoch: 9 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.003774404525756836
+[03/15 16:17:55] train_sl INFO: Epoch: 10 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.0037331581115722656
+[03/15 16:17:55] train_sl INFO: Epoch: 11, SELCON dataloader subset selection finished, takes 0.0236. 
+[03/15 16:17:55] train_sl INFO: Epoch: 11 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.027176856994628906
+[03/15 16:17:55] train_sl INFO: Epoch: 12 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.0035033226013183594
+[03/15 16:17:55] train_sl INFO: Epoch: 13 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.0035622119903564453
+[03/15 16:17:55] train_sl INFO: Epoch: 14 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.0035407543182373047
+[03/15 16:17:55] train_sl INFO: Epoch: 15 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.0033774375915527344
+[03/15 16:17:55] train_sl INFO: Epoch: 16, SELCON dataloader subset selection finished, takes 0.0348. 
+[03/15 16:17:55] train_sl INFO: Epoch: 16 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.04018831253051758
+[03/15 16:17:55] train_sl INFO: Epoch: 17 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.0029964447021484375
+[03/15 16:17:55] train_sl INFO: Epoch: 18 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.0028944015502929688
+[03/15 16:17:55] train_sl INFO: Epoch: 19 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.003248929977416992
+[03/15 16:17:55] train_sl INFO: Epoch: 20 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.0032525062561035156
+[03/15 16:17:55] train_sl INFO: Model checkpoint saved at epoch: 20
+[03/15 16:17:55] train_sl INFO: Epoch: 21, SELCON dataloader subset selection finished, takes 0.0238. 
+[03/15 16:17:55] train_sl INFO: Epoch: 21 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.02748703956604004
+[03/15 16:17:55] train_sl INFO: Epoch: 22 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.003170013427734375
+[03/15 16:17:55] train_sl INFO: Epoch: 23 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.003181934356689453
+[03/15 16:17:55] train_sl INFO: Epoch: 24 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.003231048583984375
+[03/15 16:17:55] train_sl INFO: Epoch: 25 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.0032355785369873047
+[03/15 16:17:55] train_sl INFO: Epoch: 26, SELCON dataloader subset selection finished, takes 0.0235. 
+[03/15 16:17:55] train_sl INFO: Epoch: 26 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.026906967163085938
+[03/15 16:17:55] train_sl INFO: Epoch: 27 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.003237485885620117
+[03/15 16:17:55] train_sl INFO: Epoch: 28 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.0032355785369873047
+[03/15 16:17:55] train_sl INFO: Epoch: 29 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.0031290054321289062
+[03/15 16:17:55] train_sl INFO: Epoch: 30 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.00315093994140625
+[03/15 16:17:55] train_sl INFO: Epoch: 31, SELCON dataloader subset selection finished, takes 0.0237. 
+[03/15 16:17:55] train_sl INFO: Epoch: 31 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.02730417251586914
+[03/15 16:17:55] train_sl INFO: Epoch: 32 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.003270864486694336
+[03/15 16:17:55] train_sl INFO: Epoch: 33 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.0033042430877685547
+[03/15 16:17:55] train_sl INFO: Epoch: 34 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.003187417984008789
+[03/15 16:17:55] train_sl INFO: Epoch: 35 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.0030374526977539062
+[03/15 16:17:55] train_sl INFO: Epoch: 36, SELCON dataloader subset selection finished, takes 0.0234. 
+[03/15 16:17:55] train_sl INFO: Epoch: 36 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.026648283004760742
+[03/15 16:17:55] train_sl INFO: Epoch: 37 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.00322723388671875
+[03/15 16:17:56] train_sl INFO: Epoch: 38 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.0031507015228271484
+[03/15 16:17:56] train_sl INFO: Epoch: 39 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.0032563209533691406
+[03/15 16:17:56] train_sl INFO: Epoch: 40 , Validation Loss: 16.897038899362087 , Validation Accuracy: 0.0 , Test Loss: 16.6804126650095 , Test Accuracy: 0.0 , Timing: 0.003250598907470703
+[03/15 16:17:56] train_sl INFO: Model checkpoint saved at epoch: 40
+[03/15 16:17:56] train_sl INFO: SELCON Selection Run---------------------------------
+[03/15 16:17:56] train_sl INFO: Final SubsetTrn: 7.419762849807739
+[03/15 16:17:56] train_sl INFO: Validation Loss: 16.90 , Validation Accuracy: 0.00
+[03/15 16:17:56] train_sl INFO: Test Loss: 16.68, Test Accuracy: 0.00
+[03/15 16:17:56] train_sl INFO: ---------------------------------------------------------------------
+[03/15 16:17:56] train_sl INFO: SELCON
+[03/15 16:17:56] train_sl INFO: ---------------------------------------------------------------------
+[03/15 16:17:56] train_sl INFO: Validation Accuracy,  , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0
+[03/15 16:17:56] train_sl INFO: Test Accuracy,  , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0
+[03/15 16:17:56] train_sl INFO: [0.003949880599975586, 0.0038056373596191406, 0.004236936569213867, 0.0035178661346435547, 0.0036916732788085938, 0.027815580368041992, 0.0034644603729248047, 0.003401517868041992, 0.003774404525756836, 0.0037331581115722656, 0.027176856994628906, 0.0035033226013183594, 0.0035622119903564453, 0.0035407543182373047, 0.0033774375915527344, 0.04018831253051758, 0.0029964447021484375, 0.0028944015502929688, 0.003248929977416992, 0.0032525062561035156, 0.02748703956604004, 0.003170013427734375, 0.003181934356689453, 0.003231048583984375, 0.0032355785369873047, 0.026906967163085938, 0.003237485885620117, 0.0032355785369873047, 0.0031290054321289062, 0.00315093994140625, 0.02730417251586914, 0.003270864486694336, 0.0033042430877685547, 0.003187417984008789, 0.0030374526977539062, 0.026648283004760742, 0.00322723388671875, 0.0031507015228271484, 0.0032563209533691406, 0.003250598907470703]
+[03/15 16:17:56] train_sl INFO: Total time taken by SELCON = 0.0001 

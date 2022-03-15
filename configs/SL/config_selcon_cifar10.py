@@ -30,7 +30,7 @@ config = dict(setting="SL",
                              gamma=0.1),
 
               dss_args=dict(type="SELCON", # todo : modify this to SELCON
-                                fraction=0.1,
+                                fraction=0.01,
                                 select_every=5,
                                 kappa=0,
                                 delta=0.4,
@@ -41,7 +41,7 @@ config = dict(setting="SL",
 
               train_args=dict(num_epochs=40,
                               device="cuda",
-                              print_every=10,
+                              print_every=1,
                               results_dir='results/',
                               print_args=["val_loss", "val_acc", "tst_loss", "tst_acc", "time"],
                               return_args=[]

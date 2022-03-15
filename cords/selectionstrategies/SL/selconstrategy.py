@@ -28,7 +28,6 @@ class SELCONstrategy(DataSelectionStrategy):
         self.sub_epoch = num_epochs // 20  # doubt : what to take as sub epoch? a param?
         self.__precompute(self.num_epochs//4, self.sub_epoch, torch.randn_like(self.delta))
 
-
     def __precompute(self, f_pi_epoch, p_epoch, alphas): # TODO: alphas?
         main_optimizer = torch.optim.Adam([
                 {'params': self.model.parameters()}], lr=self.lr)
