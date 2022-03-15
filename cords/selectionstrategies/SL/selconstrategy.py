@@ -2,7 +2,7 @@ import math
 import torch
 import copy
 from .dataselectionstrategy import DataSelectionStrategy
-from cords.utils.data.datasets.SL.custom_dataset_selcon import CustomDataset, CustomDataset_WithId
+from cords.utils.data.datasets.SL.custom_dataset_selcon import CustomDataset, CustomDataset_WithId, SubsetDataset_WithId
 import numpy as np
 
 
@@ -38,7 +38,7 @@ class SELCONstrategy(DataSelectionStrategy):
         self.logger.info("SELCON: starting pre compute")
 
         # loader_val = torch.utils.data.DataLoader(CustomDataset(self.x_val, self.y_val,transform=None),\
-            # shuffle=False,batch_size=self.batch_size, pin_memory=False)
+        #     shuffle=False,batch_size=self.batch_size, pin_memory=False)
         loader_val = self.valloader
         loader_tr = self.trainloader
         # todo: update len(loader_val)
@@ -115,9 +115,11 @@ class SELCONstrategy(DataSelectionStrategy):
         beta1, beta2 = main_optimizer.param_groups[0]['betas']
         # loader_tr = torch.utils.data.DataLoader(CustomDataset_WithId(self.x_trn, self.y_trn,\
         #     transform=None), device = self.device, shuffle=False,batch_size=self.batch_size*20)
+        loader_tr = self.trainloader
 
         # loader_val = torch.utils.data.DataLoader(CustomDataset(self.x_val, self.y_val,device = self.device,transform=None),\
         #     shuffle=False,batch_size=self.batch_size*20)    
+        loader_val = self.valloader
 
         # for batch_idx in list(loader_tr.batch_sampler):
         for _, (inputs, targets, idxs) in enumerate(loader_tr):
@@ -184,7 +186,8 @@ class SELCONstrategy(DataSelectionStrategy):
 
         # loader_tr = torch.utils.data.DataLoader(CustomDataset_WithId(self.x_trn[curr_subset], self.y_trn[curr_subset],\
         #     transform=None),shuffle=False,batch_size=batch)
-        loader_tr = self.trainloader
+        loader_tr = torch.utils.data.DataLoader(SubsetDataset_WithId(self.trainset, curr_subset), shuffle=False, batch_size=batch)
+        # loader_tr = self.trainloader
 
         sum_error = torch.nn.MSELoss(reduction='sum') # doubt: why not use self.criterion here, also check the reduction here and nored
 
@@ -208,8 +211,10 @@ class SELCONstrategy(DataSelectionStrategy):
         l = [torch.flatten(p) for p in self.model.state_dict().values()]
         flat = torch.cat(l).detach()
 
-        loader_tr = torch.utils.data.DataLoader(CustomDataset_WithId(self.x_trn[curr_subset], self.y_trn[curr_subset],\
-            transform=None),shuffle=False,batch_size=self.batch_size)
+        # loader_tr = torch.utils.data.DataLoader(CustomDataset_WithId(self.x_trn[curr_subset], self.y_trn[curr_subset],\
+        #     transform=None),shuffle=False,batch_size=self.batch_size)
+        loader_tr = torch.utils.data.DataLoader(SubsetDataset_WithId(self.trainset, curr_subset), shuffle=False, batch_size=self.batch_size)
+        # loader_tr = self.trainloader
 
         beta1,beta2 = main_optimizer.param_groups[0]['betas']
         rem_len = (len(curr_subset)-1)
@@ -300,7 +305,7 @@ class SELCONstrategy(DataSelectionStrategy):
         return list(indices.cpu().numpy()), list(values.cpu().numpy())
 
     def select(self, budget, model_params):
-        N, _ = self.x_trn.shape
+        N = len(self.trainloader)
         current_idx = list(np.random.choice(N, budget, replace=False)) # take this from prev train loop
         state_values = list(self.optimizer.state.values())
         step = state_values[0]['step']

@@ -177,7 +177,7 @@ class TrainClassifier:
         tst_batch_size = 1000
 
         if self.cfg.dss_args.type in ['SELCON']:
-            assert(self.cfg.dataset.name in ['LawSchool'])
+            assert(self.cfg.dataset.name in ['LawSchool', 'Community_Crime'])
             if self.cfg.dss_arg.batch_sampler == 'sequential':
                 # todo: not working 
                 batch_sampler = lambda dataset, bs : torch.utils.data.BatchSampler(
@@ -330,7 +330,7 @@ class TrainClassifier:
             self.cfg.dss_args.lr = self.cfg.optimizer.lr
             self.cfg.dss_args.loss = criterion_nored # doubt: or criterion
             self.cfg.dss_args.device = self.cfg.train_args.device
-            self.cfg.dss_args.optimizer = self.cfg.optimizer.type
+            self.cfg.dss_args.optimizer = optimizer
             self.cfg.dss_args.criterion = criterion
             self.cfg.dss_args.num_classes = self.cfg.model.numclasses
             self.cfg.dss_args.batch_size = self.cfg.dataloader.batch_size

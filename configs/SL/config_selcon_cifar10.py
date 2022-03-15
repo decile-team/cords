@@ -31,7 +31,7 @@ config = dict(setting="SL",
 
               dss_args=dict(type="SELCON", # todo : modify this to SELCON
                                 fraction=0.1,
-                                select_every=1,
+                                select_every=5,
                                 kappa=0,
                                 delta=0.4,
                                 linear_layer=False,
@@ -39,7 +39,7 @@ config = dict(setting="SL",
                                 batch_sampler='sequential',
                                 selection_type='Supervised'),
 
-              train_args=dict(num_epochs=10,
+              train_args=dict(num_epochs=40,
                               device="cuda",
                               print_every=10,
                               results_dir='results/',

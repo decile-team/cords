@@ -55,9 +55,24 @@ class CustomDataset_WithId(Dataset):
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
-            idx = idx.tolist()        
+            idx = idx.tolist()  
         sample_data = self.data[idx]
         label = self.targets[idx]
         if self.transform is not None:
             sample_data = self.transform(sample_data)
         return sample_data, label,idx #.astype('float32')
+
+
+
+class SubsetDataset_WithId(CustomDataset_WithId):
+    def __init__(self, dataset, idxs, transform=None):
+        super().__init__(dataset.data, dataset.targets, transform=transform)
+        self.idxs = idxs
+    
+    def __len__(self):
+        return len(self.idxs)
+    
+    def __getitem__(self, idx):
+        new_idx = self.idxs[idx].tolist()
+        data, targets, _ = super().__getitem__(new_idx)
+        return (data, targets, idx)
