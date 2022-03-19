@@ -12,7 +12,7 @@ from .efficientnet import EfficientNetB0
 from .googlenet import GoogLeNet
 from .googlenet import Inception
 from .lenet import LeNet
-from .logreg_net import LogisticRegNet
+from .logreg_net import LogisticRegNet, RegressionNet
 from .mnist_net import MnistNet
 from .mobilenet import MobileNet
 from .mobilenetv2 import MobileNetV2

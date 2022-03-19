@@ -6,30 +6,30 @@ from torch.nn.functional import cross_entropy
 class DataSelectionStrategy(object):
     """
     Implementation of Data Selection Strategy class which serves as base class for other
-    dataselectionstrategies for general learning frameworks.
+    dataselectionstrategies for semi-supervised learning frameworks.
     Parameters
-        ----------
-        trainloader: class
-            Loading the training data using pytorch dataloader
-        valloader: class
-            Loading the validation data using pytorch dataloader
-        model: class
-            Model architecture used for training
-        tea_model: class
-            Teacher model architecture used for training
-        ssl_alg: class
-            SSL algorithm class
-        num_classes: int
-            Number of target classes in the dataset
-        linear_layer: bool
-            If True, we use the last fc layer weights and biases gradients
-            If False, we use the last fc layer biases gradients
-        loss: class
-            Consistency loss function for unlabeled data with no reduction
-        device: str
-            The device being utilized - cpu | cuda
-        logger : class
-            logger file for printing the info
+    ----------
+    trainloader: class
+        Loading the training data using pytorch dataloader
+    valloader: class
+        Loading the validation data using pytorch dataloader
+    model: class
+        Model architecture used for training
+    tea_model: class
+        Teacher model architecture used for training
+    ssl_alg: class
+        SSL algorithm class
+    num_classes: int
+        Number of target classes in the dataset
+    linear_layer: bool
+        If True, we use the last fc layer weights and biases gradients
+        If False, we use the last fc layer biases gradients
+    loss: class
+        Consistency loss function for unlabeled data with no reduction
+    device: str
+        The device being utilized - cpu | cuda
+    logger : class
+        logger file for printing the info
     """
 
     def __init__(self, trainloader, valloader, model, tea_model, ssl_alg, num_classes, linear_layer, loss, device, logger):
@@ -55,9 +55,33 @@ class DataSelectionStrategy(object):
         self.logger = logger
 
     def select(self, budget, model_params, tea_model_params):
+        """
+        Abstract select function that is overloaded by the child classes
+        """
         pass
 
     def ssl_loss(self, ul_weak_data, ul_strong_data, labels=False):
+        """
+        Function that computes contrastive semi-supervised loss
+
+        Parameters
+        -----------
+        ul_weak_data: 
+            Weak agumented version of unlabeled data
+        ul_strong_data:
+            Strong agumented version of unlabeled data
+        labels: bool
+            if labels, just return hypothesized labels of the unlabeled data
+        
+        Returns
+        --------
+        L_consistency: Consistency loss
+        y: Actual labels(Not used anywhere)
+        l1_strong: Penultimate layer outputs for strongly augmented version of unlabeled data
+        targets: Hypothesized labels
+        mask: mask vector of the unlabeled data
+
+        """
         self.logger.debug("SSL loss computation initiated")
         all_data = torch.cat([ul_weak_data, ul_strong_data], 0)
         forward_func = self.model.forward
@@ -104,6 +128,14 @@ class DataSelectionStrategy(object):
             return L_consistency, y, l1_strong, targets, mask
 
     def get_labels(self, valid=False):
+        """
+        Function that iterates over labeled or unlabeled data and returns target or hypothesized labels.
+
+        Parameters
+        -----------
+        valid: bool
+            If True, iterate over the labeled set
+        """
         self.logger.debug("Get labels function Initiated")
         for batch_idx, (ul_weak_aug, ul_strong_aug, _) in enumerate(self.trainloader):
             ul_weak_aug, ul_strong_aug = ul_weak_aug.to(self.device), ul_strong_aug.to(self.device)

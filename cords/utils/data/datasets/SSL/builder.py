@@ -225,16 +225,19 @@ def gen_dataset(root, dataset, validation_split, cfg, logger=None):
     generate train, val, and test datasets
 
     Parameters
-    --------
-    root: str
-        root directory
-    dataset: str
-        dataset name, ['cifar10', 'cifar100', 'svhn', 'stl10']
-    validation_split: bool
-        if True, return validation loader.
-        validation data is made from training data
-    cfg: argparse.Namespace or something
-    logger: logging.Logger
+    -----------
+        root: str
+            root directory in which data is present or needs to be downloaded
+        dataset: str
+            dataset name,
+            Existing dataset choices: ['cifar10', 'cifar100', 'svhn', 'stl10', 'cifarOOD', 'mnistOOD', 'cifarImbalance']
+        validation_split: bool
+            if True, return validation loader.
+            We use 10% random split of training data as validation data
+        cfg: argparse.Namespace or dict
+            Dictionary containing necessary arguments for generating the dataset
+        logger: logging.Logger
+            Logger class for logging the information
     """
     ul_train_data = None
     if dataset == "svhn":

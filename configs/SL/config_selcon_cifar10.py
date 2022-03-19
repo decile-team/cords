@@ -19,7 +19,7 @@ config = dict(setting="SL",
                         dir='results/',
                         save_every=20),
               
-              loss=dict(type='MSELoss', # was CrossEntropyLoss for others
+              loss=dict(type='MeanSquaredLoss', # was CrossEntropyLoss for others
                         use_sigmoid=False),
 
               optimizer=dict(type="adam", 

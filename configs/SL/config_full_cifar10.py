@@ -1,10 +1,10 @@
 # Learning setting
 config = dict(setting="SL",
-
+              is_reg = False,
               dataset=dict(name="cifar10",
                            datadir="../data",
                            feature="dss",
-                           type="pre-defined"),
+                           type="image"),
 
               dataloader=dict(shuffle=True,
                               batch_size=20,
@@ -25,12 +25,13 @@ config = dict(setting="SL",
               optimizer=dict(type="sgd",
                              momentum=0.9,
                              lr=0.01,
-                             weight_decay=5e-4),
+                             weight_decay=5e-4,
+                             nesterov=False),
 
               scheduler=dict(type="cosine_annealing",
                              T_max=300),
 
-              dss_strategy=dict(type="Full"),
+              dss_args=dict(type="Full"),
 
               train_args=dict(num_epochs=300,
                               device="cuda",

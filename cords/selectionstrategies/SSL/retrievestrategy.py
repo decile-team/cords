@@ -10,37 +10,36 @@ import numpy as np
 
 class RETRIEVEStrategy(DataSelectionStrategy):
     """
-    Implementation of RETRIEVE Strategy from the paper :footcite:`killamsetty2020glister`  for supervised learning frameworks.
-    RETRIEVE methods tries to solve the  bi-level optimization problem given below:
+    Implementation of RETRIEVE Strategy from the paper :footcite:`killamsetty2021retrieve`  for efficient and robust semi-supervised learning frameworks.
+    RETRIEVE method tries to solve the  bi-level optimization problem given below:
 
     .. math::
-        \\overbrace{\\underset{{S \\subseteq {\\mathcal U}, |S| \\leq k}}{\\operatorname{argmin\\hspace{0.7mm}}} L_V(\\underbrace{\\underset{\\theta}{\\operatorname{argmin\\hspace{0.7mm}}} L_T( \\theta, S)}_{inner-level}, {\\mathcal V})}^{outer-level}
+        \\overbrace{\\mathcal{S}_{t} = \\underset{\\mathcal{S} \\subseteq \\mathcal{U}:|\\mathcal{S}| \\leq k}{\\operatorname{argmin\\hspace{0.7mm}}}L_S\\Big(\\mathcal{D}, \\underbrace{\\underset{\\theta}{\\operatorname{argmin\hspace{0.7mm}}}\\big(L_S(\\mathcal{D}, \\theta_t) + \\lambda_t \\underset{j \\in \\mathcal{S}}{\\sum} \\mathbf{m}_{jt} l_u(x_j, \\theta_t) \\big)}_{inner-level}\\Big)}^{outer-level}
 
-    In the above equation, :math:`\\mathcal{U}` denotes the training set, :math:`\\mathcal{V}` denotes the validation set that guides the subset selection process, :math:`L_T` denotes the
-    training loss, :math:`L_V` denotes the validation loss, :math:`S` denotes the data subset selected at each round,  and :math:`k` is the budget for the subset.
-
+    Notation: Denote :math: `\\mathcal{D} = \{x_i, y_i\}_{i=1}^n`  to be the labeled set with :math: `n` labeled data points, and :math: `\\mathcal{U} = \{x_j\}_{j=1}^m` 
+    to be the unlabeled set with :math: `m` data points. Let :math: `\\theta` be the classifier model parameters, :math: `l_s` be the labeled set loss function 
+    (such as cross-entropy loss) and :math: `l_u` be the unlabeled set loss, e.g. consistency-regularization loss, entropy loss, etc. Denote :math: `L_S(\\mathcal{D}, \\theta) = 
+    \\underset{i \\in \\mathcal{D}}{\\sum}l_{s}(\\theta, x_i, y_i)` and :math: `L_U(\\mathcal{U}, \\theta, \\mathbf{m}) = \\underset{j \\in \\mathcal{U}}{\\sum} \\mathbf{m}_i 
+    l_u(x_j, \\theta)` where :math: `\mathbf{m} \\in \{0, 1\}^m` is the binary mask vector for unlabeled set. For notational convenience, we denote :math: `l_{si}(\\theta) = l_s(x_i, y_i, \\theta)`
+    and denote :math: `$l_{uj}(\\theta) = l_u(x_j, \\theta)$`.
+    
     Since, solving the complete inner-optimization is expensive, RETRIEVE adopts a online one-step meta approximation where we approximate the solution to inner problem
     by taking a single gradient step.
 
     The optimization problem after the approximation is as follows:
 
     .. math::
-        \\overbrace{\\underset{{S \\subseteq {\\mathcal U}, |S| \\leq k}}{\\operatorname{argmin\\hspace{0.7mm}}} L_V(\\underbrace{\\theta - \\eta \\nabla_{\\theta}L_T(\\theta, S)}_{inner-level}, {\\mathcal V})}^{outer-level}
+        \\mathcal{S}_{t} = \\underset{\\mathcal{S} \\subseteq \\mathcal{U}:|\\mathcal{S}| \\leq k}{\\operatorname{argmin\hspace{0.7mm}}}L_S(\\mathcal{D}, \\theta_t - \\alpha_t \\nabla_{\\theta}L_S(\\mathcal{D}, \\theta_t) - \\alpha_t \\lambda_t \\underset{j \\in \\mathcal{S}}{\\sum} \\mathbf{m}_{jt} \\nabla_{\\theta}l_u(x_j, \\theta_t))\\text{\\hspace{1.7cm}}
 
-    In the above equation, :math:`\\eta` denotes the step-size used for one-step gradient update.
+    In the above equation, :math:`\\alpha_t` denotes the step-size used for one-step gradient update.
 
     RETRIEVE-ONLINE also makes an additional approximation called Taylor-Series approximation to easily solve the outer problem using a greedy selection algorithm.
     The Taylor series approximation is as follows:
 
     .. math::
-        L_V(\\theta - \\eta \\nabla_{\\theta}L_T(\\theta, S), {\\mathcal V}) \\approx L_V(\\theta) - \\eta {\\nabla_{\\theta}L_T(\\theta, S)}^T \\nabla_{\\theta}L_V(\\theta, {\\mathcal V})
+        L_S(\\mathcal{D}, \\theta_t - \\alpha_t \\nabla_{\\theta}L_S(\\mathcal{D}, \\theta_t) - \\alpha_t \\lambda_t \\underset{j \\in \\mathcal{S}}{\\sum} \\mathbf{m}_{jt} \\nabla_{\\theta}l_u(x_j, \\theta_t)) \\approx L_S(\\mathcal{D}, \\theta^{S}) - \\alpha_t \\lambda_t  {\\nabla_{\\theta}L_S(\\mathcal{D}, \\theta^S)}^T  \\mathbf{m}_{et} \\nabla_{\\theta}l_u(x_e, \\theta_t)
 
-    The Optimization problem after the Taylor series approximation is as follows:
-
-    .. math::
-        \\underset{{S \\subseteq {\\mathcal U}, |S| \\leq k}}{\\operatorname{argmin\\hspace{0.7mm}}}L_V(\\theta - \\eta \\nabla_{\\theta}L_T(\\theta, S), {\\mathcal V}) \\approx L_V(\\theta) - \\eta {\\nabla_{\\theta}L_T(\\theta, S)}^T \\nabla_{\\theta}L_V(\\theta, {\\mathcal V})
-
-    Taylor's series approximation reduces the time complexity by reducing the need of calculating the validation loss for each element during greedy selection step which
+    Taylor's series approximation reduces the time complexity by reducing the need of calculating the labeled set loss for each element during greedy selection step which
     means reducing the number of forward passes required.
 
     RETRIEVE-ONLINE is an adaptive subset selection algorithm that tries to select a subset every :math:`L` epochs and the parameter `L` can be set in the original training loop.
@@ -335,6 +334,14 @@ class RETRIEVEStrategy(DataSelectionStrategy):
         grads_X += self.grads_per_elem[element].sum(dim=0)
 
     def greedy_algo(self, budget):
+        """
+        Implement various greedy algorithms for data subset selection.
+
+        Parameters
+        ----------
+        budget: int
+            Budget of data points that needs to be sampled
+        """
         greedySet = list()
         N = self.grads_per_elem.shape[0]
         remainSet = list(range(N))

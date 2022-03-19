@@ -10,7 +10,7 @@ import numpy as np
 
 class GLISTERStrategy(DataSelectionStrategy):
     """
-    Implementation of GLISTER-ONLINE Strategy from the paper :footcite:`killamsetty2020glister`  for supervised learning frameworks.
+    Implementation of GLISTER-ONLINE Strategy from the paper :footcite:`killamsetty2021glister`  for supervised learning frameworks.
     GLISTER-ONLINE methods tries to solve the  bi-level optimization problem given below:
 
     .. math::

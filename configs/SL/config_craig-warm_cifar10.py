@@ -3,11 +3,11 @@ from torch.optim import optimizer
 
 
 config = dict(setting="SL",
-
+              is_reg = False,
               dataset=dict(name="cifar10",
                            datadir="../data",
                            feature="dss",
-                           type="pre-defined"),
+                           type="image"),
 
               dataloader=dict(shuffle=True,
                               batch_size=20,
@@ -28,7 +28,8 @@ config = dict(setting="SL",
               optimizer=dict(type="sgd",
                              momentum=0.9,
                              lr=0.01,
-                             weight_decay=5e-4),
+                             weight_decay=5e-4,
+                             nesterov=False),
 
               scheduler=dict(type="cosine_annealing",
                              T_max=300),
@@ -39,7 +40,8 @@ config = dict(setting="SL",
                                 kappa=0.5,
                                 linear_layer=False,
                                 optimizer='lazy',
-                                selection_type='PerClass'
+                                selection_type='PerClass',
+                                if_convex=False
                                 ),
 
               train_args=dict(num_epochs=300,
