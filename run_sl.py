@@ -1,5 +1,5 @@
 from train_sl import TrainClassifier
-config_file = "configs/SL/config_selcon_cifar10.py"
+config_file = "configs/SL/config_selcon_lawschool.py"
 classifier = TrainClassifier(config_file)
 # classifier.cfg.dss_args.fraction = 0.01
 # classifier.cfg.dss_args.select_every = 20

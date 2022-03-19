@@ -172,10 +172,20 @@ class TrainClassifier:
                                                                self.cfg.dataset.name,
                                                                self.cfg.dataset.feature)
 
-        trn_batch_size = self.cfg.dataloader.batch_size
-        val_batch_size = self.cfg.dataloader.batch_size
-        tst_batch_size = 1000
+        if self.cfg.dss_args.type in ['SELCON']:        
+            is_selcon = True
+        else:
+            is_selcon = False
 
+
+        trn_batch_size = self.cfg.dataloader.batch_size
+        if is_selcon:
+            val_batch_size = 20
+            tst_batch_size = 20
+        else:
+            val_batch_size = self.cfg.dataloader.batch_size
+            tst_batch_size = 1000
+        
         if self.cfg.dss_args.type in ['SELCON']:
             assert(self.cfg.dataset.name in ['LawSchool', 'Community_Crime'])
             if self.cfg.dss_arg.batch_sampler == 'sequential':
@@ -348,12 +358,6 @@ class TrainClassifier:
         else:
             raise NotImplementedError
 
-        if self.cfg.dss_args.type in ['SELCON']:        
-            is_selcon = True
-        else:
-            is_selcon = False
-
-
         """
         ################################################# Checkpoint Loading #################################################
         """
@@ -438,18 +442,22 @@ class TrainClassifier:
 
                 if ("trn_loss" in print_args) or ("trn_acc" in print_args):
                     with torch.no_grad():
-                        for _, (inputs, targets) in enumerate(trainloader):
+                        for _, data in enumerate(trainloader):
+                            if is_selcon:
+                                inputs, targets, _ = data
+                            else:
+                                inputs, targets = data
                             inputs, targets = inputs.to(self.cfg.train_args.device), \
                                               targets.to(self.cfg.train_args.device, non_blocking=True)
                             outputs = model(inputs)
                             loss = criterion(outputs, targets)
                             trn_loss += loss.item()
                             if "trn_acc" in print_args:
-                                _, predicted = outputs.max(1)
+                                if is_selcon:   predicted = outputs
+                                else:           _, predicted = outputs.max(1)
                                 trn_total += targets.size(0)
                                 trn_correct += predicted.eq(targets).sum().item()
                         trn_losses.append(trn_loss)
-
                     if "trn_acc" in print_args:
                         trn_acc.append(trn_correct / trn_total)
 
@@ -466,12 +474,12 @@ class TrainClassifier:
                             loss = criterion(outputs, targets)
                             val_loss += loss.item()
                             if "val_acc" in print_args:
-                                if is_selcon:   predicted = outputs
+                                if is_selcon:   
+                                    predicted = outputs
                                 else:           _, predicted = outputs.max(1)
                                 val_total += targets.size(0)
                                 val_correct += predicted.eq(targets).sum().item()
                         val_losses.append(val_loss)
-
                     if "val_acc" in print_args:
                         val_acc.append(val_correct / val_total)
 

@@ -31,19 +31,19 @@ config = dict(setting="SL",
 
               dss_args=dict(type="SELCON", # todo : modify this to SELCON
                                 fraction=0.01,
-                                select_every=5,
+                                select_every=10,
                                 kappa=0,
-                                delta=0.4,
+                                delta=0.04,
                                 linear_layer=False,
                                 lam=1e-5,
                                 batch_sampler='sequential',
                                 selection_type='Supervised'),
 
-              train_args=dict(num_epochs=40,
+              train_args=dict(num_epochs=50,
                               device="cuda",
                               print_every=1,
                               results_dir='results/',
-                              print_args=["val_loss", "val_acc", "tst_loss", "tst_acc", "time"],
+                              print_args=["val_loss", "val_acc", "tst_loss", "tst_acc", "trn_loss", "trn_acc", "time"],
                               return_args=[]
                               )
               )
