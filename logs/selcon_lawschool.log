@@ -1,25 +1,122 @@
-[03/20 09:52:40] train_sl INFO: DotMap(setting='SL', dataset=DotMap(name='LawSchool', datadir='../data', feature='dss', type='pre-defined'), dataloader=DotMap(shuffle=True, batch_size=100, pin_memory=False), model=DotMap(architecture='RegressionNet', type='pre-defined', numclasses=10), ckpt=DotMap(is_load=False, is_save=True, dir='results/', save_every=20), loss=DotMap(type='MSELoss', use_sigmoid=False), optimizer=DotMap(type='adam', lr=0.01), scheduler=DotMap(type='StepLR', step_size=1, gamma=0.1), dss_args=DotMap(type='SELCON', fraction=0.01, select_every=10, kappa=0, delta=0.04, linear_layer=False, lam=1e-05, batch_sampler='sequential', selection_type='Supervised'), train_args=DotMap(num_epochs=10, device='cuda', print_every=1, results_dir='results/', print_args=['val_loss', 'val_acc', 'tst_loss', 'tst_acc', 'trn_loss', 'trn_acc', 'time'], return_args=[]))
-[03/20 09:52:46] train_sl INFO: SELCON: starting pre compute
-[03/20 09:52:47] train_sl INFO: SELCON: Finishing F phi
-[03/20 09:52:50] train_sl INFO: SELCON: Finishing element wise F
-[03/20 09:52:51] train_sl INFO: Epoch: 1 , Validation Loss: 2.7963369522094728 , Validation Accuracy: 0.0 , Test Loss: 14.050236826676588 , Test Accuracy: 0.0 , Training Loss: 2.8423999184828537 , Training Accuracy: 0.0 , Timing: 0.011373758316040039
-[03/20 09:52:52] train_sl INFO: Epoch: 2 , Validation Loss: 2.6886411361694336 , Validation Accuracy: 0.0 , Test Loss: 13.508760496286245 , Test Accuracy: 0.0 , Training Loss: 2.731428560110239 , Training Accuracy: 0.0 , Timing: 0.010767936706542969
-[03/20 09:52:53] train_sl INFO: Epoch: 3 , Validation Loss: 2.6780323333740235 , Validation Accuracy: 0.0 , Test Loss: 13.455420589447021 , Test Accuracy: 0.0 , Training Loss: 2.720495753655067 , Training Accuracy: 0.0 , Timing: 0.010766267776489258
-[03/20 09:52:54] train_sl INFO: Epoch: 4 , Validation Loss: 2.6769706115722656 , Validation Accuracy: 0.0 , Test Loss: 13.450083226423997 , Test Accuracy: 0.0 , Training Loss: 2.7194017498309795 , Training Accuracy: 0.0 , Timing: 0.011230945587158203
-[03/20 09:52:55] train_sl INFO: Epoch: 5 , Validation Loss: 2.6768646011352537 , Validation Accuracy: 0.0 , Test Loss: 13.449549902402438 , Test Accuracy: 0.0 , Training Loss: 2.7192924763606143 , Training Accuracy: 0.0 , Timing: 0.01104283332824707
-[03/20 09:52:56] train_sl INFO: Epoch: 6 , Validation Loss: 2.6768535232543944 , Validation Accuracy: 0.0 , Test Loss: 13.44949432519766 , Test Accuracy: 0.0 , Training Loss: 2.7192810836205115 , Training Accuracy: 0.0 , Timing: 0.014801979064941406
-[03/20 09:52:56] train_sl INFO: Epoch: 7 , Validation Loss: 2.676851905822754 , Validation Accuracy: 0.0 , Test Loss: 13.44948624097384 , Test Accuracy: 0.0 , Training Loss: 2.7192794535710263 , Training Accuracy: 0.0 , Timing: 0.005431413650512695
-[03/20 09:52:57] train_sl INFO: Epoch: 8 , Validation Loss: 2.676851875305176 , Validation Accuracy: 0.0 , Test Loss: 13.449486174950232 , Test Accuracy: 0.0 , Training Loss: 2.719279452103835 , Training Accuracy: 0.0 , Timing: 0.005517482757568359
-[03/20 09:52:58] train_sl INFO: Epoch: 9 , Validation Loss: 2.676851875305176 , Validation Accuracy: 0.0 , Test Loss: 13.449486174950232 , Test Accuracy: 0.0 , Training Loss: 2.719279452103835 , Training Accuracy: 0.0 , Timing: 0.004070281982421875
-[03/20 09:52:59] train_sl INFO: Epoch: 10 , Validation Loss: 2.676851875305176 , Validation Accuracy: 0.0 , Test Loss: 13.449486174950232 , Test Accuracy: 0.0 , Training Loss: 2.719279452103835 , Training Accuracy: 0.0 , Timing: 0.008574247360229492
-[03/20 09:53:00] train_sl INFO: SELCON Selection Run---------------------------------
-[03/20 09:53:01] train_sl INFO: Final SubsetTrn: 789.3128967285156
-[03/20 09:53:01] train_sl INFO: Validation Loss: 5353.70 , Validation Accuracy: 0.00
-[03/20 09:53:01] train_sl INFO: Test Loss: 27974.93, Test Accuracy: 0.00
-[03/20 09:53:02] train_sl INFO: ---------------------------------------------------------------------
-[03/20 09:53:02] train_sl INFO: SELCON
-[03/20 09:53:02] train_sl INFO: ---------------------------------------------------------------------
-[03/20 09:53:02] train_sl INFO: Validation Accuracy,  , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0
-[03/20 09:53:03] train_sl INFO: Test Accuracy,  , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0
-[03/20 09:53:04] train_sl INFO: [0.011373758316040039, 0.010767936706542969, 0.010766267776489258, 0.011230945587158203, 0.01104283332824707, 0.014801979064941406, 0.005431413650512695, 0.005517482757568359, 0.004070281982421875, 0.008574247360229492]
-[03/20 09:53:05] train_sl INFO: Total time taken by SELCON = 0.0000 
+[03/20 10:37:58] train_sl INFO: DotMap(setting='SL', dataset=DotMap(name='LawSchool', datadir='../data', feature='dss', type='pre-defined'), dataloader=DotMap(shuffle=True, batch_size=100, pin_memory=False), model=DotMap(architecture='RegressionNet', type='pre-defined', numclasses=10), ckpt=DotMap(is_load=False, is_save=True, dir='results/', save_every=20), loss=DotMap(type='MSELoss', use_sigmoid=False), optimizer=DotMap(type='adam', lr=0.01), scheduler=DotMap(type='StepLR', step_size=1, gamma=0.1), dss_args=DotMap(type='SELCON', fraction=0.01, select_every=20, kappa=0, delta=0.04, linear_layer=False, lam=1e-05, batch_sampler='sequential', selection_type='Supervised'), train_args=DotMap(num_epochs=100, device='cuda', print_every=1, results_dir='results/', print_args=['val_loss', 'tst_loss', 'trn_loss', 'time'], return_args=[]))
+[03/20 10:38:03] train_sl INFO: SELCON: starting pre compute
+[03/20 10:38:16] train_sl INFO: SELCON: Finishing F phi
+[03/20 10:38:19] train_sl INFO: SELCON: Finishing element wise F
+[03/20 10:38:20] train_sl INFO: Epoch: 1 , Validation Loss: 0.900264627456665 , Test Loss: 0.8933541812896728 , Training Loss: 0.9725851077299852 , Timing: 0.011312484741210938
+[03/20 10:38:21] train_sl INFO: Epoch: 2 , Validation Loss: 0.8405448055267334 , Test Loss: 0.8339756622314453 , Training Loss: 0.9091532285396869 , Timing: 0.01130533218383789
+[03/20 10:38:22] train_sl INFO: Epoch: 3 , Validation Loss: 0.8347656555175781 , Test Loss: 0.828229585647583 , Training Loss: 0.9030143543390128 , Timing: 0.010631322860717773
+[03/20 10:38:23] train_sl INFO: Epoch: 4 , Validation Loss: 0.8341888103485108 , Test Loss: 0.8276559772491455 , Training Loss: 0.9024021251385028 , Timing: 0.011358022689819336
+[03/20 10:38:24] train_sl INFO: Epoch: 5 , Validation Loss: 0.8341311874389649 , Test Loss: 0.8275986995697021 , Training Loss: 0.9023409704061655 , Timing: 0.010359048843383789
+[03/20 10:38:25] train_sl INFO: Epoch: 6 , Validation Loss: 0.8341253318786621 , Test Loss: 0.8275928897857666 , Training Loss: 0.902334775191087 , Timing: 0.010314702987670898
+[03/20 10:38:26] train_sl INFO: Epoch: 7 , Validation Loss: 0.8341247444152832 , Test Loss: 0.8275922927856445 , Training Loss: 0.9023341453992404 , Timing: 0.011134624481201172
+[03/20 10:38:27] train_sl INFO: Epoch: 8 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.007387399673461914
+[03/20 10:38:28] train_sl INFO: Epoch: 9 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.006486415863037109
+[03/20 10:38:29] train_sl INFO: Epoch: 10 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.005934476852416992
+[03/20 10:38:30] train_sl INFO: Epoch: 11 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.006072044372558594
+[03/20 10:38:31] train_sl INFO: Epoch: 12 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.0064907073974609375
+[03/20 10:38:32] train_sl INFO: Epoch: 13 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.010968208312988281
+[03/20 10:38:33] train_sl INFO: Epoch: 14 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.010698556900024414
+[03/20 10:38:34] train_sl INFO: Epoch: 15 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.010880470275878906
+[03/20 10:38:35] train_sl INFO: Epoch: 16 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.010611772537231445
+[03/20 10:38:37] train_sl INFO: Epoch: 17 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.010772705078125
+[03/20 10:38:37] train_sl INFO: Epoch: 18 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.010175943374633789
+[03/20 10:38:39] train_sl INFO: Epoch: 19 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.011254549026489258
+[03/20 10:38:40] train_sl INFO: Epoch: 20 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.0112152099609375
+[03/20 10:38:41] train_sl INFO: Model checkpoint saved at epoch: 20
+[03/20 10:38:41] train_sl INFO: Epoch: 21, SELCON dataloader subset selection finished, takes 0.0474. 
+[03/20 10:38:42] train_sl INFO: Epoch: 21 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.10214972496032715
+[03/20 10:38:43] train_sl INFO: Epoch: 22 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009803056716918945
+[03/20 10:38:43] train_sl INFO: Epoch: 23 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009866952896118164
+[03/20 10:38:44] train_sl INFO: Epoch: 24 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009790182113647461
+[03/20 10:38:45] train_sl INFO: Epoch: 25 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009704351425170898
+[03/20 10:38:46] train_sl INFO: Epoch: 26 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009992361068725586
+[03/20 10:38:47] train_sl INFO: Epoch: 27 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009775400161743164
+[03/20 10:38:48] train_sl INFO: Epoch: 28 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009786128997802734
+[03/20 10:38:49] train_sl INFO: Epoch: 29 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.01011967658996582
+[03/20 10:38:50] train_sl INFO: Epoch: 30 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.00992131233215332
+[03/20 10:38:51] train_sl INFO: Epoch: 31 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009755849838256836
+[03/20 10:38:52] train_sl INFO: Epoch: 32 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009855985641479492
+[03/20 10:38:53] train_sl INFO: Epoch: 33 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009839057922363281
+[03/20 10:38:54] train_sl INFO: Epoch: 34 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.010204076766967773
+[03/20 10:38:55] train_sl INFO: Epoch: 35 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009895801544189453
+[03/20 10:38:56] train_sl INFO: Epoch: 36 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009813070297241211
+[03/20 10:38:57] train_sl INFO: Epoch: 37 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009771108627319336
+[03/20 10:38:58] train_sl INFO: Epoch: 38 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009946346282958984
+[03/20 10:38:59] train_sl INFO: Epoch: 39 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.0051403045654296875
+[03/20 10:39:00] train_sl INFO: Epoch: 40 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.010260820388793945
+[03/20 10:39:04] train_sl INFO: Model checkpoint saved at epoch: 40
+[03/20 10:39:05] train_sl INFO: Epoch: 41, SELCON dataloader subset selection finished, takes 0.0428. 
+[03/20 10:39:06] train_sl INFO: Epoch: 41 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.9460015296936035
+[03/20 10:39:07] train_sl INFO: Epoch: 42 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.0052928924560546875
+[03/20 10:39:07] train_sl INFO: Epoch: 43 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009780406951904297
+[03/20 10:39:08] train_sl INFO: Epoch: 44 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.010493278503417969
+[03/20 10:39:09] train_sl INFO: Epoch: 45 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.01691126823425293
+[03/20 10:39:10] train_sl INFO: Epoch: 46 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009574651718139648
+[03/20 10:39:11] train_sl INFO: Epoch: 47 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.011627435684204102
+[03/20 10:39:12] train_sl INFO: Epoch: 48 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.006433963775634766
+[03/20 10:39:13] train_sl INFO: Epoch: 49 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.007846355438232422
+[03/20 10:39:14] train_sl INFO: Epoch: 50 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009639501571655273
+[03/20 10:39:15] train_sl INFO: Epoch: 51 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.005781412124633789
+[03/20 10:39:15] train_sl INFO: Epoch: 52 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.005841255187988281
+[03/20 10:39:16] train_sl INFO: Epoch: 53 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.007219552993774414
+[03/20 10:39:17] train_sl INFO: Epoch: 54 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009985685348510742
+[03/20 10:39:18] train_sl INFO: Epoch: 55 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009551048278808594
+[03/20 10:39:19] train_sl INFO: Epoch: 56 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009869813919067383
+[03/20 10:39:20] train_sl INFO: Epoch: 57 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009934186935424805
+[03/20 10:39:21] train_sl INFO: Epoch: 58 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009834766387939453
+[03/20 10:39:22] train_sl INFO: Epoch: 59 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009803533554077148
+[03/20 10:39:23] train_sl INFO: Epoch: 60 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009746313095092773
+[03/20 10:39:25] train_sl INFO: Model checkpoint saved at epoch: 60
+[03/20 10:39:26] train_sl INFO: Epoch: 61, SELCON dataloader subset selection finished, takes 0.0445. 
+[03/20 10:39:27] train_sl INFO: Epoch: 61 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 1.3505797386169434
+[03/20 10:39:29] train_sl INFO: Epoch: 62 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.01019430160522461
+[03/20 10:39:30] train_sl INFO: Epoch: 63 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.010234355926513672
+[03/20 10:39:31] train_sl INFO: Epoch: 64 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.010203838348388672
+[03/20 10:39:32] train_sl INFO: Epoch: 65 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009801149368286133
+[03/20 10:39:33] train_sl INFO: Epoch: 66 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009811639785766602
+[03/20 10:39:34] train_sl INFO: Epoch: 67 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.005685091018676758
+[03/20 10:39:35] train_sl INFO: Epoch: 68 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.010241270065307617
+[03/20 10:39:36] train_sl INFO: Epoch: 69 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009725093841552734
+[03/20 10:39:37] train_sl INFO: Epoch: 70 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009830474853515625
+[03/20 10:39:37] train_sl INFO: Epoch: 71 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009423255920410156
+[03/20 10:39:37] train_sl INFO: Epoch: 72 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009887933731079102
+[03/20 10:39:38] train_sl INFO: Epoch: 73 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.010191679000854492
+[03/20 10:39:39] train_sl INFO: Epoch: 74 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.010115623474121094
+[03/20 10:39:40] train_sl INFO: Epoch: 75 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009781837463378906
+[03/20 10:39:41] train_sl INFO: Epoch: 76 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009773969650268555
+[03/20 10:39:42] train_sl INFO: Epoch: 77 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009806156158447266
+[03/20 10:39:43] train_sl INFO: Epoch: 78 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009801387786865234
+[03/20 10:39:44] train_sl INFO: Epoch: 79 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009563207626342773
+[03/20 10:39:45] train_sl INFO: Epoch: 80 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009952306747436523
+[03/20 10:39:47] train_sl INFO: Model checkpoint saved at epoch: 80
+[03/20 10:39:48] train_sl INFO: Epoch: 81, SELCON dataloader subset selection finished, takes 0.0456. 
+[03/20 10:39:49] train_sl INFO: Epoch: 81 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.9181618690490723
+[03/20 10:39:50] train_sl INFO: Epoch: 82 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009702920913696289
+[03/20 10:39:52] train_sl INFO: Epoch: 83 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009653329849243164
+[03/20 10:39:53] train_sl INFO: Epoch: 84 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009659290313720703
+[03/20 10:39:54] train_sl INFO: Epoch: 85 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009889602661132812
+[03/20 10:39:55] train_sl INFO: Epoch: 86 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009642362594604492
+[03/20 10:39:56] train_sl INFO: Epoch: 87 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009734630584716797
+[03/20 10:39:57] train_sl INFO: Epoch: 88 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.00995779037475586
+[03/20 10:39:58] train_sl INFO: Epoch: 89 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009917974472045898
+[03/20 10:39:59] train_sl INFO: Epoch: 90 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.00995182991027832
+[03/20 10:40:00] train_sl INFO: Epoch: 91 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009830713272094727
+[03/20 10:40:01] train_sl INFO: Epoch: 92 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009659767150878906
+[03/20 10:40:02] train_sl INFO: Epoch: 93 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009577512741088867
+[03/20 10:40:03] train_sl INFO: Epoch: 94 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009586572647094727
+[03/20 10:40:04] train_sl INFO: Epoch: 95 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009974956512451172
+[03/20 10:40:05] train_sl INFO: Epoch: 96 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.010014533996582031
+[03/20 10:40:06] train_sl INFO: Epoch: 97 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.010288476943969727
+[03/20 10:40:07] train_sl INFO: Epoch: 98 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009838581085205078
+[03/20 10:40:08] train_sl INFO: Epoch: 99 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.00923013687133789
+[03/20 10:40:08] train_sl INFO: Epoch: 100 , Validation Loss: 0.8341246299743652 , Test Loss: 0.8275921669006348 , Training Loss: 0.9023340071164645 , Timing: 0.009293317794799805
+[03/20 10:40:09] train_sl INFO: Model checkpoint saved at epoch: 100
+[03/20 10:40:10] train_sl INFO: SELCON Selection Run---------------------------------
+[03/20 10:40:11] train_sl INFO: Final SubsetTrn: 0.7338593739729661
+[03/20 10:40:12] train_sl INFO: Validation Loss: 0.83
+[03/20 10:40:13] train_sl INFO: Test Data Loss: 0.827592
+[03/20 10:40:13] train_sl INFO: ---------------------------------------------------------------------
+[03/20 10:40:14] train_sl INFO: SELCON
+[03/20 10:40:15] train_sl INFO: ---------------------------------------------------------------------
+[03/20 10:40:16] train_sl INFO: [0.011312484741210938, 0.01130533218383789, 0.010631322860717773, 0.011358022689819336, 0.010359048843383789, 0.010314702987670898, 0.011134624481201172, 0.007387399673461914, 0.006486415863037109, 0.005934476852416992, 0.006072044372558594, 0.0064907073974609375, 0.010968208312988281, 0.010698556900024414, 0.010880470275878906, 0.010611772537231445, 0.010772705078125, 0.010175943374633789, 0.011254549026489258, 0.0112152099609375, 0.10214972496032715, 0.009803056716918945, 0.009866952896118164, 0.009790182113647461, 0.009704351425170898, 0.009992361068725586, 0.009775400161743164, 0.009786128997802734, 0.01011967658996582, 0.00992131233215332, 0.009755849838256836, 0.009855985641479492, 0.009839057922363281, 0.010204076766967773, 0.009895801544189453, 0.009813070297241211, 0.009771108627319336, 0.009946346282958984, 0.0051403045654296875, 0.010260820388793945, 0.9460015296936035, 0.0052928924560546875, 0.009780406951904297, 0.010493278503417969, 0.01691126823425293, 0.009574651718139648, 0.011627435684204102, 0.006433963775634766, 0.007846355438232422, 0.009639501571655273, 0.005781412124633789, 0.005841255187988281, 0.007219552993774414, 0.009985685348510742, 0.009551048278808594, 0.009869813919067383, 0.009934186935424805, 0.009834766387939453, 0.009803533554077148, 0.009746313095092773, 1.3505797386169434, 0.01019430160522461, 0.010234355926513672, 0.010203838348388672, 0.009801149368286133, 0.009811639785766602, 0.005685091018676758, 0.010241270065307617, 0.009725093841552734, 0.009830474853515625, 0.009423255920410156, 0.009887933731079102, 0.010191679000854492, 0.010115623474121094, 0.009781837463378906, 0.009773969650268555, 0.009806156158447266, 0.009801387786865234, 0.009563207626342773, 0.009952306747436523, 0.9181618690490723, 0.009702920913696289, 0.009653329849243164, 0.009659290313720703, 0.009889602661132812, 0.009642362594604492, 0.009734630584716797, 0.00995779037475586, 0.009917974472045898, 0.00995182991027832, 0.009830713272094727, 0.009659767150878906, 0.009577512741088867, 0.009586572647094727, 0.009974956512451172, 0.010014533996582031, 0.010288476943969727, 0.009838581085205078, 0.00923013687133789, 0.009293317794799805]
+[03/20 10:40:18] train_sl INFO: Total time taken by SELCON = 0.0012 

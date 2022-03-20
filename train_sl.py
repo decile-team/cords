@@ -174,21 +174,23 @@ class TrainClassifier:
 
         if self.cfg.dss_args.type in ['SELCON']:        
             is_selcon = True
+            is_reg = True
         else:
             is_selcon = False
+            is_reg = False
 
 
         trn_batch_size = self.cfg.dataloader.batch_size
         val_batch_size = self.cfg.dataloader.batch_size
         if is_selcon:
-            tst_batch_size = 20
+            tst_batch_size = 100
         else:
             tst_batch_size = 1000
         
         if self.cfg.dss_args.type in ['SELCON']:
             assert(self.cfg.dataset.name in ['LawSchool', 'Community_Crime'])
             if self.cfg.dss_arg.batch_sampler == 'sequential':
-                # todo: not working 
+                # todo: not working
                 batch_sampler = lambda dataset, bs : torch.utils.data.BatchSampler(
                     torch.utils.data.SequentialSampler(dataset), batch_size=bs, drop_last=True
                 )   # sequential
@@ -451,14 +453,16 @@ class TrainClassifier:
                             outputs = model(inputs)
                             loss = criterion(outputs, targets)
                             trn_loss += loss.item()
+                            trn_total += targets.size(0)
                             if "trn_acc" in print_args:
                                 if is_selcon:   predicted = outputs
                                 else:           _, predicted = outputs.max(1)
-                                trn_total += targets.size(0)
                                 trn_correct += predicted.eq(targets).sum().item()
-                        trn_losses.append(trn_loss / trn_total)
+                        trn_loss = trn_loss / trn_total
+                        trn_losses.append(trn_loss)
                     if "trn_acc" in print_args:
-                        trn_acc.append(trn_correct / trn_total)
+                        trn_correct = trn_correct / trn_total
+                        trn_acc.append(trn_correct)
 
                 if ("val_loss" in print_args) or ("val_acc" in print_args):
                     with torch.no_grad():
@@ -472,15 +476,17 @@ class TrainClassifier:
                             outputs = model(inputs)
                             loss = criterion(outputs, targets)
                             val_loss += loss.item()
+                            val_total += targets.size(0)
                             if "val_acc" in print_args:
                                 if is_selcon:   
                                     predicted = outputs
                                 else:           _, predicted = outputs.max(1)
-                                val_total += targets.size(0)
                                 val_correct += predicted.eq(targets).sum().item()
-                        val_losses.append(val_loss / val_total)
+                        val_loss = val_loss / val_total
+                        val_losses.append(val_loss)
                     if "val_acc" in print_args:
-                        val_acc.append(val_correct / val_total)
+                        val_correct = val_correct / val_total
+                        val_acc.append(val_correct)
 
                 if ("tst_loss" in print_args) or ("tst_acc" in print_args):
                     with torch.no_grad():
@@ -494,18 +500,21 @@ class TrainClassifier:
                             outputs = model(inputs)
                             loss = criterion(outputs, targets)
                             tst_loss += loss.item()
+                            tst_total += targets.size(0)
                             if "tst_acc" in print_args:
                                 if is_selcon:   predicted = outputs
                                 else:           _, predicted = outputs.max(1)
-                                tst_total += targets.size(0)
                                 tst_correct += predicted.eq(targets).sum().item()
-                        tst_losses.append(tst_loss / tst_total)
+                        tst_loss = tst_loss / tst_total
+                        tst_losses.append(tst_loss)
 
                     if "tst_acc" in print_args:
-                        tst_acc.append(tst_correct / tst_total)
+                        tst_correct = tst_correct / tst_total
+                        tst_acc.append(tst_correct)
 
                 if "subtrn_acc" in print_args:
-                    subtrn_acc.append(subtrn_correct / subtrn_total)
+                    subtrn_correct = subtrn_correct / subtrn_total
+                    subtrn_acc.append(subtrn_correct)
 
                 if "subtrn_losses" in print_args:
                     subtrn_losses.append(subtrn_loss)
@@ -596,7 +605,7 @@ class TrainClassifier:
         """
 
         logger.info(self.cfg.dss_args.type + " Selection Run---------------------------------")
-        logger.info(f"Final SubsetTrn: {subtrn_loss}")
+        logger.info(f"Final SubsetTrn: {subtrn_loss/subtrn_total}")
         if "val_loss" in print_args:
             if "val_acc" in print_args:
                 logger.info("Validation Loss: %.2f , Validation Accuracy: %.2f", val_loss, val_acc[-1])
