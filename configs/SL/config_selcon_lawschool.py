@@ -39,7 +39,7 @@ config = dict(setting="SL",
                                 batch_sampler='sequential',
                                 selection_type='Supervised'),
 
-              train_args=dict(num_epochs=50,
+              train_args=dict(num_epochs=10,
                               device="cuda",
                               print_every=1,
                               results_dir='results/',

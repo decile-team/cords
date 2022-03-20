@@ -163,7 +163,6 @@ class SELCONstrategy(DataSelectionStrategy):
 
                 exten_val = torch.cat((inputs_val, torch.ones(inputs_val.shape[0], device=self.device).view(-1,1)), dim=1)
                 exten_val_y = torch.mean(targets_val).repeat(min(self.batch_size*20, targets_val.shape[0]))
-
                 val_loss = torch.sum(weights*torch.mean(exten_val,dim=0),dim=1) - exten_val_y
 
                 val_losses+= val_loss*val_loss #torch.mean(val_loss*val_loss,dim=0)
