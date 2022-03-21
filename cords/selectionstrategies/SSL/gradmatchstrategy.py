@@ -9,16 +9,16 @@ from torch.utils.data import Subset, DataLoader
 
 class GradMatchStrategy(DataSelectionStrategy):
     """
-    Implementation of OMPGradMatch Strategy from the paper :footcite:`sivasubramanian2020gradmatch` for supervised learning frameworks.
+    Implementation of OMPGradMatch Strategy from the paper :footcite:`pmlr-v139-killamsetty21a` for supervised learning frameworks.
 
     OMPGradMatch strategy tries to solve the optimization problem given below:
 
     .. math::
-        \\min_{\\mathbf{w}, S: |S| \\leq k} \\Vert \\sum_{i \\in S} w_i \\nabla_{\\theta}L_T^i(\\theta) -  \\nabla_{\\theta}L(\\theta)\\Vert
+        \\underset{\\mathcal{S} \\subseteq \\mathcal{U}:|\\mathcal{S}| \\leq k, \{\\mathbf{w}_j\}_{j \\in [1, |\\mathcal{S}|]}:\\forall_{j} \\mathbf{w}_j \\geq 0}{\\operatorname{argmin\\hspace{0.7mm}}} \\left \\Vert \\underset{i \\in \\mathcal{U}}{\\sum} \\mathbf{m}_i \\nabla_{\\theta}l_u(x_i, \\theta) - \\underset{j \\in \\mathcal{S}}{\\sum} \\mathbf{m}_j \\mathbf{w}_j \\nabla_{\\theta} l_u(x_j, \\theta)\\right \\Vert
 
-    In the above equation, :math:`\\mathbf{w}` denotes the weight vector that contains the weights for each data instance, :math:`\mathcal{U}` training set where :math:`(x^i, y^i)` denotes the :math:`i^{th}` training data point and label respectively,
-    :math:`L_T` denotes the training loss, :math:`L` denotes either training loss or validation loss depending on the parameter valid,
-    :math:`S` denotes the data subset selected at each round, and :math:`k` is the budget for the subset.
+    In the above equation, :math:`\\mathbf{w}` denotes the weight vector that contains the weights for each data instance, :math:`\\mathcal{U}` denotes the unlabeled set 
+    where :math:`(x^i, y^i)` denotes the :math:`i^{th}` training data point and label respectively, :math:`l_u` denotes the unlabeled loss, :math:`\\mathcal{S}` denotes the
+    data subset selected at each round, and :math:`k` is the budget for the subset.
 
     The above optimization problem is solved using the Orthogonal Matching Pursuit(OMP) algorithm.
 
@@ -78,6 +78,25 @@ class GradMatchStrategy(DataSelectionStrategy):
         self.v1 = v1
 
     def ompwrapper(self, X, Y, bud):
+        """
+        Wrapper function that instantiates the OMP algorithm 
+
+        Parameters
+	    ----------
+        X: 
+            Individual datapoint gradients 
+        Y: 
+            Gradient sum that needs to be matched to.
+        bud:
+            Budget of datapoints that needs to be sampled from the unlabeled set
+
+        Returns
+        ----------
+        idxs: list
+            List containing indices of the best datapoints,
+        gammas: weights tensors
+            Tensor containing weights of each instance
+        """
 
         if self.device == "cpu":
             reg = OrthogonalMP_REG(X.numpy(), Y.numpy(), nnz=bud, positive=True, lam=0)
@@ -108,7 +127,7 @@ class GradMatchStrategy(DataSelectionStrategy):
             Python dictionary object containing teacher model's parameters
 
         Returns
-        ----------
+        --------
         idxs: list
             List containing indices of the best datapoints,
         gammas: weights tensors
@@ -131,7 +150,7 @@ class GradMatchStrategy(DataSelectionStrategy):
                     self.pcvalloader = DataLoader(val_data_sub, batch_size=self.trainloader.batch_size,
                                                     shuffle=False, pin_memory=True)
 
-                self.compute_gradients(self.valid, batch=False, perClass=True)
+                self.compute_gradients(self.valid, perBatch=False, perClass=True)
                 trn_gradients = self.grads_per_elem
                 if self.valid:
                     sum_val_grad = torch.sum(self.val_grads_per_elem, dim=0)
@@ -143,7 +162,7 @@ class GradMatchStrategy(DataSelectionStrategy):
                 gammas.extend(gammas_temp)
 
         elif self.selection_type == 'PerBatch':
-            self.compute_gradients(self.valid, batch=True, perClass=False)
+            self.compute_gradients(self.valid, perBatch=True, perClass=False)
             idxs = []
             gammas = []
             trn_gradients = self.grads_per_elem
@@ -174,7 +193,7 @@ class GradMatchStrategy(DataSelectionStrategy):
                     val_data_sub = Subset(self.valloader.dataset, val_subset_idx)
                     self.pcvalloader = DataLoader(val_data_sub, batch_size=self.trainloader.batch_size,
                                                     shuffle=False, pin_memory=True)
-                self.compute_gradients(self.valid, batch=False, perClass=True)
+                self.compute_gradients(self.valid, perBatch=False, perClass=True)
                 trn_gradients = self.grads_per_elem
                 tmp_gradients = trn_gradients[:, i].view(-1, 1)
                 tmp1_gradients = trn_gradients[:,

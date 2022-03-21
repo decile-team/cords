@@ -9,7 +9,7 @@ from torch.utils.data import Subset, DataLoader
 
 class GradMatchStrategy(DataSelectionStrategy):
     """
-    Implementation of GradMatch Strategy from the paper :footcite:`sivasubramanian2020gradmatch` for supervised learning frameworks.
+    Implementation of GradMatch Strategy from the paper :footcite:`pmlr-v139-killamsetty21a` for supervised learning frameworks.
 
     GradMatch strategy tries to solve the optimization problem given below:
 
@@ -119,12 +119,12 @@ class GradMatchStrategy(DataSelectionStrategy):
                 trn_subset_idx = torch.where(self.trn_lbls == i)[0].tolist()
                 trn_data_sub = Subset(self.trainloader.dataset, trn_subset_idx)
                 self.pctrainloader = DataLoader(trn_data_sub, batch_size=self.trainloader.batch_size,
-                                                shuffle=False, pin_memory=True)
+                                                shuffle=False, pin_memory=True, collate_fn=self.trainloader.collate_fn)
                 if self.valid:
                     val_subset_idx = torch.where(self.val_lbls == i)[0].tolist()
                     val_data_sub = Subset(self.valloader.dataset, val_subset_idx)
                     self.pcvalloader = DataLoader(val_data_sub, batch_size=self.trainloader.batch_size,
-                                                  shuffle=False, pin_memory=True)
+                                                  shuffle=False, pin_memory=True, collate_fn=self.trainloader.collate_fn)
 
                 self.compute_gradients(self.valid, perBatch=False, perClass=True)
                 trn_gradients = self.grads_per_elem
@@ -164,12 +164,12 @@ class GradMatchStrategy(DataSelectionStrategy):
                 trn_subset_idx = torch.where(self.trn_lbls == i)[0].tolist()
                 trn_data_sub = Subset(self.trainloader.dataset, trn_subset_idx)
                 self.pctrainloader = DataLoader(trn_data_sub, batch_size=self.trainloader.batch_size,
-                                                shuffle=False, pin_memory=True)
+                                                shuffle=False, pin_memory=True, collate_fn=self.trainloader.collate_fn)
                 if self.valid:
                     val_subset_idx = torch.where(self.val_lbls == i)[0].tolist()
                     val_data_sub = Subset(self.valloader.dataset, val_subset_idx)
                     self.pcvalloader = DataLoader(val_data_sub, batch_size=self.trainloader.batch_size,
-                                                  shuffle=False, pin_memory=True)
+                                                  shuffle=False, pin_memory=True, collate_fn=self.trainloader.collate_fn)
                 self.compute_gradients(self.valid, perBatch=False, perClass=True)
                 trn_gradients = self.grads_per_elem
                 tmp_gradients = trn_gradients[:, i].view(-1, 1)

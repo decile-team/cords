@@ -6,7 +6,7 @@ class DataSelectionStrategy(object):
     Implementation of Data Selection Strategy class which serves as base class for other
     dataselectionstrategies for general learning frameworks.
     Parameters
-        ----------
+    ----------
         trainloader: class
             Loading the training data using pytorch dataloader
         valloader: class
@@ -28,7 +28,7 @@ class DataSelectionStrategy(object):
 
     def __init__(self, trainloader, valloader, model, num_classes, linear_layer, loss, device, logger):
         """
-        Constructer method
+        Constructor method
         """
         self.trainloader = trainloader  # assume its a sequential loader.
         self.valloader = valloader

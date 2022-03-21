@@ -13,14 +13,60 @@ import re
 import pandas as pd
 import torch
 import torchtext.data
+import pickle
+from cords.utils.data.data_utils import WeightedSubset
+import pandas as pd
+from datasets import load_dataset
+
+class standard_scaling:
+    def __init__(self):
+        self.std = None
+        self.mean = None
+
+    def fit_transform(self, data):
+        self.std = np.std(data, axis=0)
+        self.mean = np.mean(data, axis=0)
+        transformed_data = np.subtract(data, self.mean)
+        transformed_data = np.divide(transformed_data, self.std)
+        return transformed_data
+
+    def transform(self, data):
+        transformed_data = np.subtract(data, self.mean)
+        transformed_data = np.divide(transformed_data, self.std)
+        return transformed_data
 
 
-def clean_data(sentence):
+def clean_data(sentence, type = 0, TREC=False):
     # From yoonkim: https://github.com/yoonkim/CNN_sentence/blob/master/process_data.py
-    sentence = re.sub(r"[^A-Za-z0-9(),!?\'\`]", " ", sentence)
-    sentence = re.sub(r"\s{2,}", " ", sentence)
-    return sentence.strip().lower()
-
+    if type == 0:
+        """
+        Tokenization for SST
+        """
+        sentence = re.sub(r"[^A-Za-z0-9(),!?\'\`]", " ", sentence)
+        sentence = re.sub(r"\s{2,}", " ", sentence)
+        return sentence.strip().lower()
+    elif type == 1:
+        """
+        Tokenization/string cleaning for all datasets except for SST.
+        Every dataset is lower cased except for TREC
+        """
+        sentence = re.sub(r"[^A-Za-z0-9(),!?\'\`]", " ", sentence)     
+        sentence = re.sub(r"\'s", " \'s", sentence) 
+        sentence = re.sub(r"\'ve", " \'ve", sentence) 
+        sentence = re.sub(r"n\'t", " n\'t", sentence) 
+        sentence = re.sub(r"\'re", " \'re", sentence) 
+        sentence = re.sub(r"\'d", " \'d", sentence) 
+        sentence = re.sub(r"\'ll", " \'ll", sentence) 
+        sentence = re.sub(r",", " , ", sentence) 
+        sentence = re.sub(r"!", " ! ", sentence) 
+        sentence = re.sub(r"\(", " \( ", sentence) 
+        sentence = re.sub(r"\)", " \) ", sentence) 
+        sentence = re.sub(r"\?", " \? ", sentence) 
+        sentence = re.sub(r"\s{2,}", " ", sentence)    
+        return sentence.strip() if TREC else sentence.strip().lower() 
+        # if we are using glove uncased, keep TREC = False even for trec6 dataset
+    else:
+        return sentence
 
 def get_class(sentiment, num_classes):
     # Return a label based on the sentiment value
@@ -47,7 +93,7 @@ class SSTDataset(Dataset):
             device (str, optional): torch.device. Defaults to 'cpu'.
         """
         phrase_ids = pd.read_csv(path_to_dataset + 'phrase_ids.' +
-                                 name + '.txt', header=None, encoding='utf-8', dtype=int)
+                                name + '.txt', header=None, encoding='utf-8', dtype=int)
         phrase_ids = set(np.array(phrase_ids).squeeze())  # phrase_id in this dataset
         self.num_classes = num_classes
         phrase_dict = {}  # {id->phrase} 
@@ -69,7 +115,7 @@ class SSTDataset(Dataset):
                     phrase_dict[int(phrase_id)] = phrase
                     i += 1
         f.close()
-  
+
         self.phrase_vec = []  # word index in glove
         # label of each sentence
         self.labels = torch.zeros((len(phrase_dict),), dtype=torch.long)
@@ -85,7 +131,7 @@ class SSTDataset(Dataset):
             self.phrase_vec.append(torch.tensor(tmp1, dtype=torch.long)) 
             self.labels[i] = get_class(SSTDataset.label_tmp[idx], self.num_classes) 
 
-        print(missing_count)
+        # print(missing_count)
 
     def __getitem__(self, index):
         return self.phrase_vec[index], self.labels[index]
@@ -93,18 +139,74 @@ class SSTDataset(Dataset):
     def __len__(self):
         return len(self.phrase_vec)
 
+class Trec6Dataset(Dataset):
+    def __init__(self, data_path, cls_to_num, num_classes, wordvec_dim, wordvec, device='cpu'):
+        self.phrase_vec = []
+        self.labels = []
+
+        missing_count = 0
+        with open(data_path, 'r', encoding='latin1') as f:
+            for line in f:
+                label = cls_to_num[line.split()[0].split(":")[0]]
+                sentence = clean_data(" ".join(line.split(":")[1:]), 1, False)
+                
+                tmp1 = []
+                for w in sentence.split(' '):
+                    try:
+                        tmp1.append(wordvec.index.get_loc(w))  
+                    except KeyError:
+                        missing_count += 1
+
+                self.phrase_vec.append(torch.tensor(tmp1, dtype=torch.long))
+                self.labels.append(label)
+
+    def __getitem__(self, index):
+        return self.phrase_vec[index], self.labels[index]
+
+    def __len__(self):
+        return len(self.phrase_vec)
+
+class GlueDataset(Dataset):
+    def __init__(self, glue_dataset, sentence_str, label_str, clean_type, num_classes, wordvec_dim, wordvec, device='cpu'):
+        self.len =  glue_dataset.__len__()       
+        self.phrase_vec = []  # word index in glove
+        # label of each sentence
+        self.labels = torch.zeros((self.len,), dtype=torch.long)
+        missing_count = 0
+        for i, p in enumerate(glue_dataset):
+            tmp1 = []
+            for w in clean_data(p[sentence_str], clean_type, False).split(' '): #False since glove used is uncased
+                try:
+                    tmp1.append(wordvec.index.get_loc(w))  
+                except KeyError:
+                    missing_count += 1
+
+            self.phrase_vec.append(torch.tensor(tmp1, dtype=torch.long)) 
+            self.labels[i] = p[label_str]
+        
+    def __getitem__(self, index):
+        return self.phrase_vec[index], self.labels[index]
+    def __len__(self):
+        return self.len
 
 ## Custom PyTorch Dataset Class wrapper
 class CustomDataset(Dataset):
-    def __init__(self, data, target, device=None, transform=None):
+    def __init__(self, data, target, device=None, transform=None, isreg=False):
         self.transform = transform
         if device is not None:
             # Push the entire data to given device, eg: cuda:0
             self.data = data.float().to(device)
-            self.targets = target.long().to(device)
+            if isreg:
+                self.targets = target.float().to(device)
+            else:
+                self.targets = target.long().to(device)
+
         else:
             self.data = data.float()
-            self.targets = target.long()
+            if isreg:
+                self.targets = target.float()
+            else:
+                self.targets = target.long()
 
     def __len__(self):
         return len(self.targets)
@@ -192,6 +294,23 @@ def libsvm_file_load(path, dim, save_data=False):
         np.save(data_np_path, X_data)
         np.save(target_np_path, Y_label)
     return (X_data, Y_label)
+
+def clean_lawschool_full(path):
+    df = pd.read_csv(path)
+    df = df.dropna()
+    # remove y from df
+    y = df['ugpa']
+    y = y / 4
+    df = df.drop('ugpa', 1)
+    # convert gender variables to 0,1
+    df['gender'] = df['gender'].map({'male': 1, 'female': 0})
+    # add bar1 back to the feature set
+    df_bar = df['bar1']
+    df = df.drop('bar1', 1)
+    df['bar1'] = [int(grade == 'P') for grade in df_bar]
+    # df['race'] = [int(race == 7.0) for race in df['race']]
+    # a = df['race']
+    return df.to_numpy(), y.to_numpy()
 
 
 def census_load(path, dim, save_data=False):
@@ -351,6 +470,24 @@ def create_noisy(y_trn, num_cls, noise_ratio=0.8):
 
 
 def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
+    """
+    Generate train, val, and test datasets for supervised learning setting.
+
+    Parameters
+    --------
+    datadir: str
+        Dataset directory in which the data is present or needs to be downloaded.
+    dset_name: str
+        dataset name, ['cifar10', 'cifar100', 'svhn', 'stl10']
+    feature: str
+        if 'classimb', generate datasets wth class imbalance
+            - Needs keyword argument 'classimb_ratio'
+        elif 'noise', generate datasets with label noise
+        otherwise, generate standard datasets 
+    isnumpy: bool
+        if True, return datasets in numpy format instead of tensor format
+    """
+    
     if feature == 'classimb':
         if 'classimb_ratio' in kwargs:
             pass
@@ -401,18 +538,98 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         #train, test = train_test_split(list(range(X.shape[0])), test_size=.3)
         x_trn, x_tst, y_trn, y_tst = train_test_split(x_trn, y_trn, test_size=0.2, random_state=42)
         x_trn, x_val, y_trn, y_val = train_test_split(x_trn, y_trn, test_size=0.1, random_state=42)
+        scaler = standard_scaling()
+        x_trn = scaler.fit_transform(x_trn)
+        x_val = scaler.transform(x_val)
+        x_tst = scaler.transform(x_tst)
+        y_trn = y_trn.reshape((-1, 1))
+        y_val = y_val.reshape((-1, 1))
+        y_tst = y_tst.reshape((-1, 1))
+        if isnumpy:
+            fullset = (x_trn, y_trn)
+            valset = (x_val, y_val)
+            testset = (x_tst, y_tst)
+        else:
+            fullset = CustomDataset(torch.from_numpy(x_trn), torch.from_numpy(y_trn), isreg=True)
+            valset = CustomDataset(torch.from_numpy(x_val), torch.from_numpy(y_val), isreg=True)
+            testset = CustomDataset(torch.from_numpy(x_tst), torch.from_numpy(y_tst), isreg=True)
+        return fullset, valset, testset, num_cls
+
+    elif dset_name in ["cadata","abalone","cpusmall",'LawSchool']:
+
+        if dset_name == "cadata":
+            trn_file = os.path.join(datadir, 'cadata.txt')
+            x_trn, y_trn = libsvm_file_load(trn_file, dim=8)
+
+        elif dset_name == "abalone":
+            trn_file = os.path.join(datadir, 'abalone_scale.txt')
+            x_trn, y_trn = libsvm_file_load(trn_file, 8)
+
+        elif dset_name == "cpusmall":
+            trn_file = os.path.join(datadir, 'cpusmall_scale.txt')
+            x_trn, y_trn = libsvm_file_load(trn_file, 12)
+
+        elif dset_name == 'LawSchool':
+            x_trn, y_trn = clean_lawschool_full(os.path.join(datadir, 'lawschool.csv'))
+
+        # create train and test indices
+        #train, test = train_test_split(list(range(X.shape[0])), test_size=.3)
+        x_trn, x_tst, y_trn, y_tst = train_test_split(x_trn, y_trn, test_size=0.2, random_state=42)
+        x_trn, x_val, y_trn, y_val = train_test_split(x_trn, y_trn, test_size=0.1, random_state=42)
+
+        sc = StandardScaler()
+        x_trn = sc.fit_transform(x_trn)
+        x_val = sc.transform(x_val)
+        x_tst = sc.transform(x_tst)
+
+        sc_l = StandardScaler()
+        y_trn = np.reshape(sc_l.fit_transform(np.reshape(y_trn, (-1, 1))), (-1))
+        y_val = np.reshape(sc_l.fit_transform(np.reshape(y_val, (-1, 1))), (-1))
+        y_tst = np.reshape(sc_l.fit_transform(np.reshape(y_tst, (-1, 1))), (-1))
+
         if isnumpy:
             fullset = (x_trn, y_trn)
             valset = (x_val, y_val)
             testset = (x_tst, y_tst)
 
         else:
-            fullset = CustomDataset(torch.from_numpy(x_trn), torch.from_numpy(y_trn))
-            valset = CustomDataset(torch.from_numpy(x_val), torch.from_numpy(y_val))
-            testset = CustomDataset(torch.from_numpy(x_tst), torch.from_numpy(y_tst))
+            fullset = CustomDataset(torch.from_numpy(x_trn), torch.from_numpy(y_trn),if_reg=True)
+            valset = CustomDataset(torch.from_numpy(x_val), torch.from_numpy(y_val),if_reg=True)
+            testset = CustomDataset(torch.from_numpy(x_tst), torch.from_numpy(y_tst),if_reg=True)
 
-        return fullset, valset, testset, num_cls
+        return fullset, valset, testset, 1
 
+    elif dset_name == 'MSD':
+
+        trn_file = os.path.join(datadir, 'YearPredictionMSD')
+        x_trn, y_trn = libsvm_file_load(trn_file, 90)
+
+        tst_file = os.path.join(datadir, 'YearPredictionMSD.t')
+        x_tst, y_tst = libsvm_file_load(tst_file, 90)
+        x_trn, x_val, y_trn, y_val = train_test_split(x_trn, y_trn, test_size=0.005, random_state=42)
+
+        sc = StandardScaler()
+        x_trn = sc.fit_transform(x_trn)
+        x_val = sc.transform(x_val)
+        x_tst = sc.transform(x_tst)
+
+        sc_l = StandardScaler()
+        y_trn = np.reshape(sc_l.fit_transform(np.reshape(y_trn, (-1, 1))), (-1))
+        y_val = np.reshape(sc_l.fit_transform(np.reshape(y_val, (-1, 1))), (-1))
+        y_tst = np.reshape(sc_l.fit_transform(np.reshape(y_tst, (-1, 1))), (-1))
+
+        if isnumpy:
+            fullset = (x_trn, y_trn)
+            valset = (x_val, y_val)
+            testset = (x_tst, y_tst)
+
+        else:
+            fullset = CustomDataset(torch.from_numpy(x_trn), torch.from_numpy(y_trn),if_reg=True)
+            valset = CustomDataset(torch.from_numpy(x_val), torch.from_numpy(y_val),if_reg=True)
+            testset = CustomDataset(torch.from_numpy(x_tst), torch.from_numpy(y_tst),if_reg=True)
+
+        return fullset, valset, testset, 1
+        
     elif dset_name == "adult":
         trn_file = os.path.join(datadir, 'a9a.trn')
         tst_file = os.path.join(datadir, 'a9a.tst')
@@ -1342,3 +1559,96 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
                     subset_idxs.extend(batch_subset_idxs)
             trainset = torch.utils.data.Subset(trainset, subset_idxs)
         return trainset, valset, testset, num_cls
+    elif dset_name == "sst2" or dset_name == "sst2_facloc":
+        '''
+        download data/SST from https://drive.google.com/file/d/14KU6RQJpP6HKKqVGm0OF3MVxtI0NlEcr/view?usp=sharing
+        or get the stanford sst data and make phrase_ids.<dev/test/train>.txt files
+        pass datadir arg in dataset in config appropiriately(should look like ......../SST)
+        '''
+        num_cls = 2
+        wordvec_dim = kwargs['dataset'].wordvec_dim
+        weight_path = kwargs['dataset'].weight_path
+        weight_full_path = weight_path+'glove.6B.' + str(wordvec_dim) + 'd.txt'
+        wordvec = loadGloveModel(weight_full_path)
+        trainset = SSTDataset(datadir, 'train', num_cls, wordvec_dim, wordvec)
+        testset = SSTDataset(datadir, 'test', num_cls, wordvec_dim, wordvec)
+        valset = SSTDataset(datadir, 'dev', num_cls, wordvec_dim, wordvec)
+
+        return trainset, valset, testset, num_cls
+    elif dset_name == "glue_sst2":
+        num_cls = 2
+        raw = load_dataset("glue", "sst2")
+
+        wordvec_dim = kwargs['dataset'].wordvec_dim
+        weight_path = kwargs['dataset'].weight_path
+        weight_full_path = weight_path+'glove.6B.' + str(wordvec_dim) + 'd.txt'
+        wordvec = loadGloveModel(weight_full_path)
+
+        clean_type = 0
+        fullset = GlueDataset(raw['train'], 'sentence', 'label', clean_type, num_cls, wordvec_dim, wordvec)
+        # testset = GlueDataset(raw['test'], 'sentence', 'label', clean_type, num_cls, wordvec_dim, wordvec) # doesn't have gold labels
+        valset = GlueDataset(raw['validation'], 'sentence', 'label', clean_type, num_cls, wordvec_dim, wordvec)
+
+        test_set_fraction = 0.05
+        seed = 42
+        num_fulltrn = len(fullset)
+        num_test = int(num_fulltrn * test_set_fraction)
+        num_trn = num_fulltrn - num_test
+        trainset, testset = random_split(fullset, [num_trn, num_test], generator=torch.Generator().manual_seed(seed))
+
+        return trainset, valset, testset, num_cls
+    elif  dset_name == "sst5":
+        '''
+        download data/SST from https://drive.google.com/file/d/14KU6RQJpP6HKKqVGm0OF3MVxtI0NlEcr/view?usp=sharing
+        or get the stanford sst data and make phrase_ids.<dev/test/train>.txt files
+        pass datadir arg in dataset in config appropiriately(should look like ......../SST)
+        '''
+        num_cls = 5
+        wordvec_dim = kwargs['dataset'].wordvec_dim
+        weight_path = kwargs['dataset'].weight_path
+        weight_full_path = weight_path+'glove.6B.' + str(wordvec_dim) + 'd.txt'
+        wordvec = loadGloveModel(weight_full_path)
+        trainset = SSTDataset(datadir, 'train', num_cls, wordvec_dim, wordvec)
+        testset = SSTDataset(datadir, 'test', num_cls, wordvec_dim, wordvec)
+        valset = SSTDataset(datadir, 'dev', num_cls, wordvec_dim, wordvec)
+
+
+        return trainset, valset, testset, num_cls
+    elif dset_name == 'trec6':
+        num_cls = 6
+
+        wordvec_dim = kwargs['dataset'].wordvec_dim
+        weight_path = kwargs['dataset'].weight_path
+        weight_full_path = weight_path+'glove.6B.' + str(wordvec_dim) + 'd.txt'
+        wordvec = loadGloveModel(weight_full_path)
+
+        cls_to_num = {"DESC": 0, "ENTY": 1, "HUM": 2, "ABBR": 3, "LOC": 4, "NUM": 5}
+
+        trainset = Trec6Dataset(datadir+'train.txt', cls_to_num, num_cls, wordvec_dim, wordvec)
+        testset = Trec6Dataset(datadir+'test.txt', cls_to_num, num_cls, wordvec_dim, wordvec)
+        valset = Trec6Dataset(datadir+'valid.txt', cls_to_num, num_cls, wordvec_dim, wordvec)
+
+        return trainset, valset, testset, num_cls
+    elif dset_name == "hf_trec6": # hugging face trec6
+        num_cls = 6
+        raw = load_dataset("trec")
+
+        wordvec_dim = kwargs['dataset'].wordvec_dim
+        weight_path = kwargs['dataset'].weight_path
+        weight_full_path = weight_path+'glove.6B.' + str(wordvec_dim) + 'd.txt'
+        wordvec = loadGloveModel(weight_full_path)
+
+        clean_type = 1
+        fullset = GlueDataset(raw['train'], 'text', 'label-coarse', clean_type, num_cls, wordvec_dim, wordvec)
+        testset = GlueDataset(raw['test'], 'text', 'label-coarse', clean_type, num_cls, wordvec_dim, wordvec)
+        # valset = GlueDataset(raw['validation'], num_cls, wordvec_dim, wordvec)
+        
+        validation_set_fraction = 0.1
+        seed = 42
+        num_fulltrn = len(fullset)
+        num_val = int(num_fulltrn * validation_set_fraction)
+        num_trn = num_fulltrn - num_val
+        trainset, valset = random_split(fullset, [num_trn, num_val], generator=torch.Generator().manual_seed(seed))
+
+        return trainset, valset, testset, num_cls
+

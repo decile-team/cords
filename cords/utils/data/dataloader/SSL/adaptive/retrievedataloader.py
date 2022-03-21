@@ -5,11 +5,27 @@ import time, copy
 
 # RETRIEVE
 class RETRIEVEDataLoader(AdaptiveDSSDataLoader):
+    """
+    Implements of RETRIEVEDataLoader that serves as the dataloader for the adaptive RETRIEVE subset selection strategy from the paper 
+    :footcite:`killamsetty2021retrieve`.
 
+    Parameters
+    -----------
+    train_loader: torch.utils.data.DataLoader class
+        Dataloader of the training dataset
+    val_loader: torch.utils.data.DataLoader class
+        Dataloader of the validation dataset
+    dss_args: dict
+        Data subset selection arguments dictionary required for GLISTER subset selection strategy
+    logger: class
+        Logger for logging the information
+    """
     def __init__(self, train_loader, val_loader, dss_args, logger, *args, **kwargs):
         """
-         Arguments assertion check
+        Constructor function
         """
+        # Arguments assertion check
+        
         assert "model" in dss_args.keys(), "'model' is a compulsory argument. Include it as a key in dss_args"
         assert "tea_model" in dss_args.keys(), "'tea_model' is a compulsory argument. Include it as a key in dss_args"
         assert "ssl_alg" in dss_args.keys(), "'ssl_alg' is a compulsory argument. Include it as a key in dss_args"
@@ -39,6 +55,9 @@ class RETRIEVEDataLoader(AdaptiveDSSDataLoader):
         self.logger.debug('RETRIEVE dataloader initialized.')
 
     def _resample_subset_indices(self):
+        """
+        Function that calls the RETRIEVE subset selection strategy to sample new subset indices and the corresponding subset weights.
+        """
         start = time.time()
         self.logger.debug('Iteration: {0:d}, requires subset selection. '.format(self.cur_iter))
         cached_state_dict = copy.deepcopy(self.train_model.state_dict())

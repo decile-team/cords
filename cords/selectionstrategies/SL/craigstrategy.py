@@ -10,7 +10,7 @@ from .dataselectionstrategy import DataSelectionStrategy
 
 class CRAIGStrategy(DataSelectionStrategy):
     """
-    Implementation of CRAIG Strategy from the paper :footcite:`mirzasoleiman2020coresets` for supervised learning frameworks.
+    Implementation of CRAIG Strategy from the paper :footcite:`pmlr-v119-mirzasoleiman20a` for supervised learning frameworks.
 
     CRAIG strategy tries to solve the optimization problem given below for convex loss functions:
 
@@ -117,7 +117,7 @@ class CRAIGStrategy(DataSelectionStrategy):
         trainset = self.trainloader.sampler.data_source
         subset_loader = torch.utils.data.DataLoader(trainset, batch_size=self.trainloader.batch_size, shuffle=False,
                                                     sampler=SubsetRandomSampler(idxs),
-                                                    pin_memory=True)
+                                                    pin_memory=True, collate_fn=self.trainloader.collate_fn)
         self.model.load_state_dict(model_params)
         self.N = 0
         g_is = []
@@ -273,21 +273,12 @@ class CRAIGStrategy(DataSelectionStrategy):
             total_greedy_list = list(np.array(total_greedy_list)[rand_indices])
             gammas = list(np.array(gammas)[rand_indices])
         elif self.selection_type == 'Supervised':
-            for i in range(self.num_classes):
-                if i == 0:
-                    idxs = torch.where(labels == i)[0]
-                    N = len(idxs)
-                    self.compute_score(model_params, idxs)
-                    row = idxs.repeat_interleave(N)
-                    col = idxs.repeat(N)
-                    data = self.dist_mat.flatten()
-                else:
-                    idxs = torch.where(labels == i)[0]
-                    N = len(idxs)
-                    self.compute_score(model_params, idxs)
-                    row = torch.cat((row, idxs.repeat_interleave(N)), dim=0)
-                    col = torch.cat((col, idxs.repeat(N)), dim=0)
-                    data = np.concatenate([data, self.dist_mat.flatten()], axis=0)
+            idxs = torch.arange(0, self.N_trn).long()
+            N = len(idxs)
+            self.compute_score(model_params, idxs)
+            row = idxs.repeat_interleave(N)
+            col = idxs.repeat(N)
+            data = self.dist_mat.flatten()
             sparse_simmat = csr_matrix((data, (row.numpy(), col.numpy())), shape=(self.N_trn, self.N_trn))
             self.dist_mat = sparse_simmat
             fl = apricot.functions.facilityLocation.FacilityLocationSelection(random_state=0, metric='precomputed',

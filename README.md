@@ -37,6 +37,7 @@
 - [What is CORDS?](#what-is-cords)
 - [Installation](#installation)
 - [Next Steps](#next-steps)
+- [Tutorials](#tutorials)
 - [Documentation](#documentation)
 
 
@@ -89,7 +90,7 @@ We are continuously incorporating newer and better algorithms into CORDS. Some o
 ## Next Steps
 
 ## Tutorials
-
+We have added example python code and tutorial notebooks under examples folder.
 ## Documentation
 
 The documentation for the latest version of CORDS can always be found [here](https://cords.readthedocs.io/en/latest/).

@@ -7,13 +7,26 @@ import numpy as np
 
 # Base objects
 class DSSDataLoader:
+    """
+    Implementation of DSSDataLoader class which serves as base class for dataloaders of other
+    selection strategies for supervised learning framework.
+
+    Parameters
+    -----------
+    full_data: torch.utils.data.Dataset Class
+        Full dataset from which data subset needs to be selected.
+    dss_args: dict 
+        Data subset selection arguments dictionary
+    logger: class
+        Logger class for logging the information
+    """
     def __init__(self, full_data, dss_args, logger, *args, **kwargs):
+        """
+        Constructor Method
+        """
         super(DSSDataLoader, self).__init__()
         # TODO: Integrate verbose in logging
         self.len_full = len(full_data)
-        """
-         Arguments assertion check
-        """
         assert "fraction" in dss_args.keys(), "'fraction' is a compulsory argument. Include it as a key in dss_args"
         if (dss_args.fraction > 1) or (dss_args.fraction<0):
              raise ValueError("'fraction' should lie between 0 and 1")
@@ -38,6 +51,9 @@ class DSSDataLoader:
         return object.__getattribute__(self, "subset_loader").__getattribute__(item)
 
     def _init_subset_loader(self):
+        """
+        Function that initializes the random data subset loader
+        """
         # All strategies start with random selection
         self.subset_indices = self._init_subset_indices()
         self.subset_weights = torch.ones(self.budget)
@@ -45,9 +61,15 @@ class DSSDataLoader:
 
     # Default subset indices comes from random selection
     def _init_subset_indices(self):
+        """
+        Function that initializes the subset indices randomly
+        """
         return np.random.choice(self.len_full, size=self.budget, replace=False)
 
     def _refresh_subset_loader(self):
+        """
+        Function that regenerates the data subset loader using new subset indices and subset weights
+        """
         self.subset_loader = DataLoader(WeightedSubset(self.dataset, self.subset_indices, self.subset_weights), 
                                         *self.loader_args, **self.loader_kwargs)
         self.batch_wise_indices = list(self.subset_loader.batch_sampler)
