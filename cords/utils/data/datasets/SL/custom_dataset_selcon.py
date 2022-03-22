@@ -17,7 +17,7 @@ from sklearn.preprocessing import LabelEncoder
 
 
 ## Custom PyTorch Dataset Class wrapper
-class CustomDataset(Dataset):
+class CustomDataset_SELCON(Dataset):
     def __init__(self, data, target, device=None, transform=None):       
         self.transform = transform
         self.data = torch.from_numpy(data.astype('float32'))#.to(device)
@@ -42,7 +42,7 @@ class CustomDataset(Dataset):
             sample_data = self.transform(sample_data)
         return (sample_data, label) #.astype('float32')
 
-class CustomDataset_WithId(Dataset):
+class CustomDataset_WithId_SELCON(Dataset):
     def __init__(self, data, target, transform=None):       
         self.transform = transform
         self.data = data #.astype('float32')
@@ -64,7 +64,7 @@ class CustomDataset_WithId(Dataset):
 
 
 
-class SubsetDataset_WithId(CustomDataset_WithId):
+class SubsetDataset_WithId_SELCON(CustomDataset_WithId_SELCON):
     def __init__(self, dataset, idxs, transform=None):
         super().__init__(dataset.data, dataset.targets, transform=transform)
         self.idxs = idxs

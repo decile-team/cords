@@ -2,7 +2,7 @@ import math
 import torch
 import copy
 from .dataselectionstrategy import DataSelectionStrategy
-from cords.utils.data.datasets.SL.custom_dataset_selcon import CustomDataset, CustomDataset_WithId, SubsetDataset_WithId
+from cords.utils.data.datasets.SL.custom_dataset_selcon import CustomDataset_SELCON, CustomDataset_WithId_SELCON, SubsetDataset_WithId_SELCON
 import numpy as np
 
 
@@ -163,6 +163,9 @@ class SELCONstrategy(DataSelectionStrategy):
 
                 exten_val = torch.cat((inputs_val, torch.ones(inputs_val.shape[0], device=self.device).view(-1,1)), dim=1)
                 exten_val_y = torch.mean(targets_val).repeat(min(self.batch_size*20, targets_val.shape[0]))
+
+                # print(weights.shape, exten_val.shape, exten_val_y.shape)
+
                 val_loss = torch.sum(weights*torch.mean(exten_val,dim=0),dim=1) - exten_val_y
 
                 val_losses+= val_loss*val_loss #torch.mean(val_loss*val_loss,dim=0)
@@ -184,7 +187,7 @@ class SELCONstrategy(DataSelectionStrategy):
 
         # loader_tr = torch.utils.data.DataLoader(CustomDataset_WithId(self.x_trn[curr_subset], self.y_trn[curr_subset],\
         #     transform=None),shuffle=False,batch_size=batch)
-        loader_tr = torch.utils.data.DataLoader(SubsetDataset_WithId(self.trainset, curr_subset), shuffle=False, batch_size=batch)
+        loader_tr = torch.utils.data.DataLoader(SubsetDataset_WithId_SELCON(self.trainset, curr_subset), shuffle=False, batch_size=batch)
         # loader_tr = self.trainloader
 
         sum_error = torch.nn.MSELoss(reduction='sum') # doubt: why not use self.criterion here, also check the reduction here and nored
@@ -211,7 +214,7 @@ class SELCONstrategy(DataSelectionStrategy):
 
         # loader_tr = torch.utils.data.DataLoader(CustomDataset_WithId(self.x_trn[curr_subset], self.y_trn[curr_subset],\
         #     transform=None),shuffle=False,batch_size=self.batch_size)
-        loader_tr = torch.utils.data.DataLoader(SubsetDataset_WithId(self.trainset, curr_subset), shuffle=False, batch_size=self.batch_size)
+        loader_tr = torch.utils.data.DataLoader(SubsetDataset_WithId_SELCON(self.trainset, curr_subset), shuffle=False, batch_size=self.batch_size)
         # loader_tr = self.trainloader
 
         beta1,beta2 = main_optimizer.param_groups[0]['betas']

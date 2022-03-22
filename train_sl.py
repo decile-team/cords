@@ -13,7 +13,7 @@ from cords.utils.config_utils import load_config_data
 from cords.utils.data.data_utils import WeightedSubset
 from cords.utils.data.data_utils import collate
 from cords.utils.data.dataloader.SL.adaptive import GLISTERDataLoader, OLRandomDataLoader, \
-    CRAIGDataLoader, GradMatchDataLoader, RandomDataLoader
+    CRAIGDataLoader, GradMatchDataLoader, RandomDataLoader, SELCONDataLoader
 from cords.utils.data.dataloader.SL.nonadaptive import FacLocDataLoader
 from cords.utils.data.datasets.SL import gen_dataset
 from cords.utils.models import *
@@ -89,8 +89,6 @@ class TrainClassifier:
             model = MobileNet2(output_size=self.cfg.model.numclasses)
         elif self.cfg.model.architecture == 'HyperParamNet':
             model = HyperParamNet(self.cfg.model.l1, self.cfg.model.l2)
-        elif self.cfg.model.architecture == 'RegressionNet':
-            model = RegressionNet(self.cfg.model.numclasses)
         elif self.cfg.model.architecture == 'ThreeLayerNet':
             model = ThreeLayerNet(self.cfg.model.input_dim, self.cfg.model.numclasses, 
 	    self.cfg.model.h1, self.cfg.model.h2)
@@ -206,20 +204,20 @@ class TrainClassifier:
         else:
             collate_fn = self.cfg.dataloader.collate_fn
 
+        batch_sampler = lambda _, __ : None
+        drop_last = False
         if self.cfg.dss_args.type in ['SELCON']:
+            drop_last = True
             assert(self.cfg.dataset.name in ['LawSchool', 'Community_Crime'])
             if self.cfg.dss_arg.batch_sampler == 'sequential':
-                # todo: not working 
                 batch_sampler = lambda dataset, bs : torch.utils.data.BatchSampler(
                     torch.utils.data.SequentialSampler(dataset), batch_size=bs, drop_last=True
                 )   # sequential
             elif self.cfg.dss_arg.batch_sampler == 'random':
-                # todo: not working 
                 batch_sampler = lambda dataset, bs : torch.utils.data.BatchSampler(
                     torch.utils.data.RandomSampler(dataset), batch_size=bs, drop_last=True
                 )   # random
-            else:
-                batch_sampler = lambda _, __ : None
+
 
         if self.cfg.dataset.name == "sst2_facloc" and self.count_pkl(self.cfg.dataset.ss_path) == 1 and self.cfg.dss_args.type == 'FacLoc':
             self.cfg.dss_args.type = 'Full'
@@ -234,14 +232,14 @@ class TrainClassifier:
             collate_fn = self.cfg.dataloader.collate_fn
 
         # Creating the Data Loaders
-        trainloader = torch.utils.data.DataLoader(trainset, batch_size=trn_batch_size,
-                                                  shuffle=False, pin_memory=True, collate_fn = collate_fn)
+        trainloader = torch.utils.data.DataLoader(trainset, batch_size=trn_batch_size, sampler=batch_sampler(trainset, trn_batch_size),
+                                                  shuffle=False, pin_memory=True, collate_fn = collate_fn, drop_last=drop_last)
 
-        valloader = torch.utils.data.DataLoader(validset, batch_size=val_batch_size,
-                                                shuffle=False, pin_memory=True, collate_fn = collate_fn)
+        valloader = torch.utils.data.DataLoader(validset, batch_size=val_batch_size, sampler=batch_sampler(validset, val_batch_size),
+                                                shuffle=False, pin_memory=True, collate_fn = collate_fn, drop_last=drop_last)
 
-        testloader = torch.utils.data.DataLoader(testset, batch_size=tst_batch_size,
-                                                 shuffle=False, pin_memory=True, collate_fn = collate_fn)
+        testloader = torch.utils.data.DataLoader(testset, batch_size=tst_batch_size, sampler=batch_sampler(testset, tst_batch_size),
+                                                 shuffle=False, pin_memory=True, collate_fn = collate_fn, drop_last=drop_last)
 
         substrn_losses = list()  # np.zeros(cfg['train_args']['num_epochs'])
         trn_losses = list()
@@ -516,7 +514,12 @@ class TrainClassifier:
                 if ("trn_loss" in print_args) or ("trn_acc" in print_args):
                     samples =0
                     with torch.no_grad():
-                        for _, (inputs, targets) in enumerate(trainloader):
+                        for _, data in enumerate(trainloader):
+                            if is_selcon:
+                                inputs, targets, _ = data
+                            else:
+                                inputs, targets = data
+
                             inputs, targets = inputs.to(self.cfg.train_args.device), \
                                               targets.to(self.cfg.train_args.device, non_blocking=True)
                             outputs = model(inputs)
@@ -524,7 +527,8 @@ class TrainClassifier:
                             trn_loss += (loss.item() * trainloader.batch_size)
                             samples += targets.shape[0]
                             if "trn_acc" in print_args:
-                                _, predicted = outputs.max(1)
+                                if is_selcon: predicted = outputs
+                                else: _, predicted = outputs.max(1)
                                 trn_total += targets.size(0)
                                 trn_correct += predicted.eq(targets).sum().item()
                         trn_loss = trn_loss/samples
@@ -536,7 +540,12 @@ class TrainClassifier:
                 if ("val_loss" in print_args) or ("val_acc" in print_args):
                     samples =0
                     with torch.no_grad():
-                        for _, (inputs, targets) in enumerate(valloader):
+                        for _, data in enumerate(valloader):
+                            if is_selcon:
+                                inputs, targets, _ = data
+                            else:
+                                inputs, targets = data
+
                             inputs, targets = inputs.to(self.cfg.train_args.device), \
                                               targets.to(self.cfg.train_args.device, non_blocking=True)
                             outputs = model(inputs)
@@ -544,7 +553,8 @@ class TrainClassifier:
                             val_loss += (loss.item() * valloader.batch_size)
                             samples += targets.shape[0]
                             if "val_acc" in print_args:
-                                _, predicted = outputs.max(1)
+                                if is_selcon: predicted = outputs
+                                else: _, predicted = outputs.max(1)
                                 val_total += targets.size(0)
                                 val_correct += predicted.eq(targets).sum().item()
                         val_loss = val_loss/samples
@@ -556,7 +566,12 @@ class TrainClassifier:
                 if ("tst_loss" in print_args) or ("tst_acc" in print_args):
                     samples =0
                     with torch.no_grad():
-                        for _, (inputs, targets) in enumerate(testloader):
+                        for _, data in enumerate(testloader):
+                            if is_selcon:
+                                inputs, targets, _ = data
+                            else:
+                                inputs, targets = data
+
                             inputs, targets = inputs.to(self.cfg.train_args.device), \
                                               targets.to(self.cfg.train_args.device, non_blocking=True)
                             outputs = model(inputs)
@@ -564,7 +579,8 @@ class TrainClassifier:
                             tst_loss += (loss.item() * testloader.batch_size)
                             samples += targets.shape[0]
                             if "tst_acc" in print_args:
-                                _, predicted = outputs.max(1)
+                                if is_selcon: predicted = outputs
+                                else: _, predicted = outputs.max(1)
                                 tst_total += targets.size(0)
                                 tst_correct += predicted.eq(targets).sum().item()
                         tst_loss = tst_loss/samples
