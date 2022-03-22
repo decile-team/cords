@@ -208,7 +208,7 @@ class TrainClassifier:
         drop_last = False
         if self.cfg.dss_args.type in ['SELCON']:
             drop_last = True
-            assert(self.cfg.dataset.name in ['LawSchool', 'Community_Crime'])
+            assert(self.cfg.dataset.name in ['LawSchool_selcon', 'Community_Crime'])
             if self.cfg.dss_arg.batch_sampler == 'sequential':
                 batch_sampler = lambda dataset, bs : torch.utils.data.BatchSampler(
                     torch.utils.data.SequentialSampler(dataset), batch_size=bs, drop_last=True
