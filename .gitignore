@@ -1,0 +1,13 @@
+notebooks/results
+.idea
+cords.egg-info
+build
+dist
+__pycache__
+/results/
+.gitignore
+/data/
+/log/
+/RayLogs/
+*.tar.gz
+.vscode

@@ -89,12 +89,16 @@ class TrainClassifier:
             model = MobileNet2(output_size=self.cfg.model.numclasses)
         elif self.cfg.model.architecture == 'HyperParamNet':
             model = HyperParamNet(self.cfg.model.l1, self.cfg.model.l2)
+        elif self.cfg.model.architecture == 'RegressionNet':
+            model = RegressionNet(self.cfg.model.numclasses)
         elif self.cfg.model.architecture == 'ThreeLayerNet':
             model = ThreeLayerNet(self.cfg.model.input_dim, self.cfg.model.numclasses, 
 	    self.cfg.model.h1, self.cfg.model.h2)
         elif self.cfg.model.architecture == 'LSTM':
             model = LSTMClassifier(self.cfg.model.numclasses, self.cfg.model.wordvec_dim, \
                  self.cfg.model.weight_path, self.cfg.model.num_layers, self.cfg.model.hidden_size)
+        else:
+            raise(NotImplementedError)
         model = model.to(self.cfg.train_args.device)
         return model
 
@@ -127,9 +131,7 @@ class TrainClassifier:
             scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,
                                                                    T_max=self.cfg.scheduler.T_max)
         elif self.cfg.scheduler.type == 'linear_decay':
-            scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 
-                                                        step_size=self.cfg.scheduler.stepsize, 
-                                                        gamma=self.cfg.scheduler.gamma)
+            scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=self.cfg.scheduler.stepsize, gamma=self.cfg.scheduler.gamma)
         else:
             scheduler = None
         return optimizer, scheduler
@@ -191,6 +193,33 @@ class TrainClassifier:
         trn_batch_size = self.cfg.dataloader.batch_size
         val_batch_size = self.cfg.dataloader.batch_size
         tst_batch_size = self.cfg.dataloader.batch_size
+
+        if self.cfg.dataset.name == "sst2_facloc" and self.count_pkl(self.cfg.dataset.ss_path) == 1 and self.cfg.dss_args.type == 'FacLoc':
+            self.cfg.dss_args.type = 'Full'
+            file_ss = open(self.cfg.dataset.ss_path, 'rb')
+            ss_indices = pickle.load(file_ss)
+            file_ss.close()
+            trainset = torch.utils.data.Subset(trainset, ss_indices)
+
+        if 'collate_fn' not in self.cfg.dataloader.keys():
+            collate_fn = None
+        else:
+            collate_fn = self.cfg.dataloader.collate_fn
+
+        if self.cfg.dss_args.type in ['SELCON']:
+            assert(self.cfg.dataset.name in ['LawSchool', 'Community_Crime'])
+            if self.cfg.dss_arg.batch_sampler == 'sequential':
+                # todo: not working 
+                batch_sampler = lambda dataset, bs : torch.utils.data.BatchSampler(
+                    torch.utils.data.SequentialSampler(dataset), batch_size=bs, drop_last=True
+                )   # sequential
+            elif self.cfg.dss_arg.batch_sampler == 'random':
+                # todo: not working 
+                batch_sampler = lambda dataset, bs : torch.utils.data.BatchSampler(
+                    torch.utils.data.RandomSampler(dataset), batch_size=bs, drop_last=True
+                )   # random
+            else:
+                batch_sampler = lambda _, __ : None
 
         if self.cfg.dataset.name == "sst2_facloc" and self.count_pkl(self.cfg.dataset.ss_path) == 1 and self.cfg.dss_args.type == 'FacLoc':
             self.cfg.dss_args.type = 'Full'
@@ -362,6 +391,38 @@ class TrainClassifier:
                                                      pin_memory=self.cfg.dataloader.pin_memory,
                                                      collate_fn=self.cfg.dss_args.collate_fn)
 
+        elif self.cfg.dss_args.type in ['SELCON']:
+            """
+            ############################## SELCON Dataloader Additional Arguments ##############################
+            """
+            self.cfg.dss_args.model = model
+            self.cfg.dss_args.lr = self.cfg.optimizer.lr
+            self.cfg.dss_args.loss = criterion_nored # doubt: or criterion
+            self.cfg.dss_args.device = self.cfg.train_args.device
+            self.cfg.dss_args.optimizer = optimizer
+            self.cfg.dss_args.criterion = criterion
+            self.cfg.dss_args.num_classes = self.cfg.model.numclasses
+            self.cfg.dss_args.batch_size = self.cfg.dataloader.batch_size
+            
+            # todo: not done yet
+            self.cfg.dss_args.delta = torch.tensor(self.cfg.dss_args.delta)
+            # self.cfg.dss_args.linear_layer = self.cfg.dss_args.linear_layer # already there, check glister init
+            self.cfg.dss_args.num_epochs = self.cfg.train_args.num_epochs
+            
+            dataloader = SELCONDataLoader(trainset, validset, trainloader, valloader, self.cfg.dss_args, logger,
+                                           batch_size=self.cfg.dataloader.batch_size,
+                                           shuffle=self.cfg.dataloader.shuffle,
+                                           pin_memory=self.cfg.dataloader.pin_memory)
+
+        else:
+            raise NotImplementedError
+
+        if self.cfg.dss_args.type in ['SELCON']:        
+            is_selcon = True
+        else:
+            is_selcon = False
+
+
         """
         ################################################# Checkpoint Loading #################################################
         """
@@ -402,7 +463,11 @@ class TrainClassifier:
             model.train()
             start_time = time.time()
             cum_weights = 0
-            for _, (inputs, targets, weights) in enumerate(dataloader):
+            for _, data in enumerate(dataloader):
+                if is_selcon:
+                    inputs, targets, _, weights = data  # dataloader also returns id in case of selcon algorithm
+                else:
+                    inputs, targets, weights = data
                 inputs = inputs.to(self.cfg.train_args.device)
                 targets = targets.to(self.cfg.train_args.device, non_blocking=True)
                 weights = weights.to(self.cfg.train_args.device)
@@ -418,7 +483,10 @@ class TrainClassifier:
                 cum_weights += weights.sum()
                 optimizer.step()
                 if not self.cfg.is_reg:
-                    _, predicted = outputs.max(1)
+                    if is_selcon:
+                        predicted = outputs     # linaer regression in selcon
+                    else:
+                        _, predicted = outputs.max(1)
                     subtrn_total += targets.size(0)
                     subtrn_correct += predicted.eq(targets).sum().item()
             epoch_time = time.time() - start_time
