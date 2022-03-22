@@ -1560,7 +1560,6 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
                     subset_idxs.extend(batch_subset_idxs)
             trainset = torch.utils.data.Subset(trainset, subset_idxs)
         return trainset, valset, testset, num_cls
-<<<<<<< HEAD
 
     elif dset_name in ["Community_Crime", "LawSchool"]:
         if dset_name == "Community_Crime":
@@ -1585,9 +1584,6 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
 
         return trainset, valset, testset, val_classes
 
-    else:
-        raise NotImplementedError
-=======
     elif dset_name == "sst2" or dset_name == "sst2_facloc":
         '''
         download data/SST from https://drive.google.com/file/d/14KU6RQJpP6HKKqVGm0OF3MVxtI0NlEcr/view?usp=sharing
@@ -1681,4 +1677,5 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
 
         return trainset, valset, testset, num_cls
 
->>>>>>> main
+    else:
+        raise NotImplementedError
