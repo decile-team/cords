@@ -1,25 +1,44 @@
-@misc{killamsetty2020glister,
-      title={GLISTER: Generalization based Data Subset Selection for Efficient and Robust Learning},
-      author={Krishnateja Killamsetty and Durga Sivasubramanian and Ganesh Ramakrishnan and Rishabh Iyer},
-      year={2020},
-      eprint={2012.10630},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG}
+@article{killamsetty2021glister, 
+        title={GLISTER: Generalization based Data Subset Selection for Efficient and Robust Learning}, 
+        volume={35}, 
+        url={https://ojs.aaai.org/index.php/AAAI/article/view/16988}, 
+        abstractNote={Large scale machine learning and deep models are extremely data-hungry. Unfortunately, obtaining large amounts of labeled data is expensive, and training state-of-the-art models (with hyperparameter tuning) requires significant computing resources and time. Secondly, real-world data is noisy and imbalanced. As a result, several recent papers try to make the training process more efficient and robust. However, most existing work either focuses on robustness or efficiency, but not both. In this work, we introduce GLISTER, a GeneraLIzation based data Subset selecTion for Efficient and Robust learning framework. We formulate GLISTER as a mixed discrete-continuous bi-level optimization problem to select a subset of the training data, which maximizes the log-likelihood on a held-out validation set. We then analyze GLISTER for simple classifiers such as gaussian and multinomial naive-bayes, k-nearest neighbor classifier, and linear regression and show connections to submodularity. Next, we propose an iterative online algorithm GLISTER-ONLINE, which performs data selection iteratively along with the parameter updates, and can be applied to any loss-based learning algorithm. We then show that for a rich class of loss functions including cross-entropy, hinge-loss, squared-loss, and logistic-loss, the inner discrete data selection is an instance of (weakly) submodular optimization, and we analyze conditions for which GLISTER-ONLINE reduces the validation loss and converges. Finally, we propose GLISTER-ACTIVE, an extension to batch active learning, and we empirically demonstrate the performance of GLISTER on a wide range of tasks including, (a) data selection to reduce training time, (b) robust learning under label noise and imbalance settings, and (c) batch-active learning with a number of deep and shallow models. We show that our framework improves upon the state of the art both in efficiency and accuracy (in cases (a) and (c)) and is more efficient compared to other state-of-the-art robust learning algorithms in case (b). The code for GLISTER is at: https://github.com/dssresearch/GLISTER.}, number={9}, journal={Proceedings of the AAAI Conference on Artificial Intelligence}, author={Killamsetty, Krishnateja and Sivasubramanian, Durga and Ramakrishnan, Ganesh and Iyer, Rishabh}, 
+        year={2021}, 
+        month={May}, 
+        pages={8110-8118} }
+
+
+@InProceedings{pmlr-v139-killamsetty21a,
+  title = 	 {GRAD-MATCH: Gradient Matching based Data Subset Selection for Efficient Deep Model Training},
+  author =       {Killamsetty, Krishnateja and S, Durga and Ramakrishnan, Ganesh and De, Abir and Iyer, Rishabh},
+  booktitle = 	 {Proceedings of the 38th International Conference on Machine Learning},
+  pages = 	 {5464--5474},
+  year = 	 {2021},
+  editor = 	 {Meila, Marina and Zhang, Tong},
+  volume = 	 {139},
+  series = 	 {Proceedings of Machine Learning Research},
+  month = 	 {18--24 Jul},
+  publisher =    {PMLR},
+  pdf = 	 {http://proceedings.mlr.press/v139/killamsetty21a/killamsetty21a.pdf},
+  url = 	 {https://proceedings.mlr.press/v139/killamsetty21a.html},
+  abstract = 	 {The great success of modern machine learning models on large datasets is contingent on extensive computational resources with high financial and environmental costs. One way to address this is by extracting subsets that generalize on par with the full data. In this work, we propose a general framework, GRAD-MATCH, which finds subsets that closely match the gradient of the \emph{training or validation} set. We find such subsets effectively using an orthogonal matching pursuit algorithm. We show rigorous theoretical and convergence guarantees of the proposed algorithm and, through our extensive experiments on real-world datasets, show the effectiveness of our proposed framework. We show that GRAD-MATCH significantly and consistently outperforms several recent data-selection algorithms and achieves the best accuracy-efficiency trade-off. GRAD-MATCH is available as a part of the CORDS toolkit: \url{https://github.com/decile-team/cords}.}
 }
 
-@misc{sivasubramanian2020gradmatch,
-      title={Grad-Match: A Gradient Matching based Data Selection Framework for Data-efficient Learning},
-      author={Durga Sivasubramanian and Krishnateja Killamsetty and Ganesh Ramakrishnan and Rishabh Iyer},
-      year={2020}
-}
 
-@misc{mirzasoleiman2020coresets,
-      title={Coresets for Data-efficient Training of Machine Learning Models},
-      author={Baharan Mirzasoleiman and Jeff Bilmes and Jure Leskovec},
-      year={2020},
-      eprint={1906.01827},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG}
+@InProceedings{pmlr-v119-mirzasoleiman20a,
+  title = 	 {Coresets for Data-efficient Training of Machine Learning Models},
+  author =       {Mirzasoleiman, Baharan and Bilmes, Jeff and Leskovec, Jure},
+  booktitle = 	 {Proceedings of the 37th International Conference on Machine Learning},
+  pages = 	 {6950--6960},
+  year = 	 {2020},
+  editor = 	 {III, Hal Daumé and Singh, Aarti},
+  volume = 	 {119},
+  series = 	 {Proceedings of Machine Learning Research},
+  month = 	 {13--18 Jul},
+  publisher =    {PMLR},
+  pdf = 	 {http://proceedings.mlr.press/v119/mirzasoleiman20a/mirzasoleiman20a.pdf},
+  url = 	 {https://proceedings.mlr.press/v119/mirzasoleiman20a.html},
+  abstract = 	 {Incremental gradient (IG) methods, such as stochastic gradient descent and its variants are commonly used for large scale optimization in machine learning. Despite the sustained effort to make IG methods more data-efficient, it remains an open question how to select a training data subset that can theoretically and practically perform on par with the full dataset. Here we develop CRAIG, a method to select a weighted subset (or coreset) of training data that closely estimates the full gradient by maximizing a submodular function. We prove that applying IG to this subset is guaranteed to converge to the (near)optimal solution with the same convergence rate as that of IG for convex optimization. As a result, CRAIG achieves a speedup that is inversely proportional to the size of the subset. To our knowledge, this is the first rigorous method for data-efficient training of general machine learning models. Our extensive set of experiments show that CRAIG, while achieving practically the same solution, speeds up various IG methods by up to 6x for logistic regression and 3x for training deep neural networks.}
 }
 
 @misc{mirzasoleiman2014lazier,
@@ -29,4 +48,14 @@
       eprint={1409.7938},
       archivePrefix={arXiv},
       primaryClass={cs.LG}
+}
+
+@inproceedings{
+killamsetty2021retrieve,
+title={{RETRIEVE}: Coreset Selection for Efficient and Robust Semi-Supervised Learning},
+author={Krishnateja Killamsetty and Xujiang Zhao and Feng Chen and Rishabh K Iyer},
+booktitle={Advances in Neural Information Processing Systems},
+editor={A. Beygelzimer and Y. Dauphin and P. Liang and J. Wortman Vaughan},
+year={2021},
+url={https://openreview.net/forum?id=jSz59N8NvUP}
 }

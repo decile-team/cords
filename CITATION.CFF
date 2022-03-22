@@ -1,0 +1,20 @@
+cff-version: 1.1.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: "Killamsetty"
+    given-names: "Krishnateja"
+    orcid: "https://orcid.org/0000-0001-5565-9126"
+  - family-names: "Bhat"
+    given-names: "Dheeraj"
+    orcid: "https://orcid.org/0000-0000-0000-0000"
+  - family-names: "Ramakrishnan"
+    given-names: "Ganesh"
+    orcid: "https://orcid.org/0000-0003-4533-2490" 
+  - family-names: "Iyer"
+    given-names: "Rishabh"
+    orcid: "https://orcid.org/0000-0001-9851-463X"  
+title: "CORDS: COResets and Data Subset selection for Efficient Learning"
+version: v0.0.0
+date-released: 2021-03-04
+url: "https://github.com/decile-team/cords"
+

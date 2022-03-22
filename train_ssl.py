@@ -19,13 +19,13 @@ from cords.selectionstrategies.helpers.ssl_lib.misc.meter import Meter
 from cords.utils.data.dataloader.SSL.adaptive import *
 from cords.utils.config_utils import load_config_data
 import time
-import os, sys
+import os
+import sys
 
 
 class TrainClassifier:
-    def __init__(self, config_file):
-        self.config_file = config_file
-        self.cfg = load_config_data(self.config_file)
+    def __init__(self, config_file_data):
+        self.cfg = config_file_data
         results_dir = osp.abspath(osp.expanduser(self.cfg.train_args.results_dir))
         all_logs_dir = os.path.join(results_dir, self.cfg.setting,
                                     self.cfg.dss_args.type,
@@ -50,13 +50,12 @@ class TrainClassifier:
         self.logger.propagate = False
         self.logger.info(self.cfg)
 
-
     """
     ############################## Model Creation ##############################
     """
 
     def gen_model(self, name, num_classes, img_size):
-        scale =  int(np.ceil(np.log2(img_size)))
+        scale = int(np.ceil(np.log2(img_size)))
         if name == "wrn":
             return WideResNet(num_classes, 32, scale, 4)
         elif name == "shake":
@@ -68,11 +67,12 @@ class TrainClassifier:
         else:
             raise NotImplementedError
 
-
     """
     ############################## Model Evaluation ##############################
     """
-    def evaluation(self, raw_model, eval_model, loader, device):
+
+    @staticmethod
+    def evaluation(raw_model, eval_model, loader, device):
         raw_model.eval()
         eval_model.eval()
         sum_raw_acc = sum_acc = sum_loss = 0
@@ -94,25 +94,25 @@ class TrainClassifier:
         eval_model.train()
         return mean_raw_acc, mean_acc, mean_loss
 
-
     """
     ############################## Model Parameters Update ##############################
     """
-    def param_update(self, 
-        cur_iteration,
-        model,
-        teacher_model,
-        optimizer,
-        ssl_alg,
-        consistency,
-        labeled_data,
-        ul_weak_data,
-        ul_strong_data,
-        labels,
-        average_model,
-        weights=None,
-        ood=False
-    ):
+
+    def param_update(self,
+                     cur_iteration,
+                     model,
+                     teacher_model,
+                     optimizer,
+                     ssl_alg,
+                     consistency,
+                     labeled_data,
+                     ul_weak_data,
+                     ul_strong_data,
+                     labels,
+                     average_model,
+                     weights=None,
+                     ood=False
+                     ):
         # if ood:
         #     model.update_batch_stats(False)
         start_time = time.time()
@@ -126,14 +126,14 @@ class TrainClassifier:
         if self.cfg.optimizer.tsa:
             none_reduced_loss = F.cross_entropy(labeled_preds, labels, reduction="none")
             L_supervised = alg_utils.anneal_loss(
-                labeled_preds, labels, none_reduced_loss, cur_iteration+1,
+                labeled_preds, labels, none_reduced_loss, cur_iteration + 1,
                 self.cfg.train_args.iteration, labeled_preds.shape[1], self.cfg.optimizer.tsa_schedule)
         else:
             L_supervised = F.cross_entropy(labeled_preds, labels)
 
         if self.cfg.ssl_args.coef > 0:
             # get target values
-            if teacher_model is not None: # get target values from teacher model
+            if teacher_model is not None:  # get target values from teacher model
                 t_forward_func = teacher_model.forward
                 tea_logits = t_forward_func(all_data)
                 tea_unlabeled_weak_logits, _ = torch.chunk(tea_logits[labels.shape[0]:], 2, dim=0)
@@ -157,7 +157,8 @@ class TrainClassifier:
             if weights is None:
                 L_consistency = consistency(y, targets, mask, weak_prediction=tea_unlabeled_weak_logits.softmax(1))
             else:
-                L_consistency = consistency(y, targets, mask*weights, weak_prediction=tea_unlabeled_weak_logits.softmax(1))
+                L_consistency = consistency(y, targets, mask * weights,
+                                            weak_prediction=tea_unlabeled_weak_logits.softmax(1))
         else:
             L_consistency = torch.zeros_like(L_supervised)
             mask = None
@@ -167,7 +168,7 @@ class TrainClassifier:
         loss = L_supervised + coef * L_consistency
         if self.cfg.ssl_args.em > 0:
             loss -= self.cfg.ssl_args.em * \
-                (stu_unlabeled_weak_logits.softmax(1) * F.log_softmax(stu_unlabeled_weak_logits, 1)).sum(1).mean()
+                    (stu_unlabeled_weak_logits.softmax(1) * F.log_softmax(stu_unlabeled_weak_logits, 1)).sum(1).mean()
 
         # update parameters
         cur_lr = optimizer.param_groups[0]["lr"]
@@ -203,28 +204,29 @@ class TrainClassifier:
             "sec/iter": (time.time() - start_time)
         }
 
-
     """
     ############################## Calculate selected ID points percentage  ##############################
     """
+
     def get_ul_ood_ratio(self, ul_dataset):
         actual_lbls = ul_dataset.dataset.dataset['labels'][ul_dataset.indices]
         bincnt = numpy.bincount(actual_lbls, minlength=10)
-        self.logger.info("Ratio of ID points selected: {0:f}".format((bincnt[:6].sum()/bincnt.sum()).item()))
-
+        self.logger.info("Ratio of ID points selected: {0:f}".format((bincnt[:6].sum() / bincnt.sum()).item()))
 
     """
     ############################## Calculate selected ID points percentage  ##############################
     """
+
     def get_ul_classimb_ratio(self, ul_dataset):
         actual_lbls = ul_dataset.dataset.dataset['labels'][ul_dataset.indices]
         bincnt = numpy.bincount(actual_lbls, minlength=10)
-        self.logger.info("Ratio of points selected from under-represented classes: {0:f}".format((bincnt[:5].sum()/bincnt.sum()).item()))
-
+        self.logger.info("Ratio of points selected from under-represented classes: {0:f}".format(
+            (bincnt[:5].sum() / bincnt.sum()).item()))
 
     """
     ############################## Main File ##############################
     """
+
     def train(self):
         logger = self.logger
         # set seed
@@ -234,11 +236,11 @@ class TrainClassifier:
         device = self.cfg.train_args.device
         # build data loader
         logger.info("load dataset")
-        lt_data, ult_data, test_data, num_classes, img_size = gen_dataset(self.cfg.dataset.root, self.cfg.dataset.name, 
-                                                                         False, self.cfg, logger)
+        lt_data, ult_data, test_data, num_classes, img_size = gen_dataset(self.cfg.dataset.root, self.cfg.dataset.name,
+                                                                          False, self.cfg, logger)
         # set consistency type
         consistency = gen_consistency(self.cfg.ssl_args.consis, self.cfg)
-        consistency_nored = gen_consistency(self.cfg.ssl_args.consis +'_red', self.cfg)
+        consistency_nored = gen_consistency(self.cfg.ssl_args.consis + '_red', self.cfg)
         # set ssl algorithm
         ssl_alg = gen_ssl_alg(self.cfg.ssl_args.alg, self.cfg)
         # build student model
@@ -267,17 +269,12 @@ class TrainClassifier:
             else:
                 max_iteration = int(self.cfg.train_args.iteration * self.cfg.dss_args.fraction)
 
-        # build optimizer
-        N = len(ult_data)
-        bud = int(self.cfg.dss_args.fraction * N)
-        start_idxs = numpy.random.choice(N, size=bud, replace=False)
-
-        #Create Data Loaders
+        # Create Data Loaders
         ult_seq_loader = DataLoader(ult_data, batch_size=self.cfg.dataloader.ul_batch_size,
-                shuffle=False, pin_memory=True)
+                                    shuffle=False, pin_memory=True)
 
         lt_seq_loader = DataLoader(lt_data, batch_size=self.cfg.dataloader.l_batch_size,
-                shuffle=False, pin_memory=True)
+                                   shuffle=False, pin_memory=True)
 
         test_loader = DataLoader(
             test_data,
@@ -304,11 +301,12 @@ class TrainClassifier:
             self.cfg.dss_args.eta = self.cfg.optimizer.lr
             self.cfg.dss_args.device = self.cfg.train_args.device
 
-            ult_loader = GradMatchDataLoader(ult_seq_loader, lt_seq_loader, self.cfg.dss_args, logger=logger, 
-                                                batch_size=self.cfg.dataloader.ul_batch_size, 
-                                                pin_memory=self.cfg.dataloader.pin_memory)
+            ult_loader = GradMatchDataLoader(ult_seq_loader, lt_seq_loader, self.cfg.dss_args, logger=logger,
+                                             batch_size=self.cfg.dataloader.ul_batch_size,
+                                             pin_memory=self.cfg.dataloader.pin_memory,
+                                             num_workers=self.cfg.dataloader.num_workers)
 
-        
+
         elif self.cfg.dss_args.type in ['RETRIEVE', 'RETRIEVE-Warm', 'RETRIEVEPB', 'RETRIEVEPB-Warm']:
             """
             ############################## RETRIEVE Dataloader Additional Arguments ##############################
@@ -322,11 +320,12 @@ class TrainClassifier:
             self.cfg.dss_args.eta = self.cfg.optimizer.lr
             self.cfg.dss_args.device = self.cfg.train_args.device
 
-            ult_loader = RETRIEVEDataLoader(ult_seq_loader, lt_seq_loader, self.cfg.dss_args, logger=logger, 
-                                                batch_size=self.cfg.dataloader.ul_batch_size, 
-                                                pin_memory=self.cfg.dataloader.pin_memory)
+            ult_loader = RETRIEVEDataLoader(ult_seq_loader, lt_seq_loader, self.cfg.dss_args, logger=logger,
+                                            batch_size=self.cfg.dataloader.ul_batch_size,
+                                            pin_memory=self.cfg.dataloader.pin_memory,
+                                            num_workers=self.cfg.dataloader.num_workers)
 
-        
+
         elif self.cfg.dss_args.type in ['CRAIG', 'CRAIG-Warm', 'CRAIGPB', 'CRAIGPB-Warm']:
             """
             ############################## CRAIG Dataloader Additional Arguments ##############################
@@ -338,9 +337,10 @@ class TrainClassifier:
             self.cfg.dss_args.num_classes = num_classes
             self.cfg.dss_args.num_iters = max_iteration
             self.cfg.dss_args.device = self.cfg.train_args.device
-            ult_loader = CRAIGDataLoader(ult_seq_loader, lt_seq_loader, self.cfg.dss_args, logger=logger, 
-                                                batch_size=self.cfg.dataloader.ul_batch_size, 
-                                                pin_memory=self.cfg.dataloader.pin_memory)
+            ult_loader = CRAIGDataLoader(ult_seq_loader, lt_seq_loader, self.cfg.dss_args, logger=logger,
+                                         batch_size=self.cfg.dataloader.ul_batch_size,
+                                         pin_memory=self.cfg.dataloader.pin_memory,
+                                         num_workers=self.cfg.dataloader.num_workers)
 
 
         elif self.cfg.dss_args.type in ['Random', 'Random-Warm']:
@@ -352,9 +352,10 @@ class TrainClassifier:
             self.cfg.dss_args.num_iters = max_iteration
             self.cfg.dss_args.device = self.cfg.train_args.device
             ult_loader = RandomDataLoader(ult_seq_loader, self.cfg.dss_args, logger=logger,
-                                            batch_size=self.cfg.dataloader.ul_batch_size, 
-                                            pin_memory=self.cfg.dataloader.pin_memory)
-            
+                                          batch_size=self.cfg.dataloader.ul_batch_size,
+                                          pin_memory=self.cfg.dataloader.pin_memory,
+                                          num_workers=self.cfg.dataloader.num_workers)
+
 
         elif self.cfg.dss_args.type == ['OLRandom', 'OLRandom-Warm']:
             """
@@ -365,29 +366,32 @@ class TrainClassifier:
             self.cfg.dss_args.num_iters = max_iteration
             self.cfg.dss_args.device = self.cfg.train_args.device
             ult_loader = OLRandomDataLoader(ult_seq_loader, self.cfg.dss_args, logger=logger,
-                                            batch_size=self.cfg.dataloader.ul_batch_size, 
-                                            pin_memory=self.cfg.dataloader.pin_memory)
-        
+                                            batch_size=self.cfg.dataloader.ul_batch_size,
+                                            pin_memory=self.cfg.dataloader.pin_memory,
+                                            num_workers=self.cfg.dataloader.num_workers)
+
         elif self.cfg.dss_args.type == 'Full':
             """
             ############################## Full Dataloader Additional Arguments ##############################
             """
-            wt_trainset = WeightedSubset(ult_data, list(range(len(ult_data))), [1]*len(ult_data))
+            wt_trainset = WeightedSubset(ult_data, list(range(len(ult_data))), [1] * len(ult_data))
 
             ult_loader = torch.utils.data.DataLoader(wt_trainset,
-                                            batch_size=self.cfg.dataloader.ul_batch_size, 
-                                            pin_memory=self.cfg.dataloader.pin_memory)
+                                                     batch_size=self.cfg.dataloader.ul_batch_size,
+                                                     pin_memory=self.cfg.dataloader.pin_memory,
+                                                     num_workers=self.cfg.dataloader.num_workers)
 
         model.train()
         logger.info(model)
 
         if self.cfg.optimizer.type == "sgd":
             optimizer = optim.SGD(
-                model.parameters(), self.cfg.optimizer.lr, self.cfg.optimizer.momentum, weight_decay=0, nesterov=True)
+                model.parameters(), self.cfg.optimizer.lr, self.cfg.optimizer.momentum, 
+                weight_decay=self.cfg.optimizer.weight_decay, nesterov=self.cfg.optimizer.nesterov)
         elif self.cfg.optimizer.type == "adam":
             optimizer = optim.Adam(
-                model.parameters(), self.cfg.optimizer.lr, (self.cfg.optimizer, 0.999), weight_decay=0
-            )
+                model.parameters(), self.cfg.optimizer.lr, (self.cfg.optimizer.momentum, 0.999), 
+                weight_decay=self.cfg.optimizer.weight_decay)
         else:
             raise NotImplementedError
 
@@ -396,7 +400,8 @@ class TrainClassifier:
             if self.cfg.dss_args.type == 'Full':
                 lr_scheduler = scheduler.CosineAnnealingLR(optimizer, max_iteration)
             else:
-                lr_scheduler = scheduler.CosineAnnealingLR(optimizer, self.cfg.train_args.iteration * self.cfg.dss_args.fraction)
+                lr_scheduler = scheduler.CosineAnnealingLR(optimizer,
+                                                           self.cfg.train_args.iteration * self.cfg.dss_args.fraction)
         elif self.cfg.scheduler.lr_decay == "step":
             # TODO: fixed milestones
             lr_scheduler = optim.lr_scheduler.MultiStepLR(optimizer, [400000, ], self.cfg.scheduler.lr_decay_rate)
@@ -417,12 +422,13 @@ class TrainClassifier:
         iter_count = 1
         subset_selection_time = 0
         training_time = 0
-        
+
         while iter_count <= max_iteration:
             lt_loader = DataLoader(
                 lt_data,
                 self.cfg.dataloader.l_batch_size,
-                sampler=dataset_utils.InfiniteSampler(len(lt_data), len(list(ult_loader.batch_sampler)) * self.cfg.dataloader.l_batch_size),
+                sampler=dataset_utils.InfiniteSampler(len(lt_data), len(list(
+                    ult_loader.batch_sampler)) * self.cfg.dataloader.l_batch_size),
                 num_workers=self.cfg.dataloader.num_workers
             )
 
@@ -460,18 +466,19 @@ class TrainClassifier:
                         else:
                             eval_model = model
                         logger.info("test")
-                        mean_raw_acc, mean_test_acc, mean_test_loss = self.evaluation(model, eval_model, test_loader, device)
+                        mean_raw_acc, mean_test_acc, mean_test_loss = self.evaluation(model, eval_model, test_loader,
+                                                                                      device)
                         logger.info("test loss %f | test acc. %f | raw acc. %f", mean_test_loss, mean_test_acc,
                                     mean_raw_acc)
                         test_acc_list.append(mean_test_acc)
                         raw_acc_list.append(mean_raw_acc)
-                    torch.save(model.state_dict(), os.path.join(self.cfg.train_args.out_dir, "model_checkpoint.pth"))
-                    torch.save(optimizer.state_dict(), os.path.join(self.cfg.train_args.out_dir, "optimizer_checkpoint.pth"))
+                    torch.save(model.state_dict(), os.path.join(self.cfg.train_args.results_dir, "model_checkpoint.pth"))
+                    torch.save(optimizer.state_dict(),
+                               os.path.join(self.cfg.train_args.results_dir, "optimizer_checkpoint.pth"))
                 iter_count += 1
 
-            
-        numpy.save(os.path.join(self.cfg.train_args.out_dir, "results"), test_acc_list)
-        numpy.save(os.path.join(self.cfg.train_args.out_dir, "raw_results"), raw_acc_list)
+        numpy.save(os.path.join(self.cfg.train_args.results_dir, "evaluation_results"), test_acc_list)
+        numpy.save(os.path.join(self.cfg.train_args.results_dir, "raw_results"), raw_acc_list)
         logger.info("Total Time taken: %f", training_time + subset_selection_time)
         logger.info("Subset Selection Time: %f", subset_selection_time)
         accuracies = {}
@@ -480,6 +487,8 @@ class TrainClassifier:
             logger.info("mean test acc. for raw model over last %d checkpoints: %f", i, numpy.median(raw_acc_list[-i:]))
             accuracies[f"last{i}"] = numpy.median(test_acc_list[-i:])
 
-        with open(os.path.join(self.cfg.train_args.out_dir, "results.json"), "w") as f:
+        with open(os.path.join(self.cfg.train_args.results_dir, "results.json"), "w") as f:
             json.dump(accuracies, f, sort_keys=True)
 
+if __name__ == "__main__":
+    torch.multiprocessing.freeze_support()

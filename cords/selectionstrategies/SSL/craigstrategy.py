@@ -7,7 +7,7 @@ from torch.utils.data.sampler import SubsetRandomSampler
 
 class CRAIGStrategy(DataSelectionStrategy):
     """
-    Implementation of CRAIG Strategy from the paper :footcite:`mirzasoleiman2020coresets` for supervised learning frameworks.
+    Adapted Implementation of CRAIG Strategy from the paper :footcite:`pmlr-v119-mirzasoleiman20a` for semi-supervised learning setting.
 
     CRAIG strategy tries to solve the optimization problem given below for convex loss functions:
 
@@ -22,9 +22,9 @@ class CRAIGStrategy(DataSelectionStrategy):
     CRAIG strategy tries to solve the optimization problem given below for non-convex loss functions:
 
     .. math::
-        \\sum_{i\\in \\mathcal{U}} \\min_{j \\in S, |S| \\leq k} \\| \\nabla_{\\theta} {L_T}^i(\\theta) - \\nabla_{\\theta} {L_T}^j(\\theta) \\|
+        \\underset{\\mathcal{S} \\subseteq \\mathcal{U}:|\\mathcal{S}| \\leq k}{\\operatorname{argmin\\hspace{0.7cm}}}\\underset{i \\in \\mathcal{U}}{\\sum} \\underset{j \\in \\mathcal{S}}{\\min} \\left \\Vert \\mathbf{m}_i \\nabla_{\\theta}l_u(x_i, \\theta) - \\mathbf{m}_j \\nabla_{\\theta}l_u(x_j, \\theta) \\right \Vert
 
-    In the above equation, :math:`\\mathcal{U}` denotes the training set, :math:`L_T` denotes the training loss, :math:`S` denotes the data subset selected at each round,
+    In the above equation, :math:`\\mathcal{U}` denotes the unlabeled set, :math:`l_u` denotes the unlabeled loss, :math:`\\mathcal{S}` denotes the data subset selected at each round,
     and :math:`k` is the budget for the subset. In this case, CRAIG acts an adaptive subset selection strategy that selects a new subset every epoch.
 
     Both the optimization problems given above are an instance of facility location problems which is a submodular function. Hence, it can be optimally solved using greedy selection methods.

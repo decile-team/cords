@@ -2,7 +2,9 @@ CORDS
 ======
 
 .. toctree::
-   :maxdepth: 5
-
    cords.selection_strategies
-   cords.utils
+   cords.dataloaders
+   cords.datasets
+   cords.models
+   cords.configs
+

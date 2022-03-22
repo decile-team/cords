@@ -5,11 +5,25 @@ import time, copy
 
 # CRAIG
 class CRAIGDataLoader(NonAdaptiveDSSDataLoader):
+    """
+    Implements of CRAIGDataLoader that serves as the dataloader for the nonadaptive CRAIG subset selection strategy from the paper :footcite:`pmlr-v119-mirzasoleiman20a`.
 
+    Parameters
+    -----------
+    train_loader: torch.utils.data.DataLoader class
+        Dataloader of the training dataset
+    val_loader: torch.utils.data.DataLoader class
+        Dataloader of the validation dataset
+    dss_args: dict
+        Data subset selection arguments dictionary required for CRAIG subset selection strategy
+    logger: class
+        Logger for logging the information
+    """
     def __init__(self, train_loader, val_loader, dss_args, logger, *args, **kwargs):
         """
-         Arguments assertion check
+         Constructor function
         """
+        # Arguments assertion check
         assert "model" in dss_args.keys(), "'model' is a compulsory argument. Include it as a key in dss_args"
         assert "loss" in dss_args.keys(), "'loss' is a compulsory argument. Include it as a key in dss_args"
         if dss_args.loss.reduction != "none":
@@ -18,6 +32,7 @@ class CRAIGDataLoader(NonAdaptiveDSSDataLoader):
         assert "linear_layer" in dss_args.keys(), "'linear_layer' is a compulsory argument for CRAIG. Include it as a key in dss_args"
         assert "selection_type" in dss_args.keys(), "'selection_type' is a compulsory argument for CRAIG. Include it as a key in dss_args"
         assert "optimizer" in dss_args.keys(), "'optimizer' is a compulsory argument for CRAIG. Include it as a key in dss_args"
+        assert "if_convex" in dss_args.keys(), "'if_convex' is a compulsory argument for CRAIG. Include it as a key in dss_args"
         
         super(CRAIGDataLoader, self).__init__(train_loader, val_loader, dss_args,
                                               logger, *args, **kwargs)
@@ -33,11 +48,17 @@ class CRAIGDataLoader(NonAdaptiveDSSDataLoader):
         self.logger.debug('Non-adaptive CRAIG dataloader loader initialized. ')
 
     def _init_subset_loader(self):
+        """
+        Function that initializes the subset loader based on the subset indices and the subset weights.
+        """
         # All strategies start with random selection
         self.subset_indices, self.subset_weights = self._init_subset_indices()
         self._refresh_subset_loader()
 
     def _init_subset_indices(self):
+        """
+        Function that calls the CRAIG strategy for initial subset selection and calculating the initial subset weights.
+        """
         start = time.time()
         self.logger.debug('Epoch: {0:d}, requires subset selection. '.format(self.cur_epoch))
         cached_state_dict = copy.deepcopy(self.train_model.state_dict())
