@@ -41,7 +41,7 @@ config = dict(setting="SL",
                                 selection_type='Supervised'),
 
               train_args=dict(num_epochs=200,
-                              device_selcon="cuda",
+                              device="cuda",
                               print_every=1,
                               results_dir='results/',
                               print_args=["val_loss", "tst_loss", "trn_loss", "time"],

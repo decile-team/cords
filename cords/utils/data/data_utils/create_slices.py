@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 import torch
 from sklearn.preprocessing import MinMaxScaler,StandardScaler
 from sklearn import preprocessing
@@ -243,11 +244,11 @@ def get_slices(data_name, data,labels,device,buckets=None,clean=True):
             tst_label_slices[j] = torch.from_numpy(np.reshape(\
                 sc_l.transform(np.reshape(tst_label_slices[j],(-1,1))),(-1))).float().to(device)
     
-    elif data_name in ['census','LawSchool','German_credit','Community_Crime']:
+    elif data_name in ['census','LawSchool_selcon','German_credit','Community_Crime']:
         
         if data_name == 'census':
             protect_feature = 8 #9
-        elif data_name == 'LawSchool':
+        elif data_name == 'LawSchool_selcon':
             protect_feature = 0
         elif data_name == 'German_credit':
             protect_feature = 8
