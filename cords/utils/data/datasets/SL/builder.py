@@ -1,5 +1,7 @@
+from cgi import test
 import numpy as np
 import os
+from cords.utils.data.datasets.SL.custom_dataset_selcon import CustomDataset_WithId_SELCON
 import torch
 import torchvision
 from sklearn import datasets
@@ -9,6 +11,7 @@ from torch.utils.data import Dataset, random_split, TensorDataset
 from torchvision import transforms
 import PIL.Image as Image
 from sklearn.datasets import load_boston
+from cords.utils.data.data_utils import *
 import re
 import pandas as pd
 import torch
@@ -16,7 +19,7 @@ import torchtext.data
 import pickle
 from cords.utils.data.data_utils import WeightedSubset
 import pandas as pd
-from datasets import load_dataset
+# from datasets import load_dataset
 
 class standard_scaling:
     def __init__(self):
@@ -193,6 +196,7 @@ class GlueDataset(Dataset):
 class CustomDataset(Dataset):
     def __init__(self, data, target, device=None, transform=None, isreg=False):
         self.transform = transform
+        self.isreg = isreg
         if device is not None:
             # Push the entire data to given device, eg: cuda:0
             self.data = data.float().to(device)
@@ -219,13 +223,28 @@ class CustomDataset(Dataset):
         if self.transform is not None:
             sample_data = self.transform(sample_data)
         return (sample_data, label)  # .astype('float32')
+        # if self.isreg:
+        #     return (sample_data, label, idx)
+        # else:
 
 
 class CustomDataset_WithId(Dataset):
-    def __init__(self, data, target, transform=None):
+    def __init__(self, data, target, device=None, transform=None, isreg=False):
         self.transform = transform
-        self.data = data  # .astype('float32')
-        self.targets = target
+        if device is not None:
+            # Push the entire data to given device, eg: cuda:0
+            self.data = data.float().to(device)
+            if isreg:
+                self.targets = target.float().to(device)
+            else:
+                self.targets = target.long().to(device)
+
+        else:
+            self.data = data.float()
+            if isreg:
+                self.targets = target.float()
+            else:
+                self.targets = target.long()
         self.X = self.data
         self.Y = self.targets
 
@@ -301,12 +320,12 @@ def clean_lawschool_full(path):
     # remove y from df
     y = df['ugpa']
     y = y / 4
-    df = df.drop('ugpa', 1)
+    df = df.drop('ugpa', axis=1)
     # convert gender variables to 0,1
     df['gender'] = df['gender'].map({'male': 1, 'female': 0})
     # add bar1 back to the feature set
     df_bar = df['bar1']
-    df = df.drop('bar1', 1)
+    df = df.drop('bar1', axis=1)
     df['bar1'] = [int(grade == 'P') for grade in df_bar]
     # df['race'] = [int(race == 7.0) for race in df['race']]
     # a = df['race']
@@ -555,6 +574,29 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
             testset = CustomDataset(torch.from_numpy(x_tst), torch.from_numpy(y_tst), isreg=True)
         return fullset, valset, testset, num_cls
 
+    elif dset_name in ["Community_Crime", "LawSchool_selcon"]:
+        if dset_name == "Community_Crime":
+            x_trn, y_trn = clean_communities_full(os.path.join(datadir, 'communities.scv'))
+        elif dset_name == "LawSchool_selcon":
+            x_trn, y_trn = clean_lawschool_full(os.path.join(datadir, 'lawschool.csv'))
+        else:
+            raise NotImplementedError
+
+        fullset = (x_trn, y_trn)
+        data_dims = x_trn.shape[1]
+        device = 'cpu'
+
+        x_trn, y_trn, x_val_list, y_val_list, val_classes,x_tst_list, y_tst_list, tst_classes\
+            = get_slices(dset_name, fullset[0], fullset[1], device, 3)
+
+        assert(val_classes == tst_classes)
+
+        trainset = CustomDataset_WithId_SELCON(torch.from_numpy(x_trn).float().to(device),torch.from_numpy(y_trn).float().to(device))
+        valset = CustomDataset_WithId_SELCON(torch.cat(x_val_list,dim=0), torch.cat(y_val_list,dim=0))
+        testset = CustomDataset_WithId_SELCON(torch.cat(x_tst_list,dim=0), torch.cat(y_tst_list,dim=0))
+
+        return trainset, valset, testset, val_classes
+
     elif dset_name in ["cadata","abalone","cpusmall",'LawSchool']:
 
         if dset_name == "cadata":
@@ -593,9 +635,9 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
             testset = (x_tst, y_tst)
 
         else:
-            fullset = CustomDataset(torch.from_numpy(x_trn), torch.from_numpy(y_trn),if_reg=True)
-            valset = CustomDataset(torch.from_numpy(x_val), torch.from_numpy(y_val),if_reg=True)
-            testset = CustomDataset(torch.from_numpy(x_tst), torch.from_numpy(y_tst),if_reg=True)
+            fullset = CustomDataset_WithId(torch.from_numpy(x_trn), torch.from_numpy(y_trn), isreg=True)
+            valset = CustomDataset_WithId(torch.from_numpy(x_val), torch.from_numpy(y_val), isreg=True)
+            testset = CustomDataset_WithId(torch.from_numpy(x_tst), torch.from_numpy(y_tst), isreg=True)
 
         return fullset, valset, testset, 1
 
@@ -1559,6 +1601,7 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
                     subset_idxs.extend(batch_subset_idxs)
             trainset = torch.utils.data.Subset(trainset, subset_idxs)
         return trainset, valset, testset, num_cls
+
     elif dset_name == "sst2" or dset_name == "sst2_facloc":
         '''
         download data/SST from https://drive.google.com/file/d/14KU6RQJpP6HKKqVGm0OF3MVxtI0NlEcr/view?usp=sharing
@@ -1575,28 +1618,28 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         valset = SSTDataset(datadir, 'dev', num_cls, wordvec_dim, wordvec)
 
         return trainset, valset, testset, num_cls
-    elif dset_name == "glue_sst2":
-        num_cls = 2
-        raw = load_dataset("glue", "sst2")
+    # elif dset_name == "glue_sst2":
+    #     num_cls = 2
+    #     raw = load_dataset("glue", "sst2")
 
-        wordvec_dim = kwargs['dataset'].wordvec_dim
-        weight_path = kwargs['dataset'].weight_path
-        weight_full_path = weight_path+'glove.6B.' + str(wordvec_dim) + 'd.txt'
-        wordvec = loadGloveModel(weight_full_path)
+    #     wordvec_dim = kwargs['dataset'].wordvec_dim
+    #     weight_path = kwargs['dataset'].weight_path
+    #     weight_full_path = weight_path+'glove.6B.' + str(wordvec_dim) + 'd.txt'
+    #     wordvec = loadGloveModel(weight_full_path)
 
-        clean_type = 0
-        fullset = GlueDataset(raw['train'], 'sentence', 'label', clean_type, num_cls, wordvec_dim, wordvec)
-        # testset = GlueDataset(raw['test'], 'sentence', 'label', clean_type, num_cls, wordvec_dim, wordvec) # doesn't have gold labels
-        valset = GlueDataset(raw['validation'], 'sentence', 'label', clean_type, num_cls, wordvec_dim, wordvec)
+    #     clean_type = 0
+    #     fullset = GlueDataset(raw['train'], 'sentence', 'label', clean_type, num_cls, wordvec_dim, wordvec)
+    #     # testset = GlueDataset(raw['test'], 'sentence', 'label', clean_type, num_cls, wordvec_dim, wordvec) # doesn't have gold labels
+    #     valset = GlueDataset(raw['validation'], 'sentence', 'label', clean_type, num_cls, wordvec_dim, wordvec)
 
-        test_set_fraction = 0.05
-        seed = 42
-        num_fulltrn = len(fullset)
-        num_test = int(num_fulltrn * test_set_fraction)
-        num_trn = num_fulltrn - num_test
-        trainset, testset = random_split(fullset, [num_trn, num_test], generator=torch.Generator().manual_seed(seed))
+    #     test_set_fraction = 0.05
+    #     seed = 42
+    #     num_fulltrn = len(fullset)
+    #     num_test = int(num_fulltrn * test_set_fraction)
+    #     num_trn = num_fulltrn - num_test
+    #     trainset, testset = random_split(fullset, [num_trn, num_test], generator=torch.Generator().manual_seed(seed))
 
-        return trainset, valset, testset, num_cls
+    #     return trainset, valset, testset, num_cls
     elif  dset_name == "sst5":
         '''
         download data/SST from https://drive.google.com/file/d/14KU6RQJpP6HKKqVGm0OF3MVxtI0NlEcr/view?usp=sharing
@@ -1629,26 +1672,28 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         valset = Trec6Dataset(datadir+'valid.txt', cls_to_num, num_cls, wordvec_dim, wordvec)
 
         return trainset, valset, testset, num_cls
-    elif dset_name == "hf_trec6": # hugging face trec6
-        num_cls = 6
-        raw = load_dataset("trec")
+    # elif dset_name == "hf_trec6": # hugging face trec6
+    #     num_cls = 6
+    #     raw = load_dataset("trec")
 
-        wordvec_dim = kwargs['dataset'].wordvec_dim
-        weight_path = kwargs['dataset'].weight_path
-        weight_full_path = weight_path+'glove.6B.' + str(wordvec_dim) + 'd.txt'
-        wordvec = loadGloveModel(weight_full_path)
+    #     wordvec_dim = kwargs['dataset'].wordvec_dim
+    #     weight_path = kwargs['dataset'].weight_path
+    #     weight_full_path = weight_path+'glove.6B.' + str(wordvec_dim) + 'd.txt'
+    #     wordvec = loadGloveModel(weight_full_path)
 
-        clean_type = 1
-        fullset = GlueDataset(raw['train'], 'text', 'label-coarse', clean_type, num_cls, wordvec_dim, wordvec)
-        testset = GlueDataset(raw['test'], 'text', 'label-coarse', clean_type, num_cls, wordvec_dim, wordvec)
-        # valset = GlueDataset(raw['validation'], num_cls, wordvec_dim, wordvec)
+    #     clean_type = 1
+    #     fullset = GlueDataset(raw['train'], 'text', 'label-coarse', clean_type, num_cls, wordvec_dim, wordvec)
+    #     testset = GlueDataset(raw['test'], 'text', 'label-coarse', clean_type, num_cls, wordvec_dim, wordvec)
+    #     # valset = GlueDataset(raw['validation'], num_cls, wordvec_dim, wordvec)
         
-        validation_set_fraction = 0.1
-        seed = 42
-        num_fulltrn = len(fullset)
-        num_val = int(num_fulltrn * validation_set_fraction)
-        num_trn = num_fulltrn - num_val
-        trainset, valset = random_split(fullset, [num_trn, num_val], generator=torch.Generator().manual_seed(seed))
+    #     validation_set_fraction = 0.1
+    #     seed = 42
+    #     num_fulltrn = len(fullset)
+    #     num_val = int(num_fulltrn * validation_set_fraction)
+    #     num_trn = num_fulltrn - num_val
+    #     trainset, valset = random_split(fullset, [num_trn, num_val], generator=torch.Generator().manual_seed(seed))
 
-        return trainset, valset, testset, num_cls
+    #     return trainset, valset, testset, num_cls
 
+    else:
+        raise NotImplementedError

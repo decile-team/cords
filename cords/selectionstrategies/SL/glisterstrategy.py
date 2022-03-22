@@ -122,6 +122,8 @@ class GLISTERStrategy(DataSelectionStrategy):
         if first_init:
             for batch_idx, (inputs, targets) in enumerate(valloader):
                 inputs, targets = inputs.to(self.device), targets.to(self.device, non_blocking=True)
+                print(inputs.shape, targets.shape)
+                exit(0) 
                 if batch_idx == 0:
                     out, l1 = self.model(inputs, last=True, freeze=True)
                     loss = self.loss(out, targets).sum()
