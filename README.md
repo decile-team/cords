@@ -37,15 +37,18 @@
 - [What is CORDS?](#what-is-cords)
 - [Applications](#applications)
   - [Efficient Hyper-parameter Optimization(HPO)](#efficient-hyper-parameter-optimizationhpo)
+- [Highlights](#highlights)
 - [Speedups achieved using CORDS](#speedups-achieved-using-cords)
   - [SpeedUps in Supervised Learning](#speedups-in-supervised-learning)
   - [SpeedUps in Semi-supervised Learning](#speedups-in-semi-supervised-learning)
   - [SpeedUps in Hyperparameter Tuning](#speedups-in-hyperparameter-tuning)
-- [Highlights](#highlights)
-- [Installation](#installation)
-- [Next Steps](#next-steps)
-- [Tutorials](#tutorials)
-- [Documentation](#documentation)
+- [Starting with CORDS](#starting-with-cords)
+  - [Pip Installation](#pip-installation)
+  - [From Git Repository](#from-git-repository)
+  - [First Steps](#first-steps)
+- [Acknowledgment](#acknowledgment)
+- [Team](#team)
+- [Resources](#resources)
 - [Publications](#publications)
 
 ## What is CORDS?
@@ -99,9 +102,13 @@ We currently use [Ray-Tune](https://docs.ray.io/en/latest/tune/index.html) libra
 
 Please find the tutorial notebook explaining the usage of CORDS subset selections strategies for Efficient Hyper-parameter optimization in the following [notebook](https://github.com/decile-team/cords/blob/main/examples/HPO/image_classification/python_notebooks/CORDS_SL_CIFAR10_HPO_ASHA_Example.ipynb)
 
+## Highlights
+- 3x to 5x speedups, cost reduction, and energy reductions in the training of deep models in supervised learning
+- 3x+ speedups, cost/energy reduction for deep model training in semi-supervised learning
+- 3x to 30x speedups and cost/energy reduction for Hyper-parameter tuning using subset selection with SOTA schedulers (Hyperband and ASHA) and algorithms (TPE, Random)
 
 ## Speedups achieved using CORDS
-To achieve significantly faster speedups, one can replace the subset selection data loaders while keeping the training algorithm the same. Look at the speedups one can achieve below:
+To achieve significantly faster speedups, one can use the subset selection data loaders from CORDS while keeping the training algorithm the same. Look at the speedups one can achieve using the subset selection data loaders from CORDS below:
 
 ### SpeedUps in Supervised Learning
 
@@ -127,21 +134,18 @@ To achieve significantly faster speedups, one can replace the subset selection d
     </br>
 </p>
 
+## Starting with CORDS
 
-## Highlights
-- 3x to 5x speedups, cost reduction, and energy reductions in the training of deep models in supervised learning
-- 3x+ speedups, cost/energy reduction for deep model training in semi-supervised learning
-- 3x to 30x speedups and cost/energy reduction for Hyper-parameter tuning using subset selection with SOTA schedulers (Hyperband and ASHA) and algorithms (TPE, Random)
+### Pip Installation
 
-## Installation
-
-1. To install the latest version of the CORDS package using PyPI:
+To install the latest version of the CORDS package using PyPI:
 
     ```python
     pip install -i https://test.pypi.org/simple/ cords
     ```
 
-2. To install using the source:
+### From Git Repository
+To install using the source:
 
     ```bash
     git clone https://github.com/decile-team/cords.git
@@ -149,7 +153,45 @@ To achieve significantly faster speedups, one can replace the subset selection d
     pip install -r requirements/requirements.txt
     ```
 
-## Next Steps
+### First Steps
+
+To better understand CORDS's functionality, we have provided example Jupyter notebooks and python code in the [examples](https://github.com/decile-team/cords/tree/main/examples) folder, which can be easily executed by using Google Colab. We also provide a simple SL, SSL, and HPO training loops that runs experiments using a provided configuration file. To run this loop, you can look into following code examples:
+
+Using default supervised training loop,
+```python
+from train_sl import TrainClassifier
+from cords.utils.config_utils import load_config_data
+
+config_file = '/content/cords/configs/SL/config_glister_cifar10.py'
+cfg = load_config_data(config_file)
+clf = TrainClassifier(cfg)
+clf.train()
+```
+
+Using default semi-supervised training loop,
+```python
+from train_ssl import TrainClassifier
+from cords.utils.config_utils import load_config_data
+
+config_file = '/content/cords/configs/SSL/config_retrieve-warm_vat_cifar10.py'
+cfg = load_config_data(config_file)
+clf = TrainClassifier(cfg)
+clf.train()
+```
+
+<!-- Using default hyper-parameter optimization loop,
+```python
+from train_ssl import TrainClassifier
+from cords.utils.config_utils import load_config_data
+
+config_file = '/content/cords/configs/SSL/config_retrieve-warm_vat_cifar10.py'
+cfg = load_config_data(config_file)
+clf = TrainClassifier(cfg)
+clf.train()
+``` -->
+
+You can use the default configurations that we have provided in the configs folder, or you can make a custom configuration. For making your custom configuration file for training, please refer to [CORDS Configuration File Documentation](https://cords.readthedocs.io/en/latest/strategies/cords.configs.html).
+
 
 ## Tutorials
 We have added example python code and tutorial notebooks under the examples folder. See [this link](https://github.com/decile-team/cords/tree/main/examples)
@@ -157,6 +199,23 @@ We have added example python code and tutorial notebooks under the examples fold
 ## Documentation
 
 The documentation for the latest version of CORDS can always be found [here](https://cords.readthedocs.io/en/latest/).
+
+## Mailing List
+To receive updates about CORDS and to be a part of the community, join the Decile_CORDS_Dev group.
+```
+https://groups.google.com/forum/#!forum/Decile_CORDS_Dev/join 
+```
+
+## Acknowledgment
+This library takes inspiration, builds upon, and uses pieces of code from several open source codebases. These include [Teppei Suzuki's consistency based SSL repository](https://github.com/perrying/pytorch-consistency-regularization) and [Richard Liaw's Tune repository](https://github.com/ray-project/ray/tree/master/python/ray/tune). Also, CORDS uses [submodlib](https://github.com/decile-team/submodlib) for submodular optimization.
+
+## Team
+DISTIL is created and maintained by [Krishnateja Killamsetty](https://krishnatejakillamsetty.me/), Dheeraj N Bhat, [Rishabh Iyer](https://www.rishiyer.com), and [Ganesh Ramakrishnan](https://www.cse.iitb.ac.in/~ganesh/). We look forward to have CORDS more community driven. Please use it and contribute to it for your efficient learning research, and feel free to use it for your commercial projects. We will add the major contributors here.
+
+## Resources
+
+[Blog Articles](https://decile-research.medium.com/)
+
 
 ## Publications
 
