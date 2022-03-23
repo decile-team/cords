@@ -84,7 +84,7 @@ To achieve significantly faster speedups, one can replace the subset selection d
 
 <p align="center">
     <br>
-        <img src="https://github.com/decile-team/cords/blob/main/docs/source/imgs/sl_speedups.jpg" width="700"/>
+        <img src="https://github.com/decile-team/cords/blob/main/docs/source/imgs/sl_speedups.jpg" height="400" width="700"/>
     </br>
 </p>
 
@@ -92,7 +92,7 @@ To achieve significantly faster speedups, one can replace the subset selection d
 
 <p align="center">
     <br>
-        <img src="https://github.com/decile-team/cords/blob/main/docs/source/imgs/ssl_speedups.png" width="700"/>
+        <img src="https://github.com/decile-team/cords/blob/main/docs/source/imgs/ssl_speedups.png" height="400" width="700"/>
     </br>
 </p>
 
@@ -100,7 +100,7 @@ To achieve significantly faster speedups, one can replace the subset selection d
 
 <p align="center">
     <br>
-        <img src="https://github.com/decile-team/cords/blob/main/docs/source/imgs/hpo_speedups.png" width="700"/>
+        <img src="https://github.com/decile-team/cords/blob/main/docs/source/imgs/hpo_speedups.png" height="400" width="700"/>
     </br>
 </p>
 
