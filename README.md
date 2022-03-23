@@ -35,6 +35,9 @@
 
 - [In this README](#in-this-readme)
 - [What is CORDS?](#what-is-cords)
+- [Applications](#applications)
+  - [Efficient Hyper-parameter Optimization(HPO)](#efficient-hyper-parameter-optimizationhpo)
+- [Speedups achieved using CORDS](#speedups-achieved-using-cords)
   - [SpeedUps in Supervised Learning](#speedups-in-supervised-learning)
   - [SpeedUps in Semi-supervised Learning](#speedups-in-semi-supervised-learning)
   - [SpeedUps in Hyperparameter Tuning](#speedups-in-hyperparameter-tuning)
@@ -55,16 +58,18 @@
 <p align="center"><i><b>Faster Hyper-parameter tuning </b></i></p>
 <p align="center"><i><b>Reducing Resource (GPU) Requirement and Costs</b></i></p>
 
-The primary purpose of CORDS is to select the suitable representative data subsets from massive datasets, and it does so iteratively. CORDS uses recent advances in data subset selection, particularly ideas of coresets and submodularity select such subsets. CORDS implements several state-of-the-art data subset/coreset selection algorithms for efficient supervised learning(SL) and semi-supervised learning(SSL). Some of the algorithms currently implemented with CORDS include:
+The primary purpose of CORDS is to select the suitable representative data subsets from massive datasets, and it does so iteratively. CORDS uses recent advances in data subset selection, particularly ideas of coresets and submodularity select such subsets. CORDS implements several state-of-the-art data subset/coreset selection algorithms for efficient supervised learning(SL) and semi-supervised learning(SSL). 
 
-For Supervised Learning:
+Some of the algorithms currently implemented with CORDS include:
+
+For Efficient and Robust Supervised Learning:
 - [GLISTER](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.SL.html#module-cords.selectionstrategies.SL.glisterstrategy)
 - [GradMatch](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.SL.html#module-cords.selectionstrategies.SL.gradmatchstrategy)
 - [CRAIG](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.SL.html#module-cords.selectionstrategies.SL.craigstrategy)
 - [SubmodularSelection](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.SL.html#module-cords.selectionstrategies.SL.submodularselectionstrategy) (Facility Location, Feature Based Functions, Coverage, Diversity)
 - [RandomSelection](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.SL.html#module-cords.selectionstrategies.SL.randomstrategy)
 
-For Semi-supervised Learning:
+For Efficient and Robust Semi-supervised Learning:
 - [RETRIEVE](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.SSL.html#module-cords.selectionstrategies.SSL.retrievestrategy)
 - [GradMatch](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.SSL.html#module-cords.selectionstrategies.SSL.gradmatchstrategy)
 - [CRAIG](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.SSL.html#module-cords.selectionstrategies.SSL.craigstrategy)
@@ -78,6 +83,24 @@ We are continuously incorporating newer and better algorithms into CORDS. Some o
 - Modular design: The data selection algorithms are directly incorporated into data loaders, allowing one to use their own training loop for varied utility scenarios. 
 - A broad number of use cases: CORDS is currently implemented for simple image classification tasks and hyperparameter tuning, but we are working on integrating several additional use cases like  Auto-ML, object detection, speech recognition, semi-supervised learning, etc.
 
+## Applications
+
+### Efficient Hyper-parameter Optimization(HPO)
+The subset selection strategies for efficient supervised learning in CORDS allow one to train models faster. We can use the faster model training using data subsets for quicker configuration evaluations in Hyper-parameter tuning. A detailed pipeline figure of efficient hyper-parameter tuning using subset based training for faster configuration evaluations can be seen below:
+
+<p align="center">
+    <br>
+        <img src="https://github.com/decile-team/cords/blob/main/docs/source/imgs/hpo_pipeline.png" height="400" width="700"/>
+    </br>
+</p>
+
+We can use any existing data subset selection strategy in CORDS along with existing hyperparameter search and scheduling algorithms currently. 
+We currently use [Ray-Tune](https://docs.ray.io/en/latest/tune/index.html) library for hyper-parameter tuning and search algorithms.
+
+Please find the tutorial notebook explaining the usage of CORDS subset selections strategies for Efficient Hyper-parameter optimization in the following [notebook](https://github.com/decile-team/cords/blob/main/examples/HPO/image_classification/python_notebooks/CORDS_SL_CIFAR10_HPO_ASHA_Example.ipynb)
+
+
+## Speedups achieved using CORDS
 To achieve significantly faster speedups, one can replace the subset selection data loaders while keeping the training algorithm the same. Look at the speedups one can achieve below:
 
 ### SpeedUps in Supervised Learning
@@ -103,6 +126,7 @@ To achieve significantly faster speedups, one can replace the subset selection d
         <img src="https://github.com/decile-team/cords/blob/main/docs/source/imgs/hpo_speedups.png" height="400" width="700"/>
     </br>
 </p>
+
 
 ## Highlights
 - 3x to 5x speedups, cost reduction, and energy reductions in the training of deep models in supervised learning
