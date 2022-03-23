@@ -152,6 +152,9 @@ using their respective subset selection data loaders.
 Below is an example that shows the subset selection process is simplified by just calling a data loader in supervised learning setting,
 
 ```python
+    from cords.utils.data.dataloader.SL.adaptive import GLISTERDataLoader
+
+    #Pass on necessary arguments for GLISTERDataLoader
     dss_args = dict(model=model,
                     loss=criterion_nored,
                     eta=0.01,
@@ -166,7 +169,11 @@ Below is an example that shows the subset selection process is simplified by jus
                     greedy='Stochastic')
     dss_args = DotMap(dss_args)
 
-    dataloader = GLISTERDataLoader(trainloader, valloader, dss_args, logger, 
+    #Create GLISTER subset selection dataloader
+    dataloader = GLISTERDataLoader(trainloader, 
+                                    valloader, 
+                                    dss_args, 
+                                    logger, 
                                     batch_size=20, 
                                     shuffle=True,
                                     pin_memory=False)
