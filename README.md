@@ -56,13 +56,13 @@ The primary purpose of CORDS is to select the right representative data subsets 
 and coreset algorithms. Some of the algorithms currently implemented with CORDS include:
 
 For Supervised Learning:
-    - [GLISTER](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.SL.html#module-cords.selectionstrategies.SL.glisterstrategy)
-    - [GradMatch](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.SL.html#module-cords.selectionstrategies.SL.gradmatchstrategy)
-    - [CRAIG](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.SL.html#module-cords.selectionstrategies.SL.craigstrategy)
-    - [SubmodularSelection](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.SL.html#module-cords.selectionstrategies.SL.submodularselectionstrategy) (Facility Location, Feature Based Functions, Coverage, Diversity)
-    - [RandomSelection](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.SL.html#module-cords.selectionstrategies.SL.randomstrategy)
+- [GLISTER](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.SL.html#module-cords.selectionstrategies.SL.glisterstrategy)
+- [GradMatch](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.SL.html#module-cords.selectionstrategies.SL.gradmatchstrategy)
+- [CRAIG](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.SL.html#module-cords.selectionstrategies.SL.craigstrategy)
+- [SubmodularSelection](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.SL.html#module-cords.selectionstrategies.SL.submodularselectionstrategy) (Facility Location, Feature Based Functions, Coverage, Diversity)
+- [RandomSelection](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.SL.html#module-cords.selectionstrategies.SL.randomstrategy)
 
-For Supervised Learning:
+For Semi-supervised Learning:
 - [RETRIEVE](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.SSL.html#module-cords.selectionstrategies.SSL.retrievestrategy)
 - [GradMatch](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.SL.html#module-cords.selectionstrategies.SSL.gradmatchstrategy)
 - [CRAIG](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.SL.html#module-cords.selectionstrategies.SSL.craigstrategy)
