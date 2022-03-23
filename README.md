@@ -130,43 +130,43 @@ using their respective subset selection data loaders.
 Below is an example that shows the subset selection process is simplified by just calling a data loader in supervised learning setting,
 
 ```python
-    from cords.utils.data.dataloader.SL.adaptive import GLISTERDataLoader
+from cords.utils.data.dataloader.SL.adaptive import GLISTERDataLoader
 
-    #Pass on necessary arguments for GLISTERDataLoader
-    dss_args = dict(model=model,
-                    loss=criterion_nored,
-                    eta=0.01,
-                    num_classes=10,
-                    num_epochs=300,
-                    device='cuda',
-                    fraction=0.1,
-                    select_every=20,
-                    kappa=0,
-                    linear_layer=False,
-                    selection_type='SL',
-                    greedy='Stochastic')
-    dss_args = DotMap(dss_args)
+#Pass on necessary arguments for GLISTERDataLoader
+dss_args = dict(model=model,
+                loss=criterion_nored,
+                eta=0.01,
+                num_classes=10,
+                num_epochs=300,
+                device='cuda',
+                fraction=0.1,
+                select_every=20,
+                kappa=0,
+                linear_layer=False,
+                selection_type='SL',
+                greedy='Stochastic')
+dss_args = DotMap(dss_args)
 
-    #Create GLISTER subset selection dataloader
-    dataloader = GLISTERDataLoader(trainloader, 
-                                    valloader, 
-                                    dss_args, 
-                                    logger, 
-                                    batch_size=20, 
-                                    shuffle=True,
-                                    pin_memory=False)
-    
-    for epoch in range(num_epochs):
-        for _, (inputs, targets, weights) in enumerate(dataloader):
-            """
-            Standard PyTorch training loop using weighted loss
-            
-            Our training loop differs from the standard PyTorch training loop in that along with 
-            data samples and their associated target labels; we also have additional sample weight
-            information from the subset data loader, which can be used to calculate the weighted 
-            loss for gradient descent. We can calculate the weighted loss by using default PyTorch
-            loss functions with no reduction.
-            """
+#Create GLISTER subset selection dataloader
+dataloader = GLISTERDataLoader(trainloader, 
+                                valloader, 
+                                dss_args, 
+                                logger, 
+                                batch_size=20, 
+                                shuffle=True,
+                                pin_memory=False)
+
+for epoch in range(num_epochs):
+    for _, (inputs, targets, weights) in enumerate(dataloader):
+        """
+        Standard PyTorch training loop using weighted loss
+        
+        Our training loop differs from the standard PyTorch training loop in that along with 
+        data samples and their associated target labels; we also have additional sample weight
+        information from the subset data loader, which can be used to calculate the weighted 
+        loss for gradient descent. We can calculate the weighted loss by using default PyTorch
+        loss functions with no reduction.
+        """
 ```
 
 In our current version, we deployed subset selection data loaders in supervised learning and semi-supervised learning settings.
