@@ -40,7 +40,9 @@
   - [Pip Installation](#pip-installation)
   - [From Git Repository](#from-git-repository)
   - [First Steps](#first-steps)
-  - [Using subset selection based data loaders](#using-subset-selection-based-data-loaders)
+    - [Using subset selection based data loaders](#using-subset-selection-based-data-loaders)
+    - [Using default supervised training loop,](#using-default-supervised-training-loop)
+    - [Using default semi-supervised training loop,](#using-default-semi-supervised-training-loop)
 - [Applications](#applications)
   - [Efficient Hyper-parameter Optimization(HPO)](#efficient-hyper-parameter-optimizationhpo)
 - [Speedups achieved using CORDS](#speedups-achieved-using-cords)
@@ -118,31 +120,7 @@ pip install -r requirements/requirements.txt
 
 To better understand CORDS's functionality, we have provided example Jupyter notebooks and python code in the [examples](https://github.com/decile-team/cords/tree/main/examples) folder, which can be easily executed by using Google Colab. We also provide a simple SL, SSL, and HPO training loops that runs experiments using a provided configuration file. To run this loop, you can look into following code examples:
 
-Using default supervised training loop,
-```python
-from train_sl import TrainClassifier
-from cords.utils.config_utils import load_config_data
-
-config_file = '/content/cords/configs/SL/config_glister_cifar10.py'
-cfg = load_config_data(config_file)
-clf = TrainClassifier(cfg)
-clf.train()
-```
-
-Using default semi-supervised training loop,
-```python
-from train_ssl import TrainClassifier
-from cords.utils.config_utils import load_config_data
-
-config_file = '/content/cords/configs/SSL/config_retrieve-warm_vat_cifar10.py'
-cfg = load_config_data(config_file)
-clf = TrainClassifier(cfg)
-clf.train()
-```
-
-You can use the default configurations that we have provided in the configs folder, or you can make a custom configuration. For making your custom configuration file for training, please refer to [CORDS Configuration File Documentation](https://cords.readthedocs.io/en/latest/strategies/cords.configs.html).
-
-### Using subset selection based data loaders
+#### Using subset selection based data loaders
 Create a subset selection based data loader at train time and use the subset selection based data loader with your own training loop.
 
 Essentially, with subset selection-based data loaders, it is pretty straightforward to use subset selection strategies directly 
@@ -192,6 +170,31 @@ Below is an example that shows the subset selection process is simplified by jus
 ```
 
 In our current version, we deployed subset selection data loaders in supervised learning and semi-supervised learning settings.
+
+#### Using default supervised training loop,
+```python
+from train_sl import TrainClassifier
+from cords.utils.config_utils import load_config_data
+
+config_file = '/content/cords/configs/SL/config_glister_cifar10.py'
+cfg = load_config_data(config_file)
+clf = TrainClassifier(cfg)
+clf.train()
+```
+
+#### Using default semi-supervised training loop,
+```python
+from train_ssl import TrainClassifier
+from cords.utils.config_utils import load_config_data
+
+config_file = '/content/cords/configs/SSL/config_retrieve-warm_vat_cifar10.py'
+cfg = load_config_data(config_file)
+clf = TrainClassifier(cfg)
+clf.train()
+```
+
+You can use the default configurations that we have provided in the configs folder, or you can make a custom configuration. For making your custom configuration file for training, please refer to [CORDS Configuration File Documentation](https://cords.readthedocs.io/en/latest/strategies/cords.configs.html).
+
 
 
 ## Applications
