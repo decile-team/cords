@@ -35,12 +35,11 @@
 
 - [In this README](#in-this-readme)
 - [What is CORDS?](#what-is-cords)
+- [Highlights](#highlights)
 - [Installation](#installation)
 - [Next Steps](#next-steps)
 - [Tutorials](#tutorials)
 - [Documentation](#documentation)
-
-
 
 ## What is CORDS?
 
@@ -69,6 +68,11 @@ We are continuously incorporating newer and better algorithms into CORDS. Some o
 - Ease of Use: One of the main goals of CORDS is that it is easy to use and add to CORDS. Feel free to contribute to CORDS!
 - Modular design: The data selection algorithms are separate from the training loop, thereby enabling modular design and also varied scenarios of utility.
 - Broad number of usecases: CORDS is currently implemented for simple image classification tasks and hyperparameter tuning, but we are working on integrating a number of additional use cases like object detection, speech recognition, semi-supervised learning, Auto-ML, etc.
+
+## Highlights
+- 3x to 5x speedups, cost reduction and energy reductions to train deep models in supervised learning
+- 3x+ speedups, cost/energy reduction for deep model training in semi-supervised learning
+- 3x to 30x speedups and cost/energy reduction for Hyper-parameter tuning using subset selection with SOTA schedulers (Hyperband and ASHA) and algorithms (TPE, Random)
 
 ## Installation
 
