@@ -64,8 +64,8 @@ For Supervised Learning:
 
 For Semi-supervised Learning:
 - [RETRIEVE](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.SSL.html#module-cords.selectionstrategies.SSL.retrievestrategy)
-- [GradMatch](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.SL.html#module-cords.selectionstrategies.SSL.gradmatchstrategy)
-- [CRAIG](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.SL.html#module-cords.selectionstrategies.SSL.craigstrategy)
+- [GradMatch](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.SSL.html#module-cords.selectionstrategies.SSL.gradmatchstrategy)
+- [CRAIG](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.SSL.html#module-cords.selectionstrategies.SSL.craigstrategy)
 - [RandomSelection](https://cords.readthedocs.io/en/latest/strategies/cords.selection_strategies.SSL.html#module-cords.selectionstrategies.SL.randomstrategy)
 
 We are continuously incorporating newer and better algorithms into CORDS. Some of the features of CORDS includes:
