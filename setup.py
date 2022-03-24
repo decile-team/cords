@@ -1,9 +1,13 @@
 from setuptools import setup
 import setuptools
+from pathlib import Path
 
+this_directory = Path(__file__).parent
+long_description = (this_directory / "README.md").read_text()
+    
 setup(
     name='cords',
-    version='v0.0.1',
+    version='v0.0.2',
     author='Krishnateja Killamsetty, Dheeraj Bhat, Rishabh Iyer',
     author_email='krishnatejakillamsetty@gmail.com',
     #packages=['cords', 'cords/selectionstrategies', 'cords/utils'],
@@ -11,6 +15,8 @@ setup(
     license='LICENSE.txt',
     packages=setuptools.find_packages(),
     description='cords is a package for data subset selection for efficient and robust machine learning.',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     install_requires=[
         "apricot-select>=0.6.0",
         "numba>=0.43.0",
