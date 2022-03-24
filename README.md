@@ -59,7 +59,7 @@
 
 ## What is CORDS?
 
-[CORDS](https://cords.readthedocs.io/en/latest/) is COReset and Data Selection library for making machine learning time, energy, cost, and compute efficient. CORDS is built on top of PyTorch. Today, deep learning systems are extremely compute-intensive, with significant turnaround times, energy inefficiencies, higher costs, and resource requirements [7, 8]. CORDS is an effort to make deep learning more energy, cost, resource, and time-efficient while not sacrificing accuracy. The following are the goals CORDS tries to achieve:
+[CORDS](https://cords.readthedocs.io/en/latest/) is COReset and Data Selection library for making machine learning time, energy, cost, and compute efficient. CORDS is built on top of PyTorch. Today, deep learning systems are extremely compute-intensive, with significant turnaround times, energy inefficiencies, higher costs, and [resource requirements] [7, 8]. CORDS is an effort to make deep learning more energy, cost, resource, and time-efficient while not sacrificing accuracy. The following are the goals CORDS tries to achieve:
 
 <p align="center"><i><b>Data Efficiency</b></i></p>
 <p align="center"><i><b>Reducing End to End Training Time</b></i></p>
