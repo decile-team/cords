@@ -266,19 +266,23 @@ DISTIL is created and maintained by [Krishnateja Killamsetty](https://krishnatej
 
 ## Publications
 
-[1] Schwartz, Roy, et al. "Green ai." arXiv preprint arXiv:1907.10597 (2019).
+[1] Krishnateja Killamsetty, Guttu Sai Abhishek, Aakriti, Alexandre V. Evfimievski, Lucian Popa, Ganesh Ramakrishnan, Rishabh Iyer,  **[“AUTOMATA: Gradient Based Data Subset Selection for Compute-Efficient Hyper-parameter Tuning”](https://arxiv.org/abs/2203.08212)**. arXiv [cs.LG], 2022. arXiv:2203:08212.
 
-[2] Strubell, Emma, Ananya Ganesh, and Andrew McCallum. "Energy and policy considerations for deep learning in NLP." In ACL 2019.
+[2] Krishnateja Killamsetty, Xujiang Zhou, Feng Chen, and Rishabh Iyer, **[“RETRIEVE: Coreset Selection for Efficient and Robust Semi-Supervised Learning”](https://arxiv.org/abs/2106.07760)**. To Appear in Neural Information Processing Systems, NeurIPS 2021. 
 
-[3] Krishnateja Killamsetty, Durga Sivasubramanian, Ganesh Ramakrishnan, and Rishabh Iyer, [GLISTER: Generalization based Data Subset Selection for Efficient and Robust Learning](https://arxiv.org/abs/2012.10630), 35th AAAI Conference on Artificial Intelligence, AAAI 2021
+[3] Krishnateja Killamsetty, Durga Sivasubramanian, Ganesh Ramakrishnan, Abir De, Rishabh Iyer. **[“GRAD-MATCH: Gradient Matching based Data Subset Selection for Efficient Deep Model Training”](http://proceedings.mlr.press/v139/killamsetty21a.html)**. In Proceedings of the 38th International Conference on Machine Learning, ICML 2021, 18-24 July 2021, Virtual Event, 139:5464–5474. Proceedings of Machine Learning Research. PMLR, 2021.
 
-[4] Krishnateja Killamsetty, Durga Sivasubramanian, Abir De, Ganesh Ramakrishnan, Baharan Mirzasoleiman, Rishabh Iyer, [Grad-Match: A Gradient Matching based Data Selection Framework for Efficient Learning](https://arxiv.org/abs/2103.00123), 2021
+[4] Krishnateja Killamsetty, Durga Sivasubramanian, Ganesh Ramakrishnan, Rishabh Iyer. **[“GLISTER: Generalization based Data Subset Selection for Efficient and Robust Learning”](https://ojs.aaai.org/index.php/AAAI/article/view/16988)**. In Thirty-Fifth AAAI Conference on Artificial Intelligence, AAAI 2021, Virtual Event, February 2-9, 2021, 8110–8118. AAAI Press, 2021. 
 
-[5] Baharan Mirzasoleiman, Jeff Bilmes, and Jure Leskovec. [Coresets for Data-efficient Training of Machine Learning Models](https://arxiv.org/abs/1906.01827). In International Conference on Machine Learning (ICML), July 2020
+[5] Baharan Mirzasoleiman, Jeff Bilmes, and Jure Leskovec. **[“Coresets for Data-efficient Training of Machine Learning Models”](https://arxiv.org/abs/1906.01827)**. In International Conference on Machine Learning (ICML), July 2020
 
-[6] Kai Wei, Rishabh Iyer, Jeff Bilmes, [Submodularity in Data Subset Selection and Active Learning](http://proceedings.mlr.press/v37/wei15-supp.pdf), International Conference on Machine Learning (ICML) 2015
+[6] Vishal Kaushal, Rishabh Iyer, Suraj Kothiwade, Rohan Mahadev, Khoshrav Doctor, and Ganesh Ramakrishnan, **[“Learning From Less Data: A Unified Data Subset Selection and Active Learning Framework for Computer Vision”](https://arxiv.org/abs/1901.01151)**. 7th IEEE Winter Conference on Applications of Computer Vision (WACV), 2019 Hawaii, USA
 
-[7] Vishal Kaushal, Rishabh Iyer, Suraj Kothiwade, Rohan Mahadev, Khoshrav Doctor, and Ganesh Ramakrishnan, [Learning From Less Data: A Unified Data Subset Selection and Active Learning Framework for Computer Vision](https://arxiv.org/abs/1901.01151), 7th IEEE Winter Conference on Applications of Computer Vision (WACV), 2019 Hawaii, USA
+[7] Schwartz, Roy, et al. **["Green AI."]** arXiv preprint arXiv:1907.10597 (2019).
 
-[8] Wei, Kai, et al. [Submodular subset selection for large-scale speech training data](https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.496.6287&rep=rep1&type=pdf), 2014 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP). IEEE, 2014.
+[8] Strubell, Emma, Ananya Ganesh, and Andrew McCallum. **[“Energy and policy considerations for deep learning in NLP.”]** In ACL 2019.
+
+[9] Kai Wei, Rishabh Iyer, Jeff Bilmes, **[“Submodularity in Data Subset Selection and Active Learning”](http://proceedings.mlr.press/v37/wei15-supp.pdf)**. International Conference on Machine Learning (ICML) 2015
+
+[10] Wei, Kai, et al. **[Submodular subset selection for large-scale speech training data](https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.496.6287&rep=rep1&type=pdf)**. 2014 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP). IEEE, 2014.
 
