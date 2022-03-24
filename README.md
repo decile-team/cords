@@ -104,7 +104,7 @@ We are continuously incorporating newer and better algorithms into CORDS. Some o
 To install the latest version of the CORDS package using PyPI:
 
 ```python
-pip install -i https://test.pypi.org/simple/cords
+pip install cords
 ```
 
 ### From Git Repository
