@@ -278,9 +278,9 @@ DISTIL is created and maintained by [Krishnateja Killamsetty](https://krishnatej
 
 [6] Vishal Kaushal, Rishabh Iyer, Suraj Kothiwade, Rohan Mahadev, Khoshrav Doctor, and Ganesh Ramakrishnan, **[“Learning From Less Data: A Unified Data Subset Selection and Active Learning Framework for Computer Vision”](https://arxiv.org/abs/1901.01151)**. 7th IEEE Winter Conference on Applications of Computer Vision (WACV), 2019 Hawaii, USA
 
-[7] Schwartz, Roy, et al. **["Green AI."]** arXiv preprint arXiv:1907.10597 (2019).
+[7] Schwartz, Roy, et al. **["Green AI."]()** arXiv preprint arXiv:1907.10597 (2019).
 
-[8] Strubell, Emma, Ananya Ganesh, and Andrew McCallum. **[“Energy and policy considerations for deep learning in NLP.”]** In ACL 2019.
+[8] Strubell, Emma, Ananya Ganesh, and Andrew McCallum. **[“Energy and policy considerations for deep learning in NLP.”]()** In ACL 2019.
 
 [9] Kai Wei, Rishabh Iyer, Jeff Bilmes, **[“Submodularity in Data Subset Selection and Active Learning”](http://proceedings.mlr.press/v37/wei15-supp.pdf)**. International Conference on Machine Learning (ICML) 2015
 
