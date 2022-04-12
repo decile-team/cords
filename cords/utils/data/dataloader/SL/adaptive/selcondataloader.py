@@ -5,9 +5,29 @@ import time, copy
 
 # SELCONstrategy
 class SELCONDataLoader(AdaptiveDSSDataLoader):
+    """
+    Implementation of SELCONdataloader that serves as the dataloader for SELCON algorithm from the
+    paper :footcite:`durga2021training`.
+
+    Parameters
+    -----------
+    trainset : torch.utils.data.Dataset class
+        Dataset for training.
+    validset : torch.utils.data.Dataset class
+        Dataset for validation.
+    train_loader : torch.utils.data.DataLoader class
+        Training data loader.
+    val_loader : torch.utils.data.DataLoader class
+        Validation data loader.
+    dss_args : dict
+        Dictionary of arguments for SELCONdataloader.
+    logger : logging.Logger class
+        Logger for logging.
+
+    """
     def __init__(self, trainset, validset, train_loader, val_loader, dss_args, logger, *args, **kwargs):
         """
-         Arguments assertion check
+        Constructor function
         """
         assert "model" in dss_args.keys(), "'model' is a compulsory argument. Include it as a key in dss_args"
         assert "loss" in dss_args.keys(), "'loss' is a compulsory argument. Include it as a key in dss_args"
@@ -17,13 +37,6 @@ class SELCONDataLoader(AdaptiveDSSDataLoader):
         assert "num_classes" in dss_args.keys(), "'num_classes' is a compulsory argument for SELCON. Include it as a key in dss_args"
         assert "delta" in dss_args.keys(), "'delta' is a compulsory argument for SELCON. Include it as a key in dss_args"
         assert "linear_layer" in dss_args.keys(), "'linear_layer' is a compulsory argument for SELCON. Include it as a key in dss_args"
-        
-        '''
-        self, trainloader, valloader, model, 
-        loss_func, device, num_classes, delta, 
-        linear_layer, lam, lr, logger, optimizer, 
-        batch_size, criterion
-        '''
         
         super(SELCONDataLoader, self).__init__(train_loader, val_loader, dss_args,
                                                 logger, *args, **kwargs)
@@ -36,6 +49,9 @@ class SELCONDataLoader(AdaptiveDSSDataLoader):
         self.logger.debug('SELCON dataloader initialized. ')
 
     def _resample_subset_indices(self):
+        """
+        Function that calls the SELCON subset selection strategy to sample new subset indices and the corresponding subset weights.
+        """
         start = time.time()
         self.logger.debug('Epoch: {0:d}, requires subset selection. '.format(self.cur_epoch))
         cached_state_dict = copy.deepcopy(self.train_model.state_dict())

@@ -62,6 +62,13 @@ Adaptive subset selection Data Loaders
         :members:
         :undoc-members:
         :show-inheritance:
+    
+    SELCON :footcite:`durga2021training`
+    ------------------------------------------------------------
+    .. automodule:: cords.selectionstrategies.SL.selcondataloader
+        :members:
+        :undoc-members:
+        :show-inheritance:
 
     Random Dataloader
     ---------------------------------------------------------------------

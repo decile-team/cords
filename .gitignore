@@ -11,3 +11,4 @@ __pycache__
 /RayLogs/
 *.tar.gz
 .vscode
+.DS_Store

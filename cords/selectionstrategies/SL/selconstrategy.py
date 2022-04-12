@@ -7,13 +7,52 @@ import numpy as np
 
 
 class SELCONstrategy(DataSelectionStrategy):
+    """
+    Implementation of SELCON strategy from the paper :footcite:`durga2021training` for data subset selection.
+    
+
+    Parameters
+	----------
+    trainset: class
+        Loading the train dataset
+    valset: class
+        Loading the validation dataset
+    trainloader: class
+        Loading the training data using pytorch DataLoader
+    valloader: class
+        Loading the validation data using pytorch DataLoader
+    model: class
+        Model architecture used for training
+    loss_func: object
+        Loss function object
+    device: str
+        The device being utilized - cpu | cuda
+    num_classes: int
+        The number of target classes in the dataset
+    delta: float
+        Hyperparameter for SELCON algorithm
+    num_epoch: int
+        Number of epochs for SELCON pretraining
+    linear_layer: bool
+        If True, we use the last fc layer weights and biases gradients
+        If False, we use the last fc layer biases gradients
+    lam: float
+        Hyperparameter for SELCON algorithm 
+    lr: float
+        Hyperparameter for SELCON algorithm
+    logger: class
+        Logger class for logging the information
+    optimizer: class
+        Optimizer class for SELCON pretraining
+    batch_size: int
+        Hyperparameter for SELCON algorithm
+    criterion: class
+        Loss function for SELCON pretraining
+    """
     def __init__(self, trainset, validset, trainloader, valloader, model, 
                 loss_func, device, num_classes, delta, num_epochs,
                 linear_layer, lam, lr, logger, optimizer, 
                 batch_size, criterion):
-        """
-        Constructor method
-        """
         super().__init__(trainloader, valloader, model, num_classes, linear_layer, loss_func, device, logger)
         self.delta = delta
         self.lam = lam
@@ -28,7 +67,18 @@ class SELCONstrategy(DataSelectionStrategy):
         self.sub_epoch = num_epochs // 20  # doubt : what to take as sub epoch? a param?
         self.__precompute(self.num_epochs//4, self.sub_epoch, torch.randn_like(self.delta))
 
-    def __precompute(self, f_pi_epoch, p_epoch, alphas): # TODO: alphas?
+    def __precompute(self, f_pi_epoch, p_epoch, alphas):
+        """
+        SELCON precompute step
+
+        Parameters
+        ----------
+        f_pi_epoch: int
+        p_epoch: int
+            precompute epoch
+        alphas:
+            optimizer params
+        """
         main_optimizer = torch.optim.Adam([
                 {'params': self.model.parameters()}], lr=self.lr)
                 
@@ -182,6 +232,36 @@ class SELCONstrategy(DataSelectionStrategy):
     def __return_subset(self, theta_init, p_epoch, curr_subset, budget, 
                         batch, step, w_exp_avg, w_exp_avg_sq):
 
+        """
+        Return subset selected by SELCON algorithm
+
+        Parameters
+        ----------
+        theta_init: tensor
+            Model init params
+        p_epoch: int
+            Precompute epochs
+        curr_subset: int
+            Current subset idx
+        budget: int
+            The number of data points to be selected
+        batch: int
+            Batch size
+        step: int 
+            Step size
+        w_exp_avg: tensor
+            Exponential average of weights
+        w_exp_avg_sq: tensor
+            Exponential average of square weights
+        
+        Returns
+        ----------
+        indices_list : list
+            List containing indices of the best datapoints
+        values_list : list
+            List containing values of the best datapoints
+        """
+
         m_values = self.F_values.detach().clone()
         self.model.load_state_dict(theta_init) # todo: use this, update theta_init before calling this function
 
@@ -306,6 +386,24 @@ class SELCONstrategy(DataSelectionStrategy):
         return list(indices.cpu().numpy()), list(values.cpu().numpy())
 
     def select(self, budget, model_params):
+        """
+        Data selection method using SELCON algorithm.
+
+        Parameters
+        ----------
+        budget: int
+            The number of data points to be selected
+        model_params: OrderedDict
+            Python dictionary object containing models parameters
+        
+        Returns
+        ----------
+        indices_list : list
+            List containing indices of the best datapoints
+        values_list : list
+            List containing values of the best datapoints
+        """
+        
         N = len(self.trainloader)
         current_idx = list(np.random.choice(N, budget, replace=False)) # take this from prev train loop
         state_values = list(self.optimizer.state.values())

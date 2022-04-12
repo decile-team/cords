@@ -31,6 +31,15 @@ GradMatch Strategy :footcite:`pmlr-v139-killamsetty21a`
    :undoc-members:
    :show-inheritance:
 
+
+SELCON :footcite:`durga2021training`
+------------------------------------------------------------
+.. automodule:: cords.selectionstrategies.SL.selconstrategy
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
 Random Strategy
 ----------------
 .. automodule:: cords.selectionstrategies.SSL.randomstrategy
