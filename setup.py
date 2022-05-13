@@ -1,13 +1,12 @@
 from setuptools import setup
 import setuptools
-from pathlib import Path
+import os
 
-this_directory = Path(__file__).parent
-long_description = (this_directory / "README.md").read_text()
-    
+long_description = "CORDS is COReset and Data Selection library for making machine learning time, energy, cost, and compute efficient. CORDS is built on top of PyTorch. Today, deep learning systems are extremely compute-intensive, with significant turnaround times, energy inefficiencies, higher costs, and resource requirements [7, 8]. CORDS is an effort to make deep learning more energy, cost, resource, and time-efficient while not sacrificing accuracy."
+
 setup(
     name='cords',
-    version='v0.0.2',
+    version='v0.0.4',
     author='Krishnateja Killamsetty, Dheeraj Bhat, Rishabh Iyer',
     author_email='krishnatejakillamsetty@gmail.com',
     #packages=['cords', 'cords/selectionstrategies', 'cords/utils'],
