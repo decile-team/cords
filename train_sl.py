@@ -702,22 +702,31 @@ class TrainClassifier:
         """
 
         if "val_acc" in print_args:
-            val_str = "Validation Accuracy, "
+            val_str = "Validation Accuracy: "
             for val in val_acc:
-                val_str = val_str + " , " + str(val)
+                if val_str == "Validation Accuracy: ":
+                    val_str = val_str + str(val)
+                else:
+                    val_str = val_str + " , " + str(val)
             logger.info(val_str)
 
         if "tst_acc" in print_args:
-            tst_str = "Test Accuracy, "
+            tst_str = "Test Accuracy: "
             for tst in tst_acc:
-                tst_str = tst_str + " , " + str(tst)
+                if tst_str == "Test Accuracy: ":
+                    tst_str = tst_str + str(tst)
+                else:
+                    tst_str = tst_str + " , " + str(tst)
             logger.info(tst_str)
 
         if "time" in print_args:
-            time_str = "Time, "
+            time_str = "Time: "
             for t in timing:
-                time_str = time_str + " , " + str(t)
-            logger.info(timing)
+                if time_str == "Time: ":
+                    time_str = time_str + str(t)
+                else:
+                    time_str = time_str + " , " + str(t)
+            logger.info(time_str)
 
         omp_timing = np.array(timing)
         omp_cum_timing = list(self.generate_cumulative_timing(omp_timing))
