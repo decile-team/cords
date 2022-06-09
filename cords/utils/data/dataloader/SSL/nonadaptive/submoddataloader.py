@@ -1,5 +1,5 @@
 import numpy as np
-import apricot
+import submodlib
 import math
 from .nonadaptivedataloader import NonAdaptiveDSSDataLoader
 
@@ -91,9 +91,8 @@ class FacLocDataLoader(SubmodDataLoader):
         ranking: list
             Ranking of the samples based on the facility location gain 
         """
-        f = apricot.functions.facilityLocation.FacilityLocationSelection(n_samples=n_samples)
-        m = f.fit(chunk)
-        return list(m.ranking)
+        fl = submodlib.functions.facilityLocation.FacilityLocationFunction(n=len(chunk), mode='dense', data=chunk)
+        return [idx for idx, _ in fl.maximize(n_samples)]
 
 
 class GraphCutDataLoader(SubmodDataLoader):
@@ -128,11 +127,10 @@ class GraphCutDataLoader(SubmodDataLoader):
         ranking: list
             Ranking of the samples based on the graphcut gain 
         """
-        f = apricot.functions.graphCut.GraphCutSelection(n_samples=n_samples)
-        m = f.fit(chunk)
-        return list(m.ranking)
+        fl = submodlib.functions.graphCut.graphCutFunction(n=len(chunk), mode='dense', data=chunk)
+        return [idx for idx, _ in fl.maximize(n_samples)]
 
-
+'''
 class SumRedundancyDataLoader(SubmodDataLoader):
     """
     Implementation of SumRedundancyDataLoader class for the nonadaptive sum redundancy function
@@ -167,7 +165,7 @@ class SumRedundancyDataLoader(SubmodDataLoader):
         f = apricot.functions.sumRedundancy.SumRedundancySelection(n_samples=n_samples)
         m = f.fit(chunk)
         return list(m.ranking)
-
+'''
 
 class SaturatedCoverageDataLoader(SubmodDataLoader):
     """
@@ -200,6 +198,5 @@ class SaturatedCoverageDataLoader(SubmodDataLoader):
         ranking: list
             Ranking of the samples based on the saturated coverage gain 
         """
-        f = apricot.functions.facilityLocation.FacilityLocationSelection(n_samples=n_samples)
-        m = f.fit(chunk)
-        return list(m.ranking)
+        fl = submodlib.functions.saturatedCoverage.saturatedCoverageFunction(n=len(chunk), mode='dense', data=chunk)
+        return [idx for idx, _ in fl.maximize(n_samples)]

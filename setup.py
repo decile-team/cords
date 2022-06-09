@@ -17,7 +17,6 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     install_requires=[
-        "apricot-select>=0.6.0",
         "numba>=0.43.0",
         "scipy>=1.5.0",
         "scikit-learn",
@@ -39,6 +38,7 @@ setup(
         "setuptools>=58.0.4",
         "ray[tune]",
         "ray[default]",
-        "datasets"
+        "datasets",
+        "submodlib"
             ],
 )

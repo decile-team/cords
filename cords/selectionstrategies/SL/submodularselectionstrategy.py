@@ -1,4 +1,4 @@
-import apricot
+import submodlib
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -10,7 +10,7 @@ from torch.utils.data.sampler import SubsetRandomSampler
 class SubmodularSelectionStrategy(DataSelectionStrategy):
     """
     This class extends :class:`selectionstrategies.supervisedlearning.dataselectionstrategy.DataSelectionStrategy`
-    to include submodular optmization functions using apricot for data selection.
+    to include submodular optmization functions using submodlib for data selection.
 
     Parameters
     ----------
@@ -34,11 +34,15 @@ class SubmodularSelectionStrategy(DataSelectionStrategy):
         PerClass or Supervised
     submod_func_type: str
         The type of submodular optimization function. Must be one of
-        'facility-location', 'graph-cut', 'sum-redundancy', 'saturated-coverage'
+        'facility-location', 'graph-cut', or 'saturated-coverage'
+    optimizer: str
+        The optimizer used to compute the optimal subset. Can be 'NaiveGreedy', 'StochasticGreedy', 'LazyGreedy', or 'LazierThanLazyGreedy'.
+    num_neighbors: int, default=5
+        Number of neighbors applicable for the sparse similarity kernel.
     """
 
     def __init__(self, trainloader, valloader, model, loss,
-                 device, num_classes, linear_layer, if_convex, selection_type, submod_func_type, optimizer):
+                 device, num_classes, linear_layer, if_convex, selection_type, submod_func_type, optimizer, num_neighbors=5):
         """
         Constructer method
         """
@@ -47,6 +51,7 @@ class SubmodularSelectionStrategy(DataSelectionStrategy):
         self.selection_type = selection_type
         self.submod_func_type = submod_func_type
         self.optimizer = optimizer
+        self.num_neighbors = num_neighbors
 
     def distance(self, x, y, exp=2):
         """
@@ -209,10 +214,6 @@ class SubmodularSelectionStrategy(DataSelectionStrategy):
             The number of data points to be selected
         model_params: OrderedDict
             Python dictionary object containing models parameters
-        optimizer: str
-            The optimization approach for data selection. Must be one of
-            'random', 'modular', 'naive', 'lazy', 'approximate-lazy', 'two-stage',
-            'stochastic', 'sample', 'greedi', 'bidirectional'
 
         Returns
         ----------
@@ -235,26 +236,11 @@ class SubmodularSelectionStrategy(DataSelectionStrategy):
             for i in range(self.num_classes):
                 idxs = torch.where(labels == i)[0]
                 self.compute_score(model_params, idxs)
-                if self.submod_func_type == 'facility-location':
-                    fl = apricot.functions.facilityLocation.FacilityLocationSelection(random_state=0,
-                                                                                      metric='precomputed',
-                                                                                      n_samples=per_class_bud,
-                                                                                      optimizer=self.optimizer)
-                elif self.submod_func_type == 'graph-cut':
-                    fl = apricot.functions.graphCut.GraphCutSelection(random_state=0, metric='precomputed',
-                                                                      n_samples=per_class_bud, optimizer=self.optimizer)
-                elif self.submod_func_type == 'sum-redundancy':
-                    fl = apricot.functions.sumRedundancy.SumRedundancySelection(random_state=0, metric='precomputed',
-                                                                                n_samples=per_class_bud,
-                                                                                optimizer=self.optimizer)
-                elif self.submod_func_type == 'saturated-coverage':
-                    fl = apricot.functions.saturatedCoverage.SaturatedCoverageSelection(random_state=0,
-                                                                                        metric='precomputed',
-                                                                                        n_samples=per_class_bud,
-                                                                                        optimizer=self.optimizer)
-
-                sim_sub = fl.fit_transform(self.dist_mat)
-                greedyList = list(np.argmax(sim_sub, axis=1))
+                fl_functions = {'facility-location':submodlib.functions.facilityLocation.FacilityLocationFunction,
+                                'graph-cut':submodlib.functions.graphCut.graphCutFunction,
+                                'saturated-coverage':submodlib.functions.saturatedCoverage.saturatedCoverageFunction}
+                fl = fl_functions[self.submod_func_type](n=self.dist_mat.shape[0], mode='dense', sijs=self.dist_mat)
+                greedyList = [idx for idx, _ in fl.maximize(budget=per_class_bud, optimizer=self.optimizer)]
                 gamma = self.compute_gamma(greedyList)
                 total_greedy_list.extend(idxs[greedyList])
                 gammas.extend(gamma)
@@ -277,24 +263,10 @@ class SubmodularSelectionStrategy(DataSelectionStrategy):
                     data = np.concatenate([data, self.dist_mat.flatten()], axis=0)
             sparse_simmat = csr_matrix((data, (row.numpy(), col.numpy())), shape=(self.N_trn, self.N_trn))
             self.dist_mat = sparse_simmat
-            if self.submod_func_type == 'facility-location':
-                fl = apricot.functions.facilityLocation.FacilityLocationSelection(random_state=0, metric='precomputed',
-                                                                                  n_samples=per_class_bud,
-                                                                                  optimizer=self.optimizer)
-            elif self.submod_func_type == 'graph-cut':
-                fl = apricot.functions.graphCut.GraphCutSelection(random_state=0, metric='precomputed',
-                                                                  n_samples=per_class_bud, optimizer=self.optimizer)
-            elif self.submod_func_type == 'sum-redundancy':
-                fl = apricot.functions.sumRedundancy.SumRedundancySelection(random_state=0, metric='precomputed',
-                                                                            n_samples=per_class_bud,
-                                                                            optimizer=self.optimizer)
-            elif self.submod_func_type == 'saturated-coverage':
-                fl = apricot.functions.saturatedCoverage.SaturatedCoverageSelection(random_state=0,
-                                                                                    metric='precomputed',
-                                                                                    n_samples=per_class_bud,
-                                                                                    optimizer=self.optimizer)
-
-            sim_sub = fl.fit_transform(sparse_simmat)
-            total_greedy_list = list(np.array(np.argmax(sim_sub, axis=1)).reshape(-1))
-            gammas = self.compute_gamma(total_greedy_list)
+            fl_functions = {'facility-location':submodlib.functions.facilityLocation.FacilityLocationFunction,
+                            'graph-cut':submodlib.functions.graphCut.graphCutFunction,
+                            'saturated-coverage':submodlib.functions.saturatedCoverage.saturatedCoverageFunction}
+            fl = fl_functions[self.submod_func_type](n=self.N_trn, mode='sparse', sijs=sparse_simmat, num_neighbors=self.num_neighbors)
+            greedy_list = fl.maximize(budget=per_class_bud, optimizer=self.optimizer)
+            gammas = self.compute_gamma(greedy_list)
         return total_greedy_list, gammas
