@@ -29,7 +29,7 @@ def taylor_softmax_v1(x, dim=1, n=2, use_log=False):
 
 class WeightedRandomExplorationStrategy(object):
     """
-    This is the Global Order Selection Strategy class where we select a set of points based on a global ranking of the dataset.
+    Implementation of the Weighted Random Exploration Strategy class defined in the paper :footcite:`killamsetty2023milo`, where we select a set of points based on a global ordering of the dataset.
     Global Ordering has to be provided in prior for selection. We provide a way to compute global ordering for text and image datasets
     using various submodular functions as a util function.
    
@@ -62,7 +62,7 @@ class WeightedRandomExplorationStrategy(object):
 
     def select(self, budget):
         """
-        Perform random sampling of indices of size budget.
+        Samples subset of size budget from the generated probability distribution.
 
         Parameters
         ----------

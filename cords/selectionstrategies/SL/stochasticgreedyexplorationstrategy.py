@@ -16,8 +16,8 @@ def pickle2dict(file_name, key):
 
 class StochasticGreedyExplorationStrategy(object):
     """
-    This is the Global Order Selection Strategy class where we select a set of points based on a global ranking of the dataset.
-    Global Ordering has to be provided in prior for selection. We provide a way to compute global ordering for text and image datasets
+    This is the Stochastic Greedy Exploration Strategy class defined in the paper :footcite:`killamsetty2023milo`, where we select multiple subsets using stochastic greedy algorithm.
+    Stochastic subsets has to be provided in prior for selection. We provide a way to compute stochastic subsets for text and image datasets
     using various submodular functions as a util function.
    
     Parameters
@@ -44,7 +44,7 @@ class StochasticGreedyExplorationStrategy(object):
 
     def select(self, budget):
         """
-        Perform random sampling of indices of size budget.
+        Utilizes already selected stochastic subsets of indices of size budget.
 
         Parameters
         ----------
