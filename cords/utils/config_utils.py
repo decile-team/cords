@@ -33,6 +33,11 @@ def check_file_exist(filename, msg_tmpl='file "{}" does not exist'):
         raise FileNotFoundError(msg_tmpl.format(filename))
 
 
+def check_dir_exist(dirname, msg_tmpl='Directory "{}" does not exist'):
+    if not osp.isdir(dirname):
+        raise FileNotFoundError(msg_tmpl.format(dirname))
+
+
 def mkdir_or_exist(dir_name, mode=0o777):
     if dir_name == '':
         return

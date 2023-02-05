@@ -208,6 +208,7 @@ class GradMatchStrategy(DataSelectionStrategy):
             idxs = list(np.array(idxs)[rand_indices])
             gammas = list(np.array(gammas)[rand_indices])
         
+        idxs = [int(x) for x in idxs]
         omp_end_time = time.time()
         self.logger.debug("GradMatch algorithm Subset Selection time is: %.4f", omp_end_time - omp_start_time)
         return idxs, torch.FloatTensor(gammas)

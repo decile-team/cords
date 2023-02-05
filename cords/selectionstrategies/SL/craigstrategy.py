@@ -304,5 +304,6 @@ class CRAIGStrategy(DataSelectionStrategy):
                 total_greedy_list.extend(tmp)
                 gammas.extend([gammas_temp[i]] * len(tmp))
         end_time = time.time()
+        total_greedy_list = [int(x) for x in total_greedy_list]
         self.logger.debug("CRAIG strategy data selection time is: %.4f", end_time-start_time)
         return total_greedy_list, torch.FloatTensor(gammas)

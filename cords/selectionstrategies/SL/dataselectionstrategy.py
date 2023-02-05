@@ -50,19 +50,33 @@ class DataSelectionStrategy(object):
         pass
 
     def get_labels(self, valid=False):
-        for batch_idx, (inputs, targets) in enumerate(self.trainloader):
-            if batch_idx == 0:
-                self.trn_lbls = targets.view(-1, 1)
-            else:
-                self.trn_lbls = torch.cat((self.trn_lbls, targets.view(-1, 1)), dim=0)
+        if isinstance(self.trainloader.dataset[0], dict):
+            for batch_idx, batch in enumerate(self.trainloader):
+                if batch_idx == 0:
+                    self.trn_lbls = batch['labels'].view(-1, 1)
+                else:
+                    self.trn_lbls = torch.cat((self.trn_lbls, batch['labels'].view(-1, 1)), dim=0)
+        else:
+            for batch_idx, (_, targets) in enumerate(self.trainloader):
+                if batch_idx == 0:
+                    self.trn_lbls = targets.view(-1, 1)
+                else:
+                    self.trn_lbls = torch.cat((self.trn_lbls, targets.view(-1, 1)), dim=0)
         self.trn_lbls = self.trn_lbls.view(-1)
 
         if valid:
-            for batch_idx, (inputs, targets) in enumerate(self.valloader):
-                if batch_idx == 0:
-                    self.val_lbls = targets.view(-1, 1)
-                else:
-                    self.val_lbls = torch.cat((self.val_lbls, targets.view(-1, 1)), dim=0)
+            if isinstance(self.valloader.dataset[0], dict):
+                for batch_idx, batch in enumerate(self.valloader):
+                    if batch_idx == 0:
+                        self.val_lbls = batch['labels'].view(-1, 1)
+                    else:
+                        self.val_lbls = torch.cat((self.val_lbls, batch['labels'].view(-1, 1)), dim=0)
+            else:
+                for batch_idx, (_, targets) in enumerate(self.valloader):
+                    if batch_idx == 0:
+                        self.val_lbls = targets.view(-1, 1)
+                    else:
+                        self.val_lbls = torch.cat((self.val_lbls, targets.view(-1, 1)), dim=0)
             self.val_lbls = self.val_lbls.view(-1)
 
     def compute_gradients(self, valid=False, perBatch=False, perClass=False):
@@ -114,44 +128,36 @@ class DataSelectionStrategy(object):
             if valid:
                 valloader = self.valloader
             
-        for batch_idx, (inputs, targets) in enumerate(trainloader):
-            inputs, targets = inputs.to(self.device), targets.to(self.device, non_blocking=True)
-            if batch_idx == 0:
-                out, l1 = self.model(inputs, last=True, freeze=True)
-                loss = self.loss(out, targets).sum()
-                l0_grads = torch.autograd.grad(loss, out)[0]
-                if self.linear_layer:
-                    l0_expand = torch.repeat_interleave(l0_grads, embDim, dim=1)
-                    l1_grads = l0_expand * l1.repeat(1, self.num_classes)
-                if perBatch:
-                    l0_grads = l0_grads.mean(dim=0).view(1, -1)
+        if isinstance(trainloader.dataset[0], dict):
+            for batch_idx, batch in enumerate(trainloader):
+                batch = {k: v.to(self.device) for k, v in batch.items()}        
+                if batch_idx == 0:                
+                    out, l1 = self.model(**batch, last=True, freeze=True)
+                    loss = self.loss(out, batch['labels'].view(-1)).sum()
+                    l0_grads = torch.autograd.grad(loss, out)[0]                    
                     if self.linear_layer:
-                        l1_grads = l1_grads.mean(dim=0).view(1, -1)
-            else:
-                out, l1 = self.model(inputs, last=True, freeze=True)
-                loss = self.loss(out, targets).sum()
-                batch_l0_grads = torch.autograd.grad(loss, out)[0]
-                if self.linear_layer:
-                    batch_l0_expand = torch.repeat_interleave(batch_l0_grads, embDim, dim=1)
-                    batch_l1_grads = batch_l0_expand * l1.repeat(1, self.num_classes)
-
-                if perBatch:
-                    batch_l0_grads = batch_l0_grads.mean(dim=0).view(1, -1)
+                        l0_expand = torch.repeat_interleave(l0_grads, embDim, dim=1)
+                        l1_grads = l0_expand * l1.repeat(1, self.num_classes)                    
+                    if perBatch:
+                        l0_grads = l0_grads.mean(dim=0).view(1, -1)
+                        if self.linear_layer:
+                            l1_grads = l1_grads.mean(dim=0).view(1, -1)                
+                else:                    
+                    out, l1 = self.model(**batch, last=True, freeze=True)
+                    loss = self.loss(out, batch['labels'].view(-1)).sum()
+                    batch_l0_grads = torch.autograd.grad(loss, out)[0]                    
                     if self.linear_layer:
-                        batch_l1_grads = batch_l1_grads.mean(dim=0).view(1, -1)
-                l0_grads = torch.cat((l0_grads, batch_l0_grads), dim=0)
-                if self.linear_layer:
-                    l1_grads = torch.cat((l1_grads, batch_l1_grads), dim=0)
-
-        torch.cuda.empty_cache()
-
-        if self.linear_layer:
-            self.grads_per_elem = torch.cat((l0_grads, l1_grads), dim=1)
-        else:
-            self.grads_per_elem = l0_grads
-
-        if valid:
-            for batch_idx, (inputs, targets) in enumerate(valloader):
+                        batch_l0_expand = torch.repeat_interleave(batch_l0_grads, embDim, dim=1)
+                        batch_l1_grads = batch_l0_expand * l1.repeat(1, self.num_classes)
+                    if perBatch:
+                        batch_l0_grads = batch_l0_grads.mean(dim=0).view(1, -1)
+                        if self.linear_layer:
+                            batch_l1_grads = batch_l1_grads.mean(dim=0).view(1, -1)            
+                    l0_grads = torch.cat((l0_grads, batch_l0_grads), dim=0)                    
+                    if self.linear_layer:
+                        l1_grads = torch.cat((l1_grads, batch_l1_grads), dim=0)
+        else:    
+            for batch_idx, (inputs, targets) in enumerate(trainloader):
                 inputs, targets = inputs.to(self.device), targets.to(self.device, non_blocking=True)
                 if batch_idx == 0:
                     out, l1 = self.model(inputs, last=True, freeze=True)
@@ -179,6 +185,73 @@ class DataSelectionStrategy(object):
                     l0_grads = torch.cat((l0_grads, batch_l0_grads), dim=0)
                     if self.linear_layer:
                         l1_grads = torch.cat((l1_grads, batch_l1_grads), dim=0)
+
+        torch.cuda.empty_cache()
+
+        if self.linear_layer:
+            self.grads_per_elem = torch.cat((l0_grads, l1_grads), dim=1)
+        else:
+            self.grads_per_elem = l0_grads
+
+        if valid:
+            if isinstance(valloader.dataset[0], dict):
+                for batch_idx, batch in enumerate(valloader):
+                    batch = {k: v.to(self.device) for k, v in batch.items()}        
+                    if batch_idx == 0:                
+                        out, l1 = self.model(**batch, last=True, freeze=True)
+                        loss = self.loss(out, batch['labels'].view(-1)).sum()
+                        l0_grads = torch.autograd.grad(loss, out)[0]                    
+                        if self.linear_layer:
+                            l0_expand = torch.repeat_interleave(l0_grads, embDim, dim=1)
+                            l1_grads = l0_expand * l1.repeat(1, self.num_classes)                    
+                        if perBatch:
+                            l0_grads = l0_grads.mean(dim=0).view(1, -1)
+                            if self.linear_layer:
+                                l1_grads = l1_grads.mean(dim=0).view(1, -1)                
+                    else:                    
+                        out, l1 = self.model(**batch, last=True, freeze=True)
+                        loss = self.loss(out, batch['labels'].view(-1)).sum()
+                        batch_l0_grads = torch.autograd.grad(loss, out)[0]                    
+                        if self.linear_layer:
+                            batch_l0_expand = torch.repeat_interleave(batch_l0_grads, embDim, dim=1)
+                            batch_l1_grads = batch_l0_expand * l1.repeat(1, self.num_classes)
+                        if perBatch:
+                            batch_l0_grads = batch_l0_grads.mean(dim=0).view(1, -1)
+                            if self.linear_layer:
+                                batch_l1_grads = batch_l1_grads.mean(dim=0).view(1, -1)            
+                        l0_grads = torch.cat((l0_grads, batch_l0_grads), dim=0)                    
+                        if self.linear_layer:
+                            l1_grads = torch.cat((l1_grads, batch_l1_grads), dim=0)
+            else:    
+                for batch_idx, (inputs, targets) in enumerate(valloader):
+                    inputs, targets = inputs.to(self.device), targets.to(self.device, non_blocking=True)
+                    if batch_idx == 0:
+                        out, l1 = self.model(inputs, last=True, freeze=True)
+                        loss = self.loss(out, targets).sum()
+                        l0_grads = torch.autograd.grad(loss, out)[0]
+                        if self.linear_layer:
+                            l0_expand = torch.repeat_interleave(l0_grads, embDim, dim=1)
+                            l1_grads = l0_expand * l1.repeat(1, self.num_classes)
+                        if perBatch:
+                            l0_grads = l0_grads.mean(dim=0).view(1, -1)
+                            if self.linear_layer:
+                                l1_grads = l1_grads.mean(dim=0).view(1, -1)
+                    else:
+                        out, l1 = self.model(inputs, last=True, freeze=True)
+                        loss = self.loss(out, targets).sum()
+                        batch_l0_grads = torch.autograd.grad(loss, out)[0]
+                        if self.linear_layer:
+                            batch_l0_expand = torch.repeat_interleave(batch_l0_grads, embDim, dim=1)
+                            batch_l1_grads = batch_l0_expand * l1.repeat(1, self.num_classes)
+
+                        if perBatch:
+                            batch_l0_grads = batch_l0_grads.mean(dim=0).view(1, -1)
+                            if self.linear_layer:
+                                batch_l1_grads = batch_l1_grads.mean(dim=0).view(1, -1)
+                        l0_grads = torch.cat((l0_grads, batch_l0_grads), dim=0)
+                        if self.linear_layer:
+                            l1_grads = torch.cat((l1_grads, batch_l1_grads), dim=0)
+
             torch.cuda.empty_cache()
             if self.linear_layer:
                 self.val_grads_per_elem = torch.cat((l0_grads, l1_grads), dim=1)

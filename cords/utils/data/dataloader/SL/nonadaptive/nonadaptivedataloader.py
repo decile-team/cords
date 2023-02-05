@@ -36,6 +36,3 @@ class NonAdaptiveDSSDataLoader(DSSDataLoader):
         Iter function that returns the iterator of the data subset loader.
         """
         return self.subset_loader.__iter__()
-
-
-

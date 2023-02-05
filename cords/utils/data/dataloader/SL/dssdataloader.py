@@ -27,6 +27,9 @@ class DSSDataLoader:
         super(DSSDataLoader, self).__init__()
         # TODO: Integrate verbose in logging
         self.len_full = len(full_data)
+        """
+         Arguments assertion check
+        """
         assert "fraction" in dss_args.keys(), "'fraction' is a compulsory argument. Include it as a key in dss_args"
         if (dss_args.fraction > 1) or (dss_args.fraction<0):
              raise ValueError("'fraction' should lie between 0 and 1")
@@ -41,8 +44,10 @@ class DSSDataLoader:
         self.subset_weights = None
         self.subset_loader = None
         self.batch_wise_indices = None
-        #self.strategy = None
-        self.cur_epoch = 1
+        self.selection_count = 0
+        self.selected_idxs = {}
+        # self.strategy = None
+        self.cur_epoch = 0
         wt_trainset = WeightedSubset(full_data, list(range(len(full_data))), [1]*len(full_data))
         self.wtdataloader = torch.utils.data.DataLoader(wt_trainset, *self.loader_args, **self.loader_kwargs)
         self._init_subset_loader()
@@ -70,7 +75,9 @@ class DSSDataLoader:
         """
         Function that regenerates the data subset loader using new subset indices and subset weights
         """
+        self.selected_idxs[self.selection_count] = self.subset_indices
+        self.selection_count += 1
+	
         self.subset_loader = DataLoader(WeightedSubset(self.dataset, self.subset_indices, self.subset_weights), 
                                         *self.loader_args, **self.loader_kwargs)
         self.batch_wise_indices = list(self.subset_loader.batch_sampler)
-

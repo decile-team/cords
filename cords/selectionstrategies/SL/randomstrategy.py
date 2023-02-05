@@ -44,4 +44,5 @@ class RandomStrategy(object):
             np.random.seed()
             self.indices = np.random.choice(self.N_trn, size=budget, replace=False)
             self.gammas = torch.ones(budget)
+        self.indices = [int(x) for x in self.indices]
         return self.indices, self.gammas
