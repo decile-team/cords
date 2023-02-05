@@ -26,7 +26,7 @@ class TrainClassifier:
         self.cfg = config_file_data
         results_dir = osp.abspath(osp.expanduser(self.cfg.train_args.results_dir))
         
-        if self.cfg.dss_args.type in ['StochasticGreedyExploration', 'WeightedRandomExploration']:
+        if self.cfg.dss_args.type in ['StochasticGreedyExploration', 'WeightedRandomExploration', 'SGE', 'WRE']:
             subset_selection_name = self.cfg.dss_args.type + "_" + self.cfg.dss_args.submod_function + "_" + str(self.cfg.dss_args.kw)
         elif self.cfg.dss_args.type in ['MILO']:
             subset_selection_name = self.cfg.dss_args.type + "_" + self.cfg.dss_args.submod_function + self.cfg.dss_args.gc_ratio + "_" + str(self.cfg.dss_args.kw)
@@ -230,7 +230,7 @@ class TrainClassifier:
         trn_batch_size = self.cfg.dataloader.batch_size
         val_batch_size = self.cfg.dataloader.batch_size
         tst_batch_size = self.cfg.dataloader.batch_size
-        
+
         batch_sampler = lambda _, __ : None
         drop_last = False
         if self.cfg.dss_args.type in ['SELCON']:
@@ -291,7 +291,7 @@ class TrainClassifier:
         # Checkpoint file
         checkpoint_dir = osp.abspath(osp.expanduser(self.cfg.ckpt.dir))
         
-        if self.cfg.dss_args.type in ['StochasticGreedyExploration', 'WeightedRandomExploration']:
+        if self.cfg.dss_args.type in ['StochasticGreedyExploration', 'WeightedRandomExploration', 'SGE', 'WRE']:
             subset_selection_name = self.cfg.dss_args.type + "_" + self.cfg.dss_args.submod_function + "_" + str(self.cfg.dss_args.kw)
         elif self.cfg.dss_args.type in ['MILO']:
             subset_selection_name = self.cfg.dss_args.type + "_" + self.cfg.dss_args.submod_function + self.cfg.dss_args.gc_ratio + "_" + str(self.cfg.dss_args.kw)
@@ -446,7 +446,7 @@ class TrainClassifier:
                                           pin_memory=self.cfg.dataloader.pin_memory, 
                                           collate_fn = self.cfg.dss_args.collate_fn)
 
-        elif self.cfg.dss_args.type in ['WeightedRandomExploration', 'WeightedRandomExploration-Warm']:
+        elif self.cfg.dss_args.type in ['WeightedRandomExploration', 'WeightedRandomExploration-Warm', 'WRE', 'WRE-Warm']:
             """
             ############################## WeightedRandomDataloader Additional Arguments ##############################
             """
@@ -459,7 +459,7 @@ class TrainClassifier:
                                             pin_memory=self.cfg.dataloader.pin_memory,
                                             collate_fn = self.cfg.dss_args.collate_fn)
 
-        elif self.cfg.dss_args.type in ['StochasticGreedyExploration', 'StochasticGreedyExploration-Warm']:
+        elif self.cfg.dss_args.type in ['StochasticGreedyExploration', 'StochasticGreedyExploration-Warm', 'SGE', 'SGE-Warm']:
             """
             ############################## StochasticGreedyDataloader Additional Arguments ##############################
             """

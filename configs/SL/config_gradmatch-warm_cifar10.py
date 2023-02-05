@@ -7,7 +7,7 @@ config = dict(setting="SL",
                            type="image"),
 
               dataloader=dict(shuffle=True,
-                              batch_size=20,
+                              batch_size=128,
                               pin_memory=True),
 
               model=dict(architecture='ResNet18',
@@ -24,9 +24,9 @@ config = dict(setting="SL",
 
               optimizer=dict(type="sgd",
                              momentum=0.9,
-                             lr=0.01,
+                             lr=0.05,
                              weight_decay=5e-4,
-                             nesterov=False),
+                             nesterov=True),
 
               scheduler=dict(type="cosine_annealing",
                              T_max=300),
@@ -40,13 +40,15 @@ config = dict(setting="SL",
                             valid=False,
                             eps=1e-100,
                             linear_layer=True, 
-                            kappa=0.5),
+                            kappa=0.5,
+                            collate_fn = None),
 
               train_args=dict(num_epochs=300,
                               device="cuda",
                               print_every=10,
+                              run=1,
                               results_dir='results/',
-                              print_args=["val_loss", "val_acc", "tst_loss", "tst_acc", "time"],
+                              print_args=["trn_loss", "trn_acc", "val_loss", "val_acc", "tst_loss", "tst_acc", "time"],
                               return_args=[]
                               )
               )
