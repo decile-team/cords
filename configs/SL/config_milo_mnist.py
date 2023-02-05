@@ -7,7 +7,7 @@ def parse_args():
     parser.add_argument(
                         "--dataset",
                         type=str,
-                        default="cifar100",
+                        default="cifar10",
                         help="Only supports datasets for hugging face currently."
                         )
     parser.add_argument(
@@ -68,7 +68,7 @@ args = parse_args()
 # Learning setting
 config = dict(setting="SL",
               is_reg = False,
-              dataset=dict(name="cifar100",
+              dataset=dict(name="mnist",
                            datadir="../data",
                            feature="dss",
                            type="image"),
@@ -77,9 +77,9 @@ config = dict(setting="SL",
                               batch_size=128,
                               pin_memory=True),
 
-              model=dict(architecture='ResNet18',
+              model=dict(architecture='MnistNet',
                          type='pre-defined',
-                         numclasses=100),
+                         numclasses=10),
               
               ckpt=dict(is_load=False,
                         is_save=True,
@@ -96,7 +96,7 @@ config = dict(setting="SL",
                              nesterov=True),
 
               scheduler=dict(type="cosine_annealing",
-                             T_max=300),
+                             T_max=200),
 
               dss_args=dict(type="MILO",
                             fraction=0.1,
@@ -111,10 +111,10 @@ config = dict(setting="SL",
                             temperature=1,
                             collate_fn = None),
 
-              train_args=dict(num_epochs=300,
+              train_args=dict(num_epochs=200,
                               device="cuda",
-                              print_every=1,
                               wandb=False,
+                              print_every=1,
                               run=1,
                               results_dir='results/',
                               print_args=["trn_loss", "trn_acc", "val_loss", "val_acc", "tst_loss", "tst_acc", "time"],

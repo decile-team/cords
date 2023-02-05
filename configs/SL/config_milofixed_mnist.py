@@ -97,7 +97,7 @@ config = dict(setting="SL",
                              nesterov=True),
 
               scheduler=dict(type="cosine_annealing",
-                             T_max=300,
+                             T_max=200,
                              stepsize=20,
                              gamma=0.1),
 
