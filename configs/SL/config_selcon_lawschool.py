@@ -44,6 +44,7 @@ config = dict(setting="SL",
                               device="cuda",
                               print_every=1,
                               results_dir='results/',
+                              wandb=False,
                               print_args=["val_loss", "tst_loss", "trn_loss", "time"],
                               return_args=[]
                               )

@@ -111,6 +111,7 @@ config = dict(setting="SL",
 
               train_args=dict(num_epochs=300,
                               device="cuda",
+                              wandb=False,
                               print_every=1,
                               run=1,
                               results_dir='results/',

@@ -96,7 +96,7 @@ config = dict(setting="SL",
                              nesterov=True),
 
               scheduler=dict(type="cosine_annealing",
-                             T_max=300),
+                             T_max=200),
 
               dss_args=dict(type="WRE",
                             fraction=0.1,
@@ -111,6 +111,7 @@ config = dict(setting="SL",
 
               train_args=dict(num_epochs=200,
                               device="cuda",
+                              wandb=False,
                               print_every=1,
                               run=1,
                               results_dir='results/',
