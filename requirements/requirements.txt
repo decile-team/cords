@@ -22,5 +22,6 @@ ray[tune]
 ray[default]
 submodlib
 datasets
+transformers
 sentence-transformers
 setuptools>=65.5.1
