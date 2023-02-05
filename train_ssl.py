@@ -411,6 +411,8 @@ class TrainClassifier:
         # init meter
         metric_meter = Meter()
         test_acc_list = []
+        best_acc_list = []
+        curr_best_acc = 0
         raw_acc_list = []
         logger.info("training")
 
@@ -471,6 +473,9 @@ class TrainClassifier:
                         logger.info("test loss %f | test acc. %f | raw acc. %f", mean_test_loss, mean_test_acc,
                                     mean_raw_acc)
                         test_acc_list.append(mean_test_acc)
+                        if mean_test_acc > curr_best_acc:
+                            curr_best_acc = mean_test_acc
+                        best_acc_list.append(curr_best_acc)
                         raw_acc_list.append(mean_raw_acc)
                     torch.save(model.state_dict(), os.path.join(self.cfg.train_args.results_dir, "model_checkpoint.pth"))
                     torch.save(optimizer.state_dict(),
@@ -484,8 +489,10 @@ class TrainClassifier:
         accuracies = {}
         for i in [1, 10, 20, 50]:
             logger.info("mean test acc. over last %d checkpoints: %f", i, numpy.median(test_acc_list[-i:]))
+            logger.info("mean best acc. over last %d checkpoints: %f", i, numpy.median(best_acc_list[-i:]))
             logger.info("mean test acc. for raw model over last %d checkpoints: %f", i, numpy.median(raw_acc_list[-i:]))
             accuracies[f"last{i}"] = numpy.median(test_acc_list[-i:])
+            accuracies[f"best{i}"] = numpy.median(best_acc_list[-i:])
 
         with open(os.path.join(self.cfg.train_args.results_dir, "results.json"), "w") as f:
             json.dump(accuracies, f, sort_keys=True)

@@ -286,6 +286,8 @@ class TrainClassifier:
         trn_acc = list()
         val_acc = list()  # np.zeros(cfg['train_args']['num_epochs'])
         tst_acc = list()  # np.zeros(cfg['train_args']['num_epochs'])
+        best_acc = list()
+        curr_best_acc = 0
         subtrn_acc = list()  # np.zeros(cfg['train_args']['num_epochs'])
 
         # Checkpoint file
@@ -559,6 +561,7 @@ class TrainClassifier:
                     tst_losses = load_metrics['tst_loss']
                 if arg == "tst_acc":
                     tst_acc = load_metrics['tst_acc']
+                    best_acc = load_metrics['best_acc']
                 if arg == "trn_loss":
                     trn_losses = load_metrics['trn_loss']
                 if arg == "trn_acc":
@@ -673,9 +676,14 @@ class TrainClassifier:
                         tst_losses.append(tst_loss)
                         logger_dict['tst_loss'] = tst_loss
 
+                    if (tst_correct/tst_total) > curr_best_acc:
+                        curr_best_acc = (tst_correct/tst_total)
+
                     if "tst_acc" in print_args:
                         tst_acc.append(tst_correct / tst_total)
+                        best_acc.append(curr_best_acc)
                         logger_dict['tst_acc'] = tst_correct / tst_total
+                        logger_dict['best_acc'] = curr_best_acc
 
                 if "subtrn_acc" in print_args:
                     if epoch == 0:
@@ -716,6 +724,7 @@ class TrainClassifier:
 
                     if arg == "tst_acc":
                         print_str += " , " + "Test Accuracy: " + str(tst_acc[-1])
+                        print_str += " , " + "Best Accuracy: " + str(best_acc[-1])
 
                     if arg == "trn_loss":
                         print_str += " , " + "Training Loss: " + str(trn_losses[-1])
@@ -785,6 +794,7 @@ class TrainClassifier:
                         metric_dict['tst_loss'] = tst_losses
                     if arg == "tst_acc":
                         metric_dict['tst_acc'] = tst_acc
+                        metric_dict['best_acc'] = best_acc
                     if arg == "trn_loss":
                         metric_dict['trn_loss'] = trn_losses
                     if arg == "trn_acc":
@@ -841,7 +851,7 @@ class TrainClassifier:
 
         if "tst_loss" in print_args:
             if "tst_acc" in print_args:
-                logger.info("Test Loss: %.2f, Test Accuracy: %.2f", tst_loss, tst_acc[-1])
+                logger.info("Test Loss: %.2f, Test Accuracy: %.2f, Best Accuracy: %.2f", tst_loss, tst_acc[-1], best_acc[-1])
             else:
                 logger.info("Test Data Loss: %f", tst_loss)
         logger.info('---------------------------------------------------------------------')
@@ -870,6 +880,14 @@ class TrainClassifier:
                     tst_str = tst_str + " , " + str(tst)
             logger.info(tst_str)
 
+            tst_str = "Best Accuracy: "
+            for tst in best_acc:
+                if tst_str == "Best Accuracy: ":
+                    tst_str = tst_str + str(tst)
+                else:
+                    tst_str = tst_str + " , " + str(tst)
+            logger.info(tst_str)
+
         if "time" in print_args:
             time_str = "Time: "
             for t in timing:
@@ -882,4 +900,4 @@ class TrainClassifier:
         omp_timing = np.array(timing)
         omp_cum_timing = list(self.generate_cumulative_timing(omp_timing))
         logger.info("Total time taken by %s = %.4f ", self.cfg.dss_args.type, omp_cum_timing[-1])
-        return trn_acc, val_acc, tst_acc
+        return trn_acc, val_acc, tst_acc, best_acc
