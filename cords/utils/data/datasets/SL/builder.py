@@ -17,9 +17,22 @@ import pandas as pd
 import torch
 import torchtext.data
 import pickle
+from ..__utils import TinyImageNet
 from cords.utils.data.data_utils import WeightedSubset
 import pandas as pd
-# from datasets import load_dataset
+from datasets import load_dataset
+
+LABEL_MAPPINGS = {'glue_sst2':'label', 
+                  'hf_trec6':'coarse_label', 
+		          'imdb':'label',
+                  'rotten_tomatoes': 'label',
+                  'tweet_eval': 'label'}
+
+SENTENCE_MAPPINGS = {'glue_sst2': 'sentence', 
+                    'hf_trec6':'text',  
+                    'imdb':'text',
+                    'rotten_tomatoes': 'text',
+                    'tweet_eval': 'text'}
 
 class standard_scaling:
     def __init__(self):
@@ -429,8 +442,8 @@ def census_load(path, dim, save_data=False):
     return (X_data, Y_label)
 
 
-def create_imbalance(x_trn, y_trn, x_val, y_val, x_tst, y_tst, num_cls, ratio):
-    np.random.seed(42)
+def create_imbalance(x_trn, y_trn, x_val, y_val, x_tst, y_tst, num_cls, ratio, seed=42):
+    rng = np.random.default_rng(seed)
     samples_per_class = np.zeros(num_cls)
     val_samples_per_class = np.zeros(num_cls)
     tst_samples_per_class = np.zeros(num_cls)
@@ -439,18 +452,18 @@ def create_imbalance(x_trn, y_trn, x_val, y_val, x_tst, y_tst, num_cls, ratio):
         val_samples_per_class[i] = len(np.where(y_val == i)[0])
         tst_samples_per_class[i] = len(np.where(y_tst == i)[0])
     min_samples = int(np.min(samples_per_class) * 0.1)
-    selected_classes = np.random.choice(np.arange(num_cls), size=int(ratio * num_cls), replace=False)
+    selected_classes = rng.choice(np.arange(num_cls), size=int(ratio * num_cls), replace=False)
     for i in range(num_cls):
         if i == 0:
             if i in selected_classes:
-                subset_idxs = np.random.choice(np.where(y_trn == i)[0], size=min_samples, replace=False)
+                subset_idxs = rng.choice(np.where(y_trn == i)[0], size=min_samples, replace=False)
             else:
                 subset_idxs = np.where(y_trn == i)[0]
             x_trn_new = x_trn[subset_idxs]
             y_trn_new = y_trn[subset_idxs].reshape(-1, 1)
         else:
             if i in selected_classes:
-                subset_idxs = np.random.choice(np.where(y_trn == i)[0], size=min_samples, replace=False)
+                subset_idxs = rng.choice(np.where(y_trn == i)[0], size=min_samples, replace=False)
             else:
                 subset_idxs = np.where(y_trn == i)[0]
             x_trn_new = np.row_stack((x_trn_new, x_trn[subset_idxs]))
@@ -459,54 +472,40 @@ def create_imbalance(x_trn, y_trn, x_val, y_val, x_tst, y_tst, num_cls, ratio):
     for i in range(num_cls):
         y_class = np.where(y_val == i)[0]
         if i == 0:
-            subset_ids = np.random.choice(y_class, size=max_samples - y_class.shape[0], replace=True)
+            subset_ids = rng.choice(y_class, size=max_samples - y_class.shape[0], replace=True)
             x_val_new = np.row_stack((x_val, x_val[subset_ids]))
             y_val_new = np.row_stack((y_val.reshape(-1, 1), y_val[subset_ids].reshape(-1, 1)))
         else:
-            subset_ids = np.random.choice(y_class, size=max_samples - y_class.shape[0], replace=True)
+            subset_ids = rng.choice(y_class, size=max_samples - y_class.shape[0], replace=True)
             x_val_new = np.row_stack((x_val, x_val_new, x_val[subset_ids]))
             y_val_new = np.row_stack((y_val.reshape(-1, 1), y_val_new, y_val[subset_ids].reshape(-1, 1)))
     max_samples = int(np.max(tst_samples_per_class))
     for i in range(num_cls):
         y_class = np.where(y_tst == i)[0]
         if i == 0:
-            subset_ids = np.random.choice(y_class, size=max_samples - y_class.shape[0], replace=True)
+            subset_ids = rng.choice(y_class, size=max_samples - y_class.shape[0], replace=True)
             x_tst_new = np.row_stack((x_tst, x_tst[subset_ids]))
             y_tst_new = np.row_stack((y_tst.reshape(-1, 1), y_tst[subset_ids].reshape(-1, 1)))
         else:
-            subset_ids = np.random.choice(y_class, size=max_samples - y_class.shape[0], replace=True)
+            subset_ids = rng.choice(y_class, size=max_samples - y_class.shape[0], replace=True)
             x_tst_new = np.row_stack((x_tst, x_tst_new, x_tst[subset_ids]))
             y_tst_new = np.row_stack((y_tst.reshape(-1, 1), y_tst_new, y_tst[subset_ids].reshape(-1, 1)))
 
     return x_trn_new, y_trn_new.reshape(-1), x_val_new, y_val_new.reshape(-1), x_tst_new, y_tst_new.reshape(-1)
 
 
-def create_noisy(y_trn, num_cls, noise_ratio=0.8):
+def create_noisy(y_trn, num_cls, noise_ratio=0.8, seed=42):
+    rng = np.random.default_rng(seed)
     noise_size = int(len(y_trn) * noise_ratio)
-    noise_indices = np.random.choice(np.arange(len(y_trn)), size=noise_size, replace=False)
-    y_trn[noise_indices] = np.random.choice(np.arange(num_cls), size=noise_size, replace=True)
+    noise_indices = rng.choice(np.arange(len(y_trn)), size=noise_size, replace=False)
+    y_trn[noise_indices] = rng.choice(np.arange(num_cls), size=noise_size, replace=True)
     return y_trn
 
 
-def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
-    """
-    Generate train, val, and test datasets for supervised learning setting.
+def tokenize_function(tokenizer, example, text_column):
+    return tokenizer(example[text_column], padding = 'max_length', truncation=True)
 
-    Parameters
-    --------
-    datadir: str
-        Dataset directory in which the data is present or needs to be downloaded.
-    dset_name: str
-        dataset name, ['cifar10', 'cifar100', 'svhn', 'stl10']
-    feature: str
-        if 'classimb', generate datasets wth class imbalance
-            - Needs keyword argument 'classimb_ratio'
-        elif 'noise', generate datasets with label noise
-        otherwise, generate standard datasets 
-    isnumpy: bool
-        if True, return datasets in numpy format instead of tensor format
-    """
-    
+def gen_dataset(datadir, dset_name, feature, seed=42, isnumpy=False, **kwargs):
     if feature == 'classimb':
         if 'classimb_ratio' in kwargs:
             pass
@@ -514,7 +513,6 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
             raise KeyError("Specify a classimbratio value in the config file")
 
     if dset_name == "dna":
-        np.random.seed(42)
         trn_file = os.path.join(datadir, 'dna.scale.trn')
         val_file = os.path.join(datadir, 'dna.scale.val')
         tst_file = os.path.join(datadir, 'dna.scale.tst')
@@ -534,9 +532,9 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
 
         if feature == 'classimb':
             x_trn, y_trn, x_val, y_val, x_tst, y_tst = create_imbalance(x_trn, y_trn, x_val, y_val,
-                                                                        x_tst, y_tst, num_cls, kwargs['classimb_ratio'])
+                                                                        x_tst, y_tst, num_cls, kwargs['classimb_ratio'], seed=seed)
         elif feature == 'noise':
-            y_trn = create_noisy(y_trn, num_cls)
+            y_trn = create_noisy(y_trn, num_cls, seed=seed)
 
         if isnumpy:
             fullset = (x_trn, y_trn)
@@ -552,11 +550,10 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
     elif dset_name == "boston":
         num_cls = 1
         x_trn, y_trn = load_boston(return_X_y=True)
-
         # create train and test indices
         #train, test = train_test_split(list(range(X.shape[0])), test_size=.3)
-        x_trn, x_tst, y_trn, y_tst = train_test_split(x_trn, y_trn, test_size=0.2, random_state=42)
-        x_trn, x_val, y_trn, y_val = train_test_split(x_trn, y_trn, test_size=0.1, random_state=42)
+        x_trn, x_tst, y_trn, y_tst = train_test_split(x_trn, y_trn, test_size=0.2, random_state=seed)
+        x_trn, x_val, y_trn, y_val = train_test_split(x_trn, y_trn, test_size=0.1, random_state=seed)
         scaler = standard_scaling()
         x_trn = scaler.fit_transform(x_trn)
         x_val = scaler.transform(x_val)
@@ -598,26 +595,22 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         return trainset, valset, testset, val_classes
 
     elif dset_name in ["cadata","abalone","cpusmall",'LawSchool']:
-
         if dset_name == "cadata":
             trn_file = os.path.join(datadir, 'cadata.txt')
             x_trn, y_trn = libsvm_file_load(trn_file, dim=8)
-
         elif dset_name == "abalone":
             trn_file = os.path.join(datadir, 'abalone_scale.txt')
             x_trn, y_trn = libsvm_file_load(trn_file, 8)
-
         elif dset_name == "cpusmall":
             trn_file = os.path.join(datadir, 'cpusmall_scale.txt')
             x_trn, y_trn = libsvm_file_load(trn_file, 12)
-
         elif dset_name == 'LawSchool':
             x_trn, y_trn = clean_lawschool_full(os.path.join(datadir, 'lawschool.csv'))
 
         # create train and test indices
         #train, test = train_test_split(list(range(X.shape[0])), test_size=.3)
-        x_trn, x_tst, y_trn, y_tst = train_test_split(x_trn, y_trn, test_size=0.2, random_state=42)
-        x_trn, x_val, y_trn, y_val = train_test_split(x_trn, y_trn, test_size=0.1, random_state=42)
+        x_trn, x_tst, y_trn, y_tst = train_test_split(x_trn, y_trn, test_size=0.2, random_state=seed)
+        x_trn, x_val, y_trn, y_val = train_test_split(x_trn, y_trn, test_size=0.1, random_state=seed)
 
         sc = StandardScaler()
         x_trn = sc.fit_transform(x_trn)
@@ -635,9 +628,9 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
             testset = (x_tst, y_tst)
 
         else:
-            fullset = CustomDataset_WithId(torch.from_numpy(x_trn), torch.from_numpy(y_trn), isreg=True)
-            valset = CustomDataset_WithId(torch.from_numpy(x_val), torch.from_numpy(y_val), isreg=True)
-            testset = CustomDataset_WithId(torch.from_numpy(x_tst), torch.from_numpy(y_tst), isreg=True)
+            fullset = CustomDataset(torch.from_numpy(x_trn), torch.from_numpy(y_trn),if_reg=True)
+            valset = CustomDataset(torch.from_numpy(x_val), torch.from_numpy(y_val),if_reg=True)
+            testset = CustomDataset(torch.from_numpy(x_tst), torch.from_numpy(y_tst),if_reg=True)
 
         return fullset, valset, testset, 1
 
@@ -648,7 +641,7 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
 
         tst_file = os.path.join(datadir, 'YearPredictionMSD.t')
         x_tst, y_tst = libsvm_file_load(tst_file, 90)
-        x_trn, x_val, y_trn, y_val = train_test_split(x_trn, y_trn, test_size=0.005, random_state=42)
+        x_trn, x_val, y_trn, y_val = train_test_split(x_trn, y_trn, test_size=0.005, random_state=seed)
 
         sc = StandardScaler()
         x_trn = sc.fit_transform(x_trn)
@@ -683,7 +676,7 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         y_trn[y_trn < 0] = 0
         y_tst[y_tst < 0] = 0
 
-        x_trn, x_val, y_trn, y_val = train_test_split(x_trn, y_trn, test_size=0.1, random_state=42)
+        x_trn, x_val, y_trn, y_val = train_test_split(x_trn, y_trn, test_size=0.1, random_state=seed)
 
         sc = StandardScaler()
         x_trn = sc.fit_transform(x_trn)
@@ -692,9 +685,9 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
 
         if feature == 'classimb':
             x_trn, y_trn, x_val, y_val, x_tst, y_tst = create_imbalance(x_trn, y_trn, x_val, y_val,
-                                                                        x_tst, y_tst, num_cls, kwargs['classimb_ratio'])
+                                                                        x_tst, y_tst, num_cls, kwargs['classimb_ratio'], seed=seed)
         elif feature == 'noise':
-            y_trn = create_noisy(y_trn, num_cls)
+            y_trn = create_noisy(y_trn, num_cls, seed=seed)
 
         if isnumpy:
             fullset = (x_trn, y_trn)
@@ -718,8 +711,8 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         # The class labels are (-1,0,1). Make them to (0,1,2)
         y_trn[y_trn < 0] = 2
 
-        x_trn, x_tst, y_trn, y_tst = train_test_split(x_trn, y_trn, test_size=0.1, random_state=42)
-        x_trn, x_val, y_trn, y_val = train_test_split(x_trn, y_trn, test_size=0.1, random_state=42)
+        x_trn, x_tst, y_trn, y_tst = train_test_split(x_trn, y_trn, test_size=0.1, random_state=seed)
+        x_trn, x_val, y_trn, y_val = train_test_split(x_trn, y_trn, test_size=0.1, random_state=seed)
 
         sc = StandardScaler()
         x_trn = sc.fit_transform(x_trn)
@@ -728,9 +721,9 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
 
         if feature == 'classimb':
             x_trn, y_trn, x_val, y_val, x_tst, y_tst = create_imbalance(x_trn, y_trn, x_val, y_val,
-                                                                        x_tst, y_tst, num_cls, kwargs['classimb_ratio'])
+                                                                        x_tst, y_tst, num_cls, kwargs['classimb_ratio'], seed=seed)
         elif feature == 'noise':
-            y_trn = create_noisy(y_trn, num_cls)
+            y_trn = create_noisy(y_trn, num_cls, seed=seed)
 
         if isnumpy:
             fullset = (x_trn, y_trn)
@@ -764,10 +757,10 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
 
         if feature == 'classimb':
             x_trn, y_trn, x_val, y_val, x_tst, y_tst = create_imbalance(x_trn, y_trn, x_val, y_val, x_tst, y_tst,
-                                                                        num_cls, kwargs['classimb_ratio'])
+                                                                        num_cls, kwargs['classimb_ratio'], seed=seed)
 
         elif feature == 'noise':
-            y_trn = create_noisy(y_trn, num_cls)
+            y_trn = create_noisy(y_trn, num_cls, seed=seed)
 
         if isnumpy:
             fullset = (x_trn, y_trn)
@@ -782,38 +775,31 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         return fullset, valset, testset, num_cls
 
     elif dset_name == "satimage":
-        np.random.seed(42)
         trn_file = os.path.join(datadir, 'satimage.scale.trn')
         val_file = os.path.join(datadir, 'satimage.scale.val')
         tst_file = os.path.join(datadir, 'satimage.scale.tst')
         data_dims = 36
         num_cls = 6
-
         x_trn, y_trn = libsvm_file_load(trn_file, dim=data_dims)
         x_val, y_val = libsvm_file_load(val_file, dim=data_dims)
         x_tst, y_tst = libsvm_file_load(tst_file, dim=data_dims)
-
         y_trn -= 1  # First Class should be zero
         y_val -= 1
         y_tst -= 1  # First Class should be zero
-
         sc = StandardScaler()
         x_trn = sc.fit_transform(x_trn)
         x_val = sc.transform(x_val)
         x_tst = sc.transform(x_tst)
-
         if feature == 'classimb':
             x_trn, y_trn, x_val, y_val, x_tst, y_tst = create_imbalance(x_trn, y_trn, x_val, y_val, x_tst, y_tst,
-                                                                        num_cls, kwargs['classimb_ratio'])
-
+                                                                        num_cls, kwargs['classimb_ratio'], seed=seed)
         elif feature == 'noise':
-            y_trn = create_noisy(y_trn, num_cls)
+            y_trn = create_noisy(y_trn, num_cls, seed=seed)
 
         if isnumpy:
             fullset = (x_trn, y_trn)
             valset = (x_val, y_val)
             testset = (x_tst, y_tst)
-
         else:
             fullset = CustomDataset(torch.from_numpy(x_trn), torch.from_numpy(y_trn))
             valset = CustomDataset(torch.from_numpy(x_val), torch.from_numpy(y_val))
@@ -822,7 +808,6 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         return fullset, valset, testset, num_cls
 
     elif dset_name == "svmguide1":
-        np.random.seed(42)
         trn_file = os.path.join(datadir, 'svmguide1.trn_full')
         tst_file = os.path.join(datadir, 'svmguide1.tst')
         data_dims = 4
@@ -830,7 +815,7 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         x_trn, y_trn = libsvm_file_load(trn_file, dim=data_dims)
         x_tst, y_tst = libsvm_file_load(tst_file, dim=data_dims)
 
-        x_trn, x_val, y_trn, y_val = train_test_split(x_trn, y_trn, test_size=0.1, random_state=42)
+        x_trn, x_val, y_trn, y_val = train_test_split(x_trn, y_trn, test_size=0.1, random_state=seed)
 
         sc = StandardScaler()
         x_trn = sc.fit_transform(x_trn)
@@ -839,10 +824,10 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
 
         if feature == 'classimb':
             x_trn, y_trn, x_val, y_val, x_tst, y_tst = create_imbalance(x_trn, y_trn, x_val, y_val, x_tst, y_tst,
-                                                                        num_cls, kwargs['classimb_ratio'])
+                                                                        num_cls, kwargs['classimb_ratio'], seed=seed)
 
         elif feature == 'noise':
-            y_trn = create_noisy(y_trn, num_cls)
+            y_trn = create_noisy(y_trn, num_cls, seed=seed)
 
         if isnumpy:
             fullset = (x_trn, y_trn)
@@ -857,7 +842,6 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         return fullset, valset, testset, num_cls
 
     elif dset_name == "usps":
-        np.random.seed(42)
         trn_file = os.path.join(datadir, 'usps.trn_full')
         tst_file = os.path.join(datadir, 'usps.tst')
         data_dims = 256
@@ -867,7 +851,7 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         y_trn -= 1  # First Class should be zero
         y_tst -= 1  # First Class should be zero
 
-        x_trn, x_val, y_trn, y_val = train_test_split(x_trn, y_trn, test_size=0.1, random_state=42)
+        x_trn, x_val, y_trn, y_val = train_test_split(x_trn, y_trn, test_size=0.1, random_state=seed)
         sc = StandardScaler()
         x_trn = sc.fit_transform(x_trn)
         x_val = sc.transform(x_val)
@@ -875,10 +859,10 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
 
         if feature == 'classimb':
             x_trn, y_trn, x_val, y_val, x_tst, y_tst = create_imbalance(x_trn, y_trn, x_val, y_val, x_tst, y_tst,
-                                                                        num_cls, kwargs['classimb_ratio'])
+                                                                        num_cls, kwargs['classimb_ratio'], seed=seed)
 
         elif feature == 'noise':
-            y_trn = create_noisy(y_trn, num_cls)
+            y_trn = create_noisy(y_trn, num_cls, seed=seed)
 
         if isnumpy:
             fullset = (x_trn, y_trn)
@@ -893,7 +877,6 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         return fullset, valset, testset, num_cls
 
     elif dset_name == "ijcnn1":
-        np.random.seed(42)
         trn_file = os.path.join(datadir, 'ijcnn1.trn')
         val_file = os.path.join(datadir, 'ijcnn1.val')
         tst_file = os.path.join(datadir, 'ijcnn1.tst')
@@ -915,10 +898,10 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
 
         if feature == 'classimb':
             x_trn, y_trn, x_val, y_val, x_tst, y_tst = create_imbalance(x_trn, y_trn, x_val, y_val, x_tst, y_tst,
-                                                                        num_cls, kwargs['classimb_ratio'])
+                                                                        num_cls, kwargs['classimb_ratio'], seed=seed)
 
         elif feature == 'noise':
-            y_trn = create_noisy(y_trn, num_cls)
+            y_trn = create_noisy(y_trn, num_cls, seed=seed)
 
         if isnumpy:
             fullset = (x_trn, y_trn)
@@ -933,12 +916,11 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         return fullset, valset, testset, num_cls
 
     elif dset_name == "sklearn-digits":
-        np.random.seed(42)
         data, target = datasets.load_digits(return_X_y=True)
         # Test data is 10%
-        x_trn, x_tst, y_trn, y_tst = train_test_split(data, target, test_size=0.1, random_state=42)
+        x_trn, x_tst, y_trn, y_tst = train_test_split(data, target, test_size=0.1, random_state=seed)
 
-        x_trn, x_val, y_trn, y_val = train_test_split(x_trn, y_trn, test_size=0.1, random_state=42)
+        x_trn, x_val, y_trn, y_val = train_test_split(x_trn, y_trn, test_size=0.1, random_state=seed)
         num_cls = 10
         sc = StandardScaler()
         x_trn = sc.fit_transform(x_trn)
@@ -947,10 +929,10 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
 
         if feature == 'classimb':
             x_trn, y_trn, x_val, y_val, x_tst, y_tst = create_imbalance(x_trn, y_trn, x_val, y_val, x_tst, y_tst,
-                                                                        num_cls, kwargs['classimb_ratio'])
+                                                                        num_cls, kwargs['classimb_ratio'], seed=seed)
 
         elif feature == 'noise':
-            y_trn = create_noisy(y_trn, num_cls)
+            y_trn = create_noisy(y_trn, num_cls, seed=seed)
 
         if isnumpy:
             fullset = (x_trn, y_trn)
@@ -967,8 +949,6 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
     elif dset_name in ['prior_shift_large_linsep_4', 'conv_shift_large_linsep_4', 'red_large_linsep_4',
                        'expand_large_linsep_4',
                        'shrink_large_linsep_4', 'red_conv_shift_large_linsep_4', "linsep_4", "large_linsep_4"]:
-
-        np.random.seed(42)
         trn_file = os.path.join(datadir, dset_name + '.trn')
         val_file = os.path.join(datadir, dset_name + '.val')
         tst_file = os.path.join(datadir, dset_name + '.tst')
@@ -980,10 +960,10 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
 
         if feature == 'classimb':
             x_trn, y_trn, x_val, y_val, x_tst, y_tst = create_imbalance(x_trn, y_trn, x_val, y_val, x_tst, y_tst,
-                                                                        num_cls, kwargs['classimb_ratio'])
+                                                                        num_cls, kwargs['classimb_ratio'], seed=seed)
 
         elif feature == 'noise':
-            y_trn = create_noisy(y_trn, num_cls)
+            y_trn = create_noisy(y_trn, num_cls, seed=seed)
 
         if isnumpy:
             fullset = (x_trn, y_trn)
@@ -999,7 +979,6 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
 
     elif dset_name in ['prior_shift_clf_2', 'prior_shift_gauss_2', 'conv_shift_clf_2', 'conv_shift_gauss_2', "gauss_2",
                        "clf_2", "linsep"]:
-        np.random.seed(42)
         trn_file = os.path.join(datadir, dset_name + '.trn')
         val_file = os.path.join(datadir, dset_name + '.val')
         tst_file = os.path.join(datadir, dset_name + '.tst')
@@ -1016,10 +995,10 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
 
         if feature == 'classimb':
             x_trn, y_trn, x_val, y_val, x_tst, y_tst = create_imbalance(x_trn, y_trn, x_val, y_val, x_tst, y_tst,
-                                                                        num_cls, kwargs['classimb_ratio'])
+                                                                        num_cls, kwargs['classimb_ratio'], seed=seed)
 
         elif feature == 'noise':
-            y_trn = create_noisy(y_trn, num_cls)
+            y_trn = create_noisy(y_trn, num_cls, seed=seed)
 
         if isnumpy:
             fullset = (x_trn, y_trn)
@@ -1034,7 +1013,6 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         return fullset, valset, testset, num_cls
 
     elif dset_name == "covertype":
-        np.random.seed(42)
         trn_file = os.path.join(datadir, 'covtype.data')
         data_dims = 54
         num_cls = 7
@@ -1042,8 +1020,8 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
 
         y_trn -= 1  # First Class should be zero
 
-        x_trn, x_val, y_trn, y_val = train_test_split(x_trn, y_trn, test_size=0.1, random_state=42)
-        x_trn, x_tst, y_trn, y_tst = train_test_split(x_trn, y_trn, test_size=0.2, random_state=42)
+        x_trn, x_val, y_trn, y_val = train_test_split(x_trn, y_trn, test_size=0.1, random_state=seed)
+        x_trn, x_tst, y_trn, y_tst = train_test_split(x_trn, y_trn, test_size=0.2, random_state=seed)
 
         sc = StandardScaler()
         x_trn = sc.fit_transform(x_trn)
@@ -1052,10 +1030,10 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
 
         if feature == 'classimb':
             x_trn, y_trn, x_val, y_val, x_tst, y_tst = create_imbalance(x_trn, y_trn, x_val, y_val, x_tst, y_tst,
-                                                                        num_cls, kwargs['classimb_ratio'])
+                                                                        num_cls, kwargs['classimb_ratio'], seed=seed)
 
         elif feature == 'noise':
-            y_trn = create_noisy(y_trn, num_cls)
+            y_trn = create_noisy(y_trn, num_cls, seed=seed)
 
         if isnumpy:
             fullset = (x_trn, y_trn)
@@ -1070,7 +1048,6 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         return fullset, valset, testset, num_cls
 
     elif dset_name == "census":
-        np.random.seed(42)
         trn_file = os.path.join(datadir, 'adult.data')
         tst_file = os.path.join(datadir, 'adult.test')
         data_dims = 14
@@ -1079,7 +1056,7 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         x_trn, y_trn = census_load(trn_file, dim=data_dims)
         x_tst, y_tst = census_load(tst_file, dim=data_dims)
 
-        x_trn, x_val, y_trn, y_val = train_test_split(x_trn, y_trn, test_size=0.1, random_state=42)
+        x_trn, x_val, y_trn, y_val = train_test_split(x_trn, y_trn, test_size=0.1, random_state=seed)
         sc = StandardScaler()
         x_trn = sc.fit_transform(x_trn)
         x_val = sc.transform(x_val)
@@ -1087,27 +1064,21 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
 
         if feature == 'classimb':
             x_trn, y_trn, x_val, y_val, x_tst, y_tst = create_imbalance(x_trn, y_trn, x_val, y_val, x_tst, y_tst,
-                                                                        num_cls, kwargs['classimb_ratio'])
-
+                                                                        num_cls, kwargs['classimb_ratio'], seed=seed)
         elif feature == 'noise':
-            y_trn = create_noisy(y_trn, num_cls)
-
+            y_trn = create_noisy(y_trn, num_cls, seed=seed)
+    
         if isnumpy:
             fullset = (x_trn, y_trn)
             valset = (x_val, y_val)
             testset = (x_tst, y_tst)
-
         else:
             fullset = CustomDataset(x_trn, y_trn)
             valset = CustomDataset(x_val, y_val)
             testset = CustomDataset(x_tst, y_tst)
-
         return fullset, valset, testset, num_cls
 
-
     elif dset_name == "mnist":
-        torch.cuda.manual_seed(42)
-        torch.manual_seed(42)
         mnist_transform = transforms.Compose([
             torchvision.transforms.ToTensor(),
             torchvision.transforms.Normalize((0.1307,), (0.3081,))
@@ -1118,28 +1089,28 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
             torchvision.transforms.Normalize((0.1307,), (0.3081,))
         ])
         num_cls = 10
-
         fullset = torchvision.datasets.MNIST(root=datadir, train=True, download=True, transform=mnist_transform)
         testset = torchvision.datasets.MNIST(root=datadir, train=False, download=True, transform=mnist_tst_transform)
 
         if feature == 'classimb':
+            rng = np.random.default_rng(seed)
             samples_per_class = torch.zeros(num_cls)
             for i in range(num_cls):
                 samples_per_class[i] = len(torch.where(fullset.targets == i)[0])
             min_samples = int(torch.min(samples_per_class) * 0.1)
-            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
+            selected_classes = rng.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
             for i in range(num_cls):
                 if i == 0:
                     if i in selected_classes:
                         subset_idxs = list(
-                            np.random.choice(torch.where(fullset.targets == i)[0].cpu().numpy(), size=min_samples,
+                            rng.choice(torch.where(fullset.targets == i)[0].cpu().numpy(), size=min_samples,
                                              replace=False))
                     else:
                         subset_idxs = list(torch.where(fullset.targets == i)[0].cpu().numpy())
                 else:
                     if i in selected_classes:
                         batch_subset_idxs = list(
-                            np.random.choice(torch.where(fullset.targets == i)[0].cpu().numpy(), size=min_samples,
+                            rng.choice(torch.where(fullset.targets == i)[0].cpu().numpy(), size=min_samples,
                                              replace=False))
                     else:
                         batch_subset_idxs = list(torch.where(fullset.targets == i)[0].cpu().numpy())
@@ -1151,14 +1122,12 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         num_fulltrn = len(fullset)
         num_val = int(num_fulltrn * validation_set_fraction)
         num_trn = num_fulltrn - num_val
-        trainset, valset = random_split(fullset, [num_trn, num_val])
+        trainset, valset = random_split(fullset, [num_trn, num_val], generator=torch.Generator().manual_seed(seed))
 
         return trainset, valset, testset, num_cls
 
 
     elif dset_name == "fashion-mnist":
-        torch.cuda.manual_seed(42)
-        torch.manual_seed(42)
         mnist_transform = transforms.Compose([
             torchvision.transforms.ToTensor(),
             torchvision.transforms.Normalize((0.1307,), (0.3081,))
@@ -1176,23 +1145,24 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
                                                     transform=mnist_tst_transform)
 
         if feature == 'classimb':
+            rng = np.random.default_rng(seed)
             samples_per_class = torch.zeros(num_cls)
             for i in range(num_cls):
                 samples_per_class[i] = len(torch.where(fullset.targets == i)[0])
             min_samples = int(torch.min(samples_per_class) * 0.1)
-            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
+            selected_classes = rng.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
             for i in range(num_cls):
                 if i == 0:
                     if i in selected_classes:
                         subset_idxs = list(
-                            np.random.choice(torch.where(fullset.targets == i)[0].cpu().numpy(), size=min_samples,
+                            rng.choice(torch.where(fullset.targets == i)[0].cpu().numpy(), size=min_samples,
                                              replace=False))
                     else:
                         subset_idxs = list(torch.where(fullset.targets == i)[0].cpu().numpy())
                 else:
                     if i in selected_classes:
                         batch_subset_idxs = list(
-                            np.random.choice(torch.where(fullset.targets == i)[0].cpu().numpy(), size=min_samples,
+                            rng.choice(torch.where(fullset.targets == i)[0].cpu().numpy(), size=min_samples,
                                              replace=False))
                     else:
                         batch_subset_idxs = list(torch.where(fullset.targets == i)[0].cpu().numpy())
@@ -1204,13 +1174,10 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         num_fulltrn = len(fullset)
         num_val = int(num_fulltrn * validation_set_fraction)
         num_trn = num_fulltrn - num_val
-        trainset, valset = random_split(fullset, [num_trn, num_val])
-
+        trainset, valset = random_split(fullset, [num_trn, num_val], generator=torch.Generator().manual_seed(seed))
         return trainset, valset, testset, num_cls
 
     elif dset_name == "cifar10":
-        torch.cuda.manual_seed(42)
-        torch.manual_seed(42)
         cifar_transform = transforms.Compose([
             transforms.RandomCrop(32, padding=4),
             transforms.RandomHorizontalFlip(),
@@ -1230,16 +1197,17 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
                                                transform=cifar_tst_transform)
 
         if feature == 'classimb':
+            rng = np.random.default_rng(seed)
             samples_per_class = torch.zeros(num_cls)
             for i in range(num_cls):
                 samples_per_class[i] = len(torch.where(torch.Tensor(fullset.targets) == i)[0])
             min_samples = int(torch.min(samples_per_class) * 0.1)
-            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
+            selected_classes = rng.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
             for i in range(num_cls):
                 if i == 0:
                     if i in selected_classes:
                         subset_idxs = list(
-                            np.random.choice(torch.where(torch.Tensor(fullset.targets) == i)[0].cpu().numpy(),
+                            rng.choice(torch.where(torch.Tensor(fullset.targets) == i)[0].cpu().numpy(),
                                              size=min_samples,
                                              replace=False))
                     else:
@@ -1247,7 +1215,7 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
                 else:
                     if i in selected_classes:
                         batch_subset_idxs = list(
-                            np.random.choice(torch.where(torch.Tensor(fullset.targets) == i)[0].cpu().numpy(),
+                            rng.choice(torch.where(torch.Tensor(fullset.targets) == i)[0].cpu().numpy(),
                                              size=min_samples,
                                              replace=False))
                     else:
@@ -1260,14 +1228,87 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         num_fulltrn = len(fullset)
         num_val = int(num_fulltrn * validation_set_fraction)
         num_trn = num_fulltrn - num_val
-        trainset, valset = random_split(fullset, [num_trn, num_val])
+        trainset, valset = random_split(fullset, [num_trn, num_val], generator=torch.Generator().manual_seed(seed))
 
         return trainset, valset, testset, num_cls
 
 
+    elif dset_name == "tinyimagenet":
+        tiny_transform = transforms.Compose([
+            transforms.RandomResizedCrop(64),
+            transforms.ColorJitter(
+                brightness=0.4, contrast=0.4, saturation=0.4),
+            transforms.RandomRotation(45),
+            transforms.RandomHorizontalFlip(),
+            # transforms.RandomVerticalFlip(),
+            # transforms.RandomAffine(90),
+            # transforms.RandomGrayscale(),
+            # transforms.RandomPerspective(),
+            transforms.ToTensor(),
+            # transforms.RandomErasing(),
+            transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+        ])
+        # tiny_transform = transforms.Compose([
+        #     transforms.Resize(256), # Resize images to 256 x 256
+        #     transforms.CenterCrop(224), # Center crop image
+        #     transforms.RandomHorizontalFlip(),
+        #     transforms.ToTensor(),
+        #     transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+        # ])
+        size = int(64 * 1.15)
+        tiny_tst_transform = transforms.Compose([
+            transforms.Resize((size, size)),
+            transforms.CenterCrop(64),
+            transforms.ToTensor(),
+            transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+        ])
+        # tiny_tst_transform = transforms.Compose([
+        #     transforms.Resize(256), # Resize images to 256 x 256
+        #     transforms.CenterCrop(224), # Center crop image
+        #     transforms.ToTensor(),
+        #     transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+        # ])
+        num_cls = 200
+        fullset = TinyImageNet(root=datadir, split='train', download=True, transform=tiny_transform)
+        testset = TinyImageNet(root=datadir, split='val', download=True, transform=tiny_tst_transform)
+
+        if feature == 'classimb':
+            rng = np.random.default_rng(seed)
+            samples_per_class = torch.zeros(num_cls)
+            for i in range(num_cls):
+                samples_per_class[i] = len(torch.where(torch.Tensor(fullset.targets) == i)[0])
+            min_samples = int(torch.min(samples_per_class) * 0.1)
+            selected_classes = rng.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
+            for i in range(num_cls):
+                if i == 0:
+                    if i in selected_classes:
+                        subset_idxs = list(
+                            rng.choice(torch.where(torch.Tensor(fullset.targets) == i)[0].cpu().numpy(),
+                                             size=min_samples,
+                                             replace=False))
+                    else:
+                        subset_idxs = list(torch.where(torch.Tensor(fullset.targets) == i)[0].cpu().numpy())
+                else:
+                    if i in selected_classes:
+                        batch_subset_idxs = list(
+                            rng.choice(torch.where(torch.Tensor(fullset.targets) == i)[0].cpu().numpy(),
+                                             size=min_samples,
+                                             replace=False))
+                    else:
+                        batch_subset_idxs = list(torch.where(torch.Tensor(fullset.targets) == i)[0].cpu().numpy())
+                    subset_idxs.extend(batch_subset_idxs)
+            fullset = torch.utils.data.Subset(fullset, subset_idxs)
+
+        # validation dataset is (0.1 * train dataset)
+        validation_set_fraction = 0.1
+        num_fulltrn = len(fullset)
+        num_val = int(num_fulltrn * validation_set_fraction)
+        num_trn = num_fulltrn - num_val
+        trainset, valset = random_split(fullset, [num_trn, num_val], generator=torch.Generator().manual_seed(seed))
+
+        return trainset, valset, testset, num_cls
+
     elif dset_name == "cifar100":
-        torch.cuda.manual_seed(42)
-        torch.manual_seed(42)
         cifar100_transform = transforms.Compose([
             transforms.RandomCrop(32, padding=4),
             transforms.RandomHorizontalFlip(),
@@ -1287,16 +1328,17 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
                                                 transform=cifar100_tst_transform)
 
         if feature == 'classimb':
+            rng = np.random.default_rng(seed)
             samples_per_class = torch.zeros(num_cls)
             for i in range(num_cls):
                 samples_per_class[i] = len(torch.where(torch.Tensor(fullset.targets) == i)[0])
             min_samples = int(torch.min(samples_per_class) * 0.1)
-            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
+            selected_classes = rng.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
             for i in range(num_cls):
                 if i == 0:
                     if i in selected_classes:
                         subset_idxs = list(
-                            np.random.choice(torch.where(torch.Tensor(fullset.targets) == i)[0].cpu().numpy(),
+                            rng.choice(torch.where(torch.Tensor(fullset.targets) == i)[0].cpu().numpy(),
                                              size=min_samples,
                                              replace=False))
                     else:
@@ -1304,7 +1346,7 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
                 else:
                     if i in selected_classes:
                         batch_subset_idxs = list(
-                            np.random.choice(torch.where(torch.Tensor(fullset.targets) == i)[0].cpu().numpy(),
+                            rng.choice(torch.where(torch.Tensor(fullset.targets) == i)[0].cpu().numpy(),
                                              size=min_samples,
                                              replace=False))
                     else:
@@ -1317,14 +1359,12 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         num_fulltrn = len(fullset)
         num_val = int(num_fulltrn * validation_set_fraction)
         num_trn = num_fulltrn - num_val
-        trainset, valset = random_split(fullset, [num_trn, num_val])
+        trainset, valset = random_split(fullset, [num_trn, num_val], generator=torch.Generator().manual_seed(seed))
 
         return trainset, valset, testset, num_cls
 
 
     elif dset_name == "svhn":
-        torch.cuda.manual_seed(42)
-        torch.manual_seed(42)
         svhn_transform = transforms.Compose([
             transforms.RandomCrop(32, padding=4),
             transforms.RandomHorizontalFlip(),
@@ -1338,21 +1378,21 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         ])
 
         num_cls = 10
-
         fullset = torchvision.datasets.SVHN(root=datadir, split='train', download=True, transform=svhn_transform)
         testset = torchvision.datasets.SVHN(root=datadir, split='test', download=True, transform=svhn_tst_transform)
 
         if feature == 'classimb':
+            rng = np.random.default_rng(seed)
             samples_per_class = torch.zeros(num_cls)
             for i in range(num_cls):
                 samples_per_class[i] = len(torch.where(torch.Tensor(fullset.targets) == i)[0])
             min_samples = int(torch.min(samples_per_class) * 0.1)
-            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
+            selected_classes = rng.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
             for i in range(num_cls):
                 if i == 0:
                     if i in selected_classes:
                         subset_idxs = list(
-                            np.random.choice(torch.where(torch.Tensor(fullset.targets) == i)[0].cpu().numpy(),
+                            rng.choice(torch.where(torch.Tensor(fullset.targets) == i)[0].cpu().numpy(),
                                              size=min_samples,
                                              replace=False))
                     else:
@@ -1360,7 +1400,7 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
                 else:
                     if i in selected_classes:
                         batch_subset_idxs = list(
-                            np.random.choice(torch.where(torch.Tensor(fullset.targets) == i)[0].cpu().numpy(),
+                            rng.choice(torch.where(torch.Tensor(fullset.targets) == i)[0].cpu().numpy(),
                                              size=min_samples,
                                              replace=False))
                     else:
@@ -1373,14 +1413,12 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         num_fulltrn = len(fullset)
         num_val = int(num_fulltrn * validation_set_fraction)
         num_trn = num_fulltrn - num_val
-        trainset, valset = random_split(fullset, [num_trn, num_val])
+        trainset, valset = random_split(fullset, [num_trn, num_val], generator=torch.Generator().manual_seed(seed))
 
         return trainset, valset, testset, num_cls
 
 
     elif dset_name == "kmnist":
-        torch.cuda.manual_seed(42)
-        torch.manual_seed(42)
         kmnist_transform = transforms.Compose([
             transforms.RandomCrop(32, padding=4),
             transforms.RandomHorizontalFlip(),
@@ -1400,16 +1438,17 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
                                               transform=kmnist_tst_transform)
 
         if feature == 'classimb':
+            rng=np.random.default_rng(seed)
             samples_per_class = torch.zeros(num_cls)
             for i in range(num_cls):
                 samples_per_class[i] = len(torch.where(torch.Tensor(fullset.targets) == i)[0])
             min_samples = int(torch.min(samples_per_class) * 0.1)
-            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
+            selected_classes = rng.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
             for i in range(num_cls):
                 if i == 0:
                     if i in selected_classes:
                         subset_idxs = list(
-                            np.random.choice(torch.where(torch.Tensor(fullset.targets) == i)[0].cpu().numpy(),
+                            rng.choice(torch.where(torch.Tensor(fullset.targets) == i)[0].cpu().numpy(),
                                              size=min_samples,
                                              replace=False))
                     else:
@@ -1417,7 +1456,7 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
                 else:
                     if i in selected_classes:
                         batch_subset_idxs = list(
-                            np.random.choice(torch.where(torch.Tensor(fullset.targets) == i)[0].cpu().numpy(),
+                            rng.choice(torch.where(torch.Tensor(fullset.targets) == i)[0].cpu().numpy(),
                                              size=min_samples,
                                              replace=False))
                     else:
@@ -1430,14 +1469,12 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         num_fulltrn = len(fullset)
         num_val = int(num_fulltrn * validation_set_fraction)
         num_trn = num_fulltrn - num_val
-        trainset, valset = random_split(fullset, [num_trn, num_val])
+        trainset, valset = random_split(fullset, [num_trn, num_val], generator=torch.Generator().manual_seed(seed))
 
         return trainset, valset, testset, num_cls
 
 
     elif dset_name == "stl10":
-        torch.cuda.manual_seed(42)
-        torch.manual_seed(42)
         stl10_transform = transforms.Compose([
             transforms.Pad(12),
             transforms.RandomCrop(96),
@@ -1458,16 +1495,17 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         testset = torchvision.datasets.STL10(root=datadir, split='test', download=True, transform=stl10_tst_transform)
 
         if feature == 'classimb':
+            rng=np.random.default_rng(seed)
             samples_per_class = torch.zeros(num_cls)
             for i in range(num_cls):
                 samples_per_class[i] = len(torch.where(torch.Tensor(fullset.targets) == i)[0])
             min_samples = int(torch.min(samples_per_class) * 0.1)
-            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
+            selected_classes = rng.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
             for i in range(num_cls):
                 if i == 0:
                     if i in selected_classes:
                         subset_idxs = list(
-                            np.random.choice(torch.where(torch.Tensor(fullset.targets) == i)[0].cpu().numpy(),
+                            rng.choice(torch.where(torch.Tensor(fullset.targets) == i)[0].cpu().numpy(),
                                              size=min_samples,
                                              replace=False))
                     else:
@@ -1475,7 +1513,7 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
                 else:
                     if i in selected_classes:
                         batch_subset_idxs = list(
-                            np.random.choice(torch.where(torch.Tensor(fullset.targets) == i)[0].cpu().numpy(),
+                            rng.choice(torch.where(torch.Tensor(fullset.targets) == i)[0].cpu().numpy(),
                                              size=min_samples,
                                              replace=False))
                     else:
@@ -1488,14 +1526,12 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         num_fulltrn = len(fullset)
         num_val = int(num_fulltrn * validation_set_fraction)
         num_trn = num_fulltrn - num_val
-        trainset, valset = random_split(fullset, [num_trn, num_val])
+        trainset, valset = random_split(fullset, [num_trn, num_val], generator=torch.Generator().manual_seed(seed))
 
         return trainset, valset, testset, num_cls
 
 
     elif dset_name == "emnist":
-        torch.cuda.manual_seed(42)
-        torch.manual_seed(42)
         emnist_transform = transforms.Compose([
             torchvision.transforms.ToTensor(),
             torchvision.transforms.Normalize((0.1307,), (0.3081,))
@@ -1514,23 +1550,24 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
                                               transform=emnist_tst_transform)
 
         if feature == 'classimb':
+            rng=np.random.default_rng(seed)
             samples_per_class = torch.zeros(num_cls)
             for i in range(num_cls):
                 samples_per_class[i] = len(torch.where(fullset.targets == i)[0])
             min_samples = int(torch.min(samples_per_class) * 0.1)
-            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
+            selected_classes = rng.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
             for i in range(num_cls):
                 if i == 0:
                     if i in selected_classes:
                         subset_idxs = list(
-                            np.random.choice(torch.where(fullset.targets == i)[0].cpu().numpy(), size=min_samples,
+                            rng.choice(torch.where(fullset.targets == i)[0].cpu().numpy(), size=min_samples,
                                              replace=False))
                     else:
                         subset_idxs = list(torch.where(fullset.targets == i)[0].cpu().numpy())
                 else:
                     if i in selected_classes:
                         batch_subset_idxs = list(
-                            np.random.choice(torch.where(fullset.targets == i)[0].cpu().numpy(), size=min_samples,
+                            rng.choice(torch.where(fullset.targets == i)[0].cpu().numpy(), size=min_samples,
                                              replace=False))
                     else:
                         batch_subset_idxs = list(torch.where(fullset.targets == i)[0].cpu().numpy())
@@ -1542,12 +1579,10 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         num_fulltrn = len(fullset)
         num_val = int(num_fulltrn * validation_set_fraction)
         num_trn = num_fulltrn - num_val
-        trainset, valset = random_split(fullset, [num_trn, num_val])
+        trainset, valset = random_split(fullset, [num_trn, num_val], generator=torch.Generator().manual_seed(seed))
         return trainset, valset, testset, num_cls
 
     elif dset_name == "celeba":
-        torch.cuda.manual_seed(42)
-        torch.manual_seed(42)
         crop_size = 108
         re_size = 64
         offset_height = (218 - crop_size) // 2
@@ -1578,23 +1613,24 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         testset.identity.sub_(1)
 
         if feature == 'classimb':
+            rng = np.random.default_rng(seed)
             samples_per_class = torch.zeros(num_cls)
             for i in range(num_cls):
                 samples_per_class[i] = len(torch.where(trainset.identity == i)[0])
             min_samples = int(torch.min(samples_per_class) * 0.1)
-            selected_classes = np.random.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
+            selected_classes = rng.choice(np.arange(num_cls), size=int(kwargs['classimb_ratio'] * num_cls), replace=False)
             for i in range(num_cls):
                 if i == 0:
                     if i in selected_classes:
                         subset_idxs = list(
-                            np.random.choice(torch.where(trainset.identity == i)[0].cpu().numpy(), size=min_samples,
+                            rng.choice(torch.where(trainset.identity == i)[0].cpu().numpy(), size=min_samples,
                                              replace=False))
                     else:
                         subset_idxs = list(torch.where(trainset.identity == i)[0].cpu().numpy())
                 else:
                     if i in selected_classes:
                         batch_subset_idxs = list(
-                            np.random.choice(torch.where(trainset.identity == i)[0].cpu().numpy(), size=min_samples,
+                            rng.choice(torch.where(trainset.identity == i)[0].cpu().numpy(), size=min_samples,
                                              replace=False))
                     else:
                         batch_subset_idxs = list(torch.where(trainset.identity == i)[0].cpu().numpy())
@@ -1616,30 +1652,30 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         trainset = SSTDataset(datadir, 'train', num_cls, wordvec_dim, wordvec)
         testset = SSTDataset(datadir, 'test', num_cls, wordvec_dim, wordvec)
         valset = SSTDataset(datadir, 'dev', num_cls, wordvec_dim, wordvec)
-
         return trainset, valset, testset, num_cls
-    # elif dset_name == "glue_sst2":
-    #     num_cls = 2
-    #     raw = load_dataset("glue", "sst2")
 
-    #     wordvec_dim = kwargs['dataset'].wordvec_dim
-    #     weight_path = kwargs['dataset'].weight_path
-    #     weight_full_path = weight_path+'glove.6B.' + str(wordvec_dim) + 'd.txt'
-    #     wordvec = loadGloveModel(weight_full_path)
+    elif dset_name == "glue_sst2":
+        num_cls = 2
+        raw = load_dataset("glue", "sst2")
 
-    #     clean_type = 0
-    #     fullset = GlueDataset(raw['train'], 'sentence', 'label', clean_type, num_cls, wordvec_dim, wordvec)
-    #     # testset = GlueDataset(raw['test'], 'sentence', 'label', clean_type, num_cls, wordvec_dim, wordvec) # doesn't have gold labels
-    #     valset = GlueDataset(raw['validation'], 'sentence', 'label', clean_type, num_cls, wordvec_dim, wordvec)
+        wordvec_dim = kwargs['dataset'].wordvec_dim
+        weight_path = kwargs['dataset'].weight_path
+        weight_full_path = weight_path+'glove.6B.' + str(wordvec_dim) + 'd.txt'
+        wordvec = loadGloveModel(weight_full_path)
 
-    #     test_set_fraction = 0.05
-    #     seed = 42
-    #     num_fulltrn = len(fullset)
-    #     num_test = int(num_fulltrn * test_set_fraction)
-    #     num_trn = num_fulltrn - num_test
-    #     trainset, testset = random_split(fullset, [num_trn, num_test], generator=torch.Generator().manual_seed(seed))
+        clean_type = 0
+        fullset = GlueDataset(raw['train'], 'sentence', 'label', clean_type, num_cls, wordvec_dim, wordvec)
+        # testset = GlueDataset(raw['test'], 'sentence', 'label', clean_type, num_cls, wordvec_dim, wordvec) # doesn't have gold labels
+        valset = GlueDataset(raw['validation'], 'sentence', 'label', clean_type, num_cls, wordvec_dim, wordvec)
 
-    #     return trainset, valset, testset, num_cls
+        test_set_fraction = 0.05
+        seed = 42
+        num_fulltrn = len(fullset)
+        num_test = int(num_fulltrn * test_set_fraction)
+        num_trn = num_fulltrn - num_test
+        trainset, testset = random_split(fullset, [num_trn, num_test], generator=torch.Generator().manual_seed(seed))
+        return trainset, valset, testset, num_cls
+
     elif  dset_name == "sst5":
         '''
         download data/SST from https://drive.google.com/file/d/14KU6RQJpP6HKKqVGm0OF3MVxtI0NlEcr/view?usp=sharing
@@ -1654,12 +1690,10 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         trainset = SSTDataset(datadir, 'train', num_cls, wordvec_dim, wordvec)
         testset = SSTDataset(datadir, 'test', num_cls, wordvec_dim, wordvec)
         valset = SSTDataset(datadir, 'dev', num_cls, wordvec_dim, wordvec)
-
-
         return trainset, valset, testset, num_cls
+
     elif dset_name == 'trec6':
         num_cls = 6
-
         wordvec_dim = kwargs['dataset'].wordvec_dim
         weight_path = kwargs['dataset'].weight_path
         weight_full_path = weight_path+'glove.6B.' + str(wordvec_dim) + 'd.txt'
@@ -1670,30 +1704,177 @@ def gen_dataset(datadir, dset_name, feature, isnumpy=False, **kwargs):
         trainset = Trec6Dataset(datadir+'train.txt', cls_to_num, num_cls, wordvec_dim, wordvec)
         testset = Trec6Dataset(datadir+'test.txt', cls_to_num, num_cls, wordvec_dim, wordvec)
         valset = Trec6Dataset(datadir+'valid.txt', cls_to_num, num_cls, wordvec_dim, wordvec)
+        return trainset, valset, testset, num_cls
+
+    elif dset_name == "hf_trec6": # hugging face trec6
+        num_cls = 6
+        raw = load_dataset("trec")
+
+        wordvec_dim = kwargs['dataset'].wordvec_dim
+        weight_path = kwargs['dataset'].weight_path
+        weight_full_path = weight_path+'glove.6B.' + str(wordvec_dim) + 'd.txt'
+        wordvec = loadGloveModel(weight_full_path)
+
+        clean_type = 1
+        fullset = GlueDataset(raw['train'], 'text', 'coarse_label', clean_type, num_cls, wordvec_dim, wordvec)
+        testset = GlueDataset(raw['test'], 'text', 'coarse_label', clean_type, num_cls, wordvec_dim, wordvec)
+        # valset = GlueDataset(raw['validation'], num_cls, wordvec_dim, wordvec)
+        
+        validation_set_fraction = 0.1
+        seed = 42
+        num_fulltrn = len(fullset)
+        num_val = int(num_fulltrn * validation_set_fraction)
+        num_trn = num_fulltrn - num_val
+        trainset, valset = random_split(fullset, [num_trn, num_val], generator=torch.Generator().manual_seed(seed))
 
         return trainset, valset, testset, num_cls
-    # elif dset_name == "hf_trec6": # hugging face trec6
-    #     num_cls = 6
-    #     raw = load_dataset("trec")
+    
+    elif dset_name == "imdb": # hugging face trec6
+        num_cls = 2
+        raw = load_dataset("imdb")
 
-    #     wordvec_dim = kwargs['dataset'].wordvec_dim
-    #     weight_path = kwargs['dataset'].weight_path
-    #     weight_full_path = weight_path+'glove.6B.' + str(wordvec_dim) + 'd.txt'
-    #     wordvec = loadGloveModel(weight_full_path)
+        wordvec_dim = kwargs['dataset'].wordvec_dim
+        weight_path = kwargs['dataset'].weight_path
+        weight_full_path = weight_path+'glove.6B.' + str(wordvec_dim) + 'd.txt'
+        wordvec = loadGloveModel(weight_full_path)
 
-    #     clean_type = 1
-    #     fullset = GlueDataset(raw['train'], 'text', 'label-coarse', clean_type, num_cls, wordvec_dim, wordvec)
-    #     testset = GlueDataset(raw['test'], 'text', 'label-coarse', clean_type, num_cls, wordvec_dim, wordvec)
-    #     # valset = GlueDataset(raw['validation'], num_cls, wordvec_dim, wordvec)
+        clean_type = 1
+        fullset = GlueDataset(raw['train'], 'text', 'label', clean_type, num_cls, wordvec_dim, wordvec)
+        testset = GlueDataset(raw['test'], 'text', 'label', clean_type, num_cls, wordvec_dim, wordvec)
+        # valset = GlueDataset(raw['validation'], num_cls, wordvec_dim, wordvec)
         
-    #     validation_set_fraction = 0.1
-    #     seed = 42
-    #     num_fulltrn = len(fullset)
-    #     num_val = int(num_fulltrn * validation_set_fraction)
-    #     num_trn = num_fulltrn - num_val
-    #     trainset, valset = random_split(fullset, [num_trn, num_val], generator=torch.Generator().manual_seed(seed))
+        validation_set_fraction = 0.1
+        seed = 42
+        num_fulltrn = len(fullset)
+        num_val = int(num_fulltrn * validation_set_fraction)
+        num_trn = num_fulltrn - num_val
+        trainset, valset = random_split(fullset, [num_trn, num_val], generator=torch.Generator().manual_seed(seed))
 
-    #     return trainset, valset, testset, num_cls
+        return trainset, valset, testset, num_cls
+
+    elif dset_name == 'rotten_tomatoes':
+        num_cls = 2
+        raw = load_dataset("rotten_tomatoes")
+
+        wordvec_dim = kwargs['dataset'].wordvec_dim
+        weight_path = kwargs['dataset'].weight_path
+        weight_full_path = weight_path+'glove.6B.' + str(wordvec_dim) + 'd.txt'
+        wordvec = loadGloveModel(weight_full_path)
+
+        clean_type = 1
+        trainset = GlueDataset(raw['train'], 'text', 'label', clean_type, num_cls, wordvec_dim, wordvec)
+        valset = GlueDataset(raw['validation'], 'text', 'label', clean_type, num_cls, wordvec_dim, wordvec)
+        testset = GlueDataset(raw['test'], 'text', 'label', clean_type, num_cls, wordvec_dim, wordvec)
+        
+        return trainset, valset, testset, num_cls
+
+    elif dset_name == 'tweet_eval':
+        num_cls = 20
+        raw = load_dataset("tweet_eval", "emoji")
+
+        wordvec_dim = kwargs['dataset'].wordvec_dim
+        weight_path = kwargs['dataset'].weight_path
+        weight_full_path = weight_path+'glove.6B.' + str(wordvec_dim) + 'd.txt'
+        wordvec = loadGloveModel(weight_full_path)
+
+        clean_type = 1
+        trainset = GlueDataset(raw['train'], 'text', 'label', clean_type, num_cls, wordvec_dim, wordvec)
+        valset = GlueDataset(raw['validation'], 'text', 'label', clean_type, num_cls, wordvec_dim, wordvec)
+        testset = GlueDataset(raw['test'], 'text', 'label', clean_type, num_cls, wordvec_dim, wordvec)
+        
+        return trainset, valset, testset, num_cls
+
+    elif dset_name == "glue_sst2_transformer":
+        """
+        Load GLUE SST2 dataset. We are only using train and validation splits since the test split doesn't come with gold labels. For testing purposes, we use 5% of train
+        dataset as test dataset.
+        """
+        num_cls = 2
+        glue_dataset = load_dataset("glue", "sst2")
+        tokenizer_mapping = lambda example: tokenize_function(kwargs['tokenizer'], example, SENTENCE_MAPPINGS['glue_sst2'])
+        glue_dataset = glue_dataset.map(tokenizer_mapping, batched=True) 
+        glue_dataset = glue_dataset.remove_columns([SENTENCE_MAPPINGS['glue_sst2'], "idx"])
+        glue_dataset = glue_dataset.rename_column(LABEL_MAPPINGS['glue_sst2'], "labels")
+        glue_dataset.set_format("torch")
+
+        fullset = glue_dataset['train']
+        valset = glue_dataset['validation']
+        test_set_fraction = 0.05
+        seed = 42
+        num_fulltrn = len(fullset)
+        num_test = int(num_fulltrn * test_set_fraction)
+        num_trn = num_fulltrn - num_test
+        trainset, testset = random_split(fullset, [num_trn, num_test], generator=torch.Generator().manual_seed(seed))
+        return trainset, valset, testset, num_cls
+
+    elif dset_name == 'hf_trec6_transformer':
+        num_cls = 6
+        trec6_dataset = load_dataset("trec")
+        
+        tokenizer_mapping = lambda example: tokenize_function(kwargs['tokenizer'], example, SENTENCE_MAPPINGS['hf_trec6'])
+        trec6_dataset = trec6_dataset.map(tokenizer_mapping, batched=True) 
+        trec6_dataset = trec6_dataset.remove_columns([SENTENCE_MAPPINGS['hf_trec6'], 'fine_label'])
+        trec6_dataset = trec6_dataset.rename_column(LABEL_MAPPINGS['hf_trec6'], "labels")
+        trec6_dataset.set_format("torch")
+
+        fullset = trec6_dataset["train"]
+        testset = trec6_dataset['test']
+        validation_set_fraction = 0.1
+        seed = 42
+        num_fulltrn = len(fullset)
+        num_val = int(num_fulltrn * validation_set_fraction)
+        num_trn = num_fulltrn - num_val
+        trainset, valset = random_split(fullset, [num_trn, num_val], generator=torch.Generator().manual_seed(seed))
+        return trainset, valset, testset, num_cls
+        
+    elif dset_name == 'imdb_transformer':
+        num_cls = 2
+        imdb_dataset = load_dataset("imdb")
+
+        tokenizer_mapping = lambda example: tokenize_function(kwargs['tokenizer'], example, SENTENCE_MAPPINGS['imdb'])
+        imdb_dataset = imdb_dataset.map(tokenizer_mapping, batched=True) 
+        imdb_dataset = imdb_dataset.remove_columns([SENTENCE_MAPPINGS['imdb']])
+        imdb_dataset = imdb_dataset.rename_column(LABEL_MAPPINGS['imdb'], "labels")
+        imdb_dataset.set_format("torch")
+
+        fullset = imdb_dataset["train"]
+        testset = imdb_dataset['test']
+        validation_set_fraction = 0.1
+        seed = 42
+        num_fulltrn = len(fullset)
+        num_val = int(num_fulltrn * validation_set_fraction)
+        num_trn = num_fulltrn - num_val
+        trainset, valset = random_split(fullset, [num_trn, num_val], generator=torch.Generator().manual_seed(seed))
+        return trainset, valset, testset, num_cls
+    
+    elif dset_name == 'rotten_tomatoes_transformer':
+        num_cls = 2
+        dataset = load_dataset("rotten_tomatoes")
+        tokenizer_mapping = lambda example: tokenize_function(kwargs['tokenizer'], example, SENTENCE_MAPPINGS['rotten_tomatoes'])
+        dataset = dataset.map(tokenizer_mapping, batched=True) 
+        dataset = dataset.remove_columns([SENTENCE_MAPPINGS['rotten_tomatoes']])
+        dataset = dataset.rename_column(LABEL_MAPPINGS['rotten_tomatoes'], "labels")
+        dataset.set_format("torch")
+
+        trainset = dataset["train"]
+        valset = dataset["validation"]
+        testset = dataset['test']
+        return trainset, valset, testset, num_cls
+
+    elif dset_name == 'tweet_eval_transformer':
+        num_cls = 20
+        tweet_dataset = load_dataset("tweet_eval", "emoji")
+
+        tokenizer_mapping = lambda example: tokenize_function(kwargs['tokenizer'], example, SENTENCE_MAPPINGS['tweet_eval'])
+        tweet_dataset = tweet_dataset.map(tokenizer_mapping, batched=True) 
+        tweet_dataset = tweet_dataset.remove_columns([SENTENCE_MAPPINGS['tweet_eval']])
+        tweet_dataset = tweet_dataset.rename_column(LABEL_MAPPINGS['tweet_eval'], "labels")
+        tweet_dataset.set_format("torch")
+
+        trainset = tweet_dataset["train"]
+        valset = tweet_dataset["validation"]
+        testset = tweet_dataset['test']
+        return trainset, valset, testset, num_cls
 
     else:
         raise NotImplementedError
