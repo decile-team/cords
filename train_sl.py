@@ -13,8 +13,8 @@ from ray import tune
 from cords.selectionstrategies.helpers.ssl_lib.param_scheduler import scheduler as step_scheduler
 from cords.utils.data.data_utils import WeightedSubset
 from cords.utils.data.dataloader.SL.adaptive import GLISTERDataLoader, AdaptiveRandomDataLoader, StochasticGreedyDataLoader,\
-    CRAIGDataLoader, GradMatchDataLoader, RandomDataLoader, WeightedRandomDataLoader, MILODataLoader
-from cords.utils.data.dataloader.SL.nonadaptive import FacLocDataLoader, MILOFixedDataLoader, SELCONDataLoader
+    CRAIGDataLoader, GradMatchDataLoader, RandomDataLoader, WeightedRandomDataLoader, MILODataLoader, SELCONDataLoader
+from cords.utils.data.dataloader.SL.nonadaptive import FacLocDataLoader, MILOFixedDataLoader
 from cords.utils.data.datasets.SL import gen_dataset
 from cords.utils.models import *
 from cords.utils.data.data_utils.collate import *
