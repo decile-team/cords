@@ -45,13 +45,20 @@ def train_model(dset, ml_model, strategy, budget):
         config_data.train_args.wandb = False
         if dset in ['trec6']:
             config_data.train_args.num_epochs = 20
+            # if strat == 'full':
+            #     config_data.train_args.num_epochs = 5
             config_data.train_args.print_every = 1
             config_data.dataloader.batch_size = 16
         else:
-            config_data.train_args.num_epochs = 50
-            config_data.train_args.print_every = 5
+            config_data.train_args.num_epochs = 10
+            config_data.train_args.print_every = 1
+            config_data.scheduler.T_max = 10
+            # if strat == 'full':
+            #     config_data.train_args.num_epochs = 5
+            #     config_data.train_args.print_every = 1
+            #     config_data.scheduler.T_max = 5
             config_data.scheduler.type = "cosine_annealing"
-            config_data.scheduler.T_max = 50
+            
             config_data.optimizer.type = 'sgd'
             config_data.optimizer.lr = 5e-2
             config_data.dataloader.batch_size = 128
@@ -86,7 +93,7 @@ def train_model(dset, ml_model, strategy, budget):
     plt.box(on=True)
     ax.spines['top'].set_visible(True)
     ax.spines['right'].set_visible(True)
-    return fig
+    return fig, results_dict[strategy][3][-1], results_dict[strategy][-1][-1], results_dict['full'][3][-1], results_dict['full'][-1][-1]
 
 
 def update_model_text(choice):
@@ -97,30 +104,31 @@ def update_model_text(choice):
     elif choice == 'CIFAR10':
         return gr.update(choices=['ResNet18'], value="ResNet18")
 
+
+def update_out_text(choice):
+    # print(choice)
+    return gr.update(label='Best Test Accuracy obtained by '+ str(choice)), gr.update(label="Time taken by " + str(choice) + " in seconds")
+
+
 with gr.Blocks(title = "Classifier Training") as demo:
     with gr.Row():
         with gr.Column():
             dset = gr.Dropdown(choices=['MNIST', 'TREC6', 'CIFAR10'], label='Dataset Name')
             model = gr.Radio(["LeNet", "LSTM", "ResNet18"], label="Model Architecture")
             strategy = gr.Dropdown(choices=['Random', 'AdaptiveRandom', 'MILO', 'WRE', 'SGE', 'MILOFixed', 'GradMatchPB', 'CraigPB', 'GLISTER'], label='Subset Selection Strategy')
-            budget = gr.Slider(minimum=1, maximum=100, default=50, label='Budget (in %)')
+            budget = gr.Slider(minimum=1, maximum=100, label='Budget (in %)')
             submit = gr.Button(value="Train Model")
         with gr.Column():
             plot = gr.Plot(label='Convergence Curves')
+            with gr.Row():
+                strat_acc = gr.Number(label='Test Accuracy obtained by selected strategy')
+                strat_timing = gr.Number(label="Time taken by selected strategy in seconds")
+            with gr.Row():
+                full_acc = gr.Number(label='Test Accuracy obtained by full')
+                full_timing = gr.Number(label="Time taken by full in seconds")
     dset.change(fn=update_model_text, inputs=dset, outputs=model)
-    submit.click(fn=train_model, inputs=[dset, model, strategy, budget], outputs=plot)
-demo.launch()
 
-# Define input interfaces
-inputs = [gr.Dropdown(choices=['MNIST', 'TREC6', 'CIFAR10'], label='Dataset Name'),
-        #   gr.inputs.Dropdown(options=['ConvNet', 'FullyConnected'], label='Model Architecture'),
-          gr.Textbox(value=update_model_text),
-          
-          gr.Slider(minimum=1, maximum=100, default=50, label='Budget (in %)')]
-
-# Define output interface
-outputs = [gr.Plot(label='Convergence Curves')]
-
-demo = gr.Interface(fn=train_model, inputs=inputs, outputs=outputs)
-
+    # strategy.change(fn=update_out_text, inputs=strategy, outputs=[strat_acc, strat_timing])
+    
+    submit.click(fn=train_model, inputs=[dset, model, strategy, budget], outputs=[plot, strat_acc, strat_timing, full_acc, full_timing])
 demo.launch()
