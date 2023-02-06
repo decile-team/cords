@@ -282,7 +282,7 @@ class TrainClassifier:
         val_losses = list()  # np.zeros(cfg['train_args']['num_epochs'])
         tst_losses = list()
         subtrn_losses = list()
-        timing = [0]
+        timing = []
         trn_acc = list()
         val_acc = list()  # np.zeros(cfg['train_args']['num_epochs'])
         tst_acc = list()  # np.zeros(cfg['train_args']['num_epochs'])
@@ -704,6 +704,7 @@ class TrainClassifier:
                 print_str = "Epoch: " + str(epoch)
                 logger_dict['Epoch'] = epoch
                 logger_dict['Time'] = train_time
+                timing.append(train_time)
                 
                 if self.cfg.train_args.wandb:
                     wandb.log(logger_dict)
@@ -773,7 +774,7 @@ class TrainClassifier:
             epoch_time = time.time() - start_time
             if (scheduler is not None) and (self.cfg.scheduler.type != "cosine_annealing_step"):
                 scheduler.step()
-            timing.append(epoch_time)
+            # timing.append(epoch_time)
             train_time += epoch_time
             
 
@@ -898,6 +899,6 @@ class TrainClassifier:
             logger.info(time_str)
 
         omp_timing = np.array(timing)
-        omp_cum_timing = list(self.generate_cumulative_timing(omp_timing))
-        logger.info("Total time taken by %s = %.4f ", self.cfg.dss_args.type, omp_cum_timing[-1])
-        return trn_acc, val_acc, tst_acc, best_acc
+        # omp_cum_timing = list(self.generate_cumulative_timing(omp_timing))
+        logger.info("Total time taken by %s = %.4f ", self.cfg.dss_args.type, omp_timing[-1])
+        return trn_acc, val_acc, tst_acc, best_acc, omp_timing
