@@ -29,7 +29,7 @@ class TrainClassifier:
         if self.cfg.dss_args.type in ['StochasticGreedyExploration', 'WeightedRandomExploration', 'SGE', 'WRE']:
             subset_selection_name = self.cfg.dss_args.type + "_" + self.cfg.dss_args.submod_function + "_" + str(self.cfg.dss_args.kw)
         elif self.cfg.dss_args.type in ['MILO']:
-            subset_selection_name = self.cfg.dss_args.type + "_" + self.cfg.dss_args.submod_function + self.cfg.dss_args.gc_ratio + "_" + str(self.cfg.dss_args.kw)
+            subset_selection_name = self.cfg.dss_args.type + "_" + self.cfg.dss_args.submod_function + "_" + str(self.cfg.dss_args.gc_ratio) + "_" + str(self.cfg.dss_args.kw)
         else:
             subset_selection_name = self.cfg.dss_args.type
             
@@ -296,7 +296,7 @@ class TrainClassifier:
         if self.cfg.dss_args.type in ['StochasticGreedyExploration', 'WeightedRandomExploration', 'SGE', 'WRE']:
             subset_selection_name = self.cfg.dss_args.type + "_" + self.cfg.dss_args.submod_function + "_" + str(self.cfg.dss_args.kw)
         elif self.cfg.dss_args.type in ['MILO']:
-            subset_selection_name = self.cfg.dss_args.type + "_" + self.cfg.dss_args.submod_function + self.cfg.dss_args.gc_ratio + "_" + str(self.cfg.dss_args.kw)
+            subset_selection_name = self.cfg.dss_args.type + "_" + self.cfg.dss_args.submod_function + "_" + str(self.cfg.dss_args.gc_ratio) + "_" + str(self.cfg.dss_args.kw)
         else:
             subset_selection_name = self.cfg.dss_args.type
         

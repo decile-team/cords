@@ -11,3 +11,6 @@ __pycache__
 /RayLogs/
 *.tar.gz
 .vscode
+/logs/
+/checkpoints/
+/wandb/
