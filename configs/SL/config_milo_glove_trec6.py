@@ -27,7 +27,7 @@ def parse_args():
     parser.add_argument(
                         "--submod_function",
                         type=str,
-                        default="fl",
+                        default="disp_min_pc",
                         help="Submdular function used for finding the global order."
                         )
     parser.add_argument(
@@ -39,13 +39,13 @@ def parse_args():
     parser.add_argument(
                         "--device",
                         type=str,
-                        default='cuda:0',
+                        default='cuda',
                         help= "Device used for computing the embeddings"
                         )
     parser.add_argument(
                         "--kw",
                         type=float,
-                        default=0.1,
+                        default=0.01,
                         help= "Multiplier for RBF Kernel"
                         )
     parser.add_argument(
