@@ -127,11 +127,11 @@ def hpo(dset, ml_model, strategy, budget):
 
         if results_dict[strategy][i][0] > best_strat_acc:
             best_strat_acc = results_dict[strategy][i][0]
-            best_strat_config = search_config
+            best_strat_config = search_configs[i]
         
         if results_dict['full'][i][0] > best_full_acc:
             best_full_acc = results_dict['full'][i][0]
-            best_full_config = search_config
+            best_full_config = search_configs[i]
 
     df1 = pd.DataFrame.from_dict(hpo_dict)
     return df1, best_strat_config, strat_tuning_time, best_full_config, full_tuning_time
