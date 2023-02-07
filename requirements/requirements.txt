@@ -20,6 +20,8 @@ dotmap~=1.3.24
 setuptools~=58.0.4
 ray[tune]
 ray[default]
+-i https://test.pypi.org/simple/ 
+--extra-index-url https://pypi.org/simple/
 submodlib
 datasets
 transformers
