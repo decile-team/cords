@@ -210,22 +210,25 @@ class TrainClassifier:
         file.close()
         return return_val
 
-    def train(self):
+    def train(self, **kwargs):
         """
         ############################## General Training Loop with Data Selection Strategies ##############################
         """
         # Loading the Dataset
         logger = self.logger
-        #logger.info(self.cfg)
-        if self.cfg.dataset.feature == 'classimb':
-            trainset, validset, testset, num_cls = gen_dataset(self.cfg.dataset.datadir,
-                                                               self.cfg.dataset.name,
-                                                               self.cfg.dataset.feature,
-                                                               classimb_ratio=self.cfg.dataset.classimb_ratio, dataset=self.cfg.dataset)
+        if ('trainset' in kwargs) and ('validset' in kwargs) and ('testset' in kwargs) and ('num_cls' in kwargs):
+            trainset, validset, testset, num_cls = kwargs['trainset'], kwargs['validset'], kwargs['testset'], kwargs['num_cls']
         else:
-            trainset, validset, testset, num_cls = gen_dataset(self.cfg.dataset.datadir,
-                                                               self.cfg.dataset.name,
-                                                               self.cfg.dataset.feature, dataset=self.cfg.dataset)
+            #logger.info(self.cfg)
+            if self.cfg.dataset.feature == 'classimb':
+                trainset, validset, testset, num_cls = gen_dataset(self.cfg.dataset.datadir,
+                                                                self.cfg.dataset.name,
+                                                                self.cfg.dataset.feature,
+                                                                classimb_ratio=self.cfg.dataset.classimb_ratio, dataset=self.cfg.dataset)
+            else:
+                trainset, validset, testset, num_cls = gen_dataset(self.cfg.dataset.datadir,
+                                                                self.cfg.dataset.name,
+                                                                self.cfg.dataset.feature, dataset=self.cfg.dataset)
 
         trn_batch_size = self.cfg.dataloader.batch_size
         val_batch_size = self.cfg.dataloader.batch_size

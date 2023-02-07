@@ -148,7 +148,7 @@ with gr.Blocks(title = "Classifier Training") as demo:
             dset = gr.Dropdown(choices=['MNIST', 'TREC6', 'CIFAR10'], label='Dataset Name')
             model = gr.Radio(["LeNet", "LSTM", "ResNet18"], label="Model Architecture")
             strategy = gr.Dropdown(choices=['Random', 'AdaptiveRandom', 'MILO', 'WRE', 'SGE', 'MILOFixed', 'GradMatchPB', 'CraigPB', 'GLISTER'], label='Subset Selection Strategy')
-            budget = gr.Slider(minimum=1, maximum=100, label='Budget (in %)')
+            budget = gr.Slider(minimum=0, maximum=100, label='Budget (in %)')
             submit = gr.Button(value="Train Model")
         with gr.Column():
             #plot = gr.Plot(label='Convergence Curves')
