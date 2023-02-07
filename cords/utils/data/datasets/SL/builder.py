@@ -1712,21 +1712,28 @@ def gen_dataset(datadir, dset_name, feature, seed=42, isnumpy=False, **kwargs):
 
         wordvec_dim = kwargs['dataset'].wordvec_dim
         weight_path = kwargs['dataset'].weight_path
-        weight_full_path = weight_path+'glove.6B.' + str(wordvec_dim) + 'd.txt'
-        wordvec = loadGloveModel(weight_full_path)
-
-        clean_type = 1
-        fullset = GlueDataset(raw['train'], 'text', 'coarse_label', clean_type, num_cls, wordvec_dim, wordvec)
-        testset = GlueDataset(raw['test'], 'text', 'coarse_label', clean_type, num_cls, wordvec_dim, wordvec)
-        # valset = GlueDataset(raw['validation'], num_cls, wordvec_dim, wordvec)
-        
-        validation_set_fraction = 0.1
-        seed = 42
-        num_fulltrn = len(fullset)
-        num_val = int(num_fulltrn * validation_set_fraction)
-        num_trn = num_fulltrn - num_val
-        trainset, valset = random_split(fullset, [num_trn, num_val], generator=torch.Generator().manual_seed(seed))
-
+        data_dir = kwargs['dataset'].datadir
+        if not os.path.exists(os.path.abspath(data_dir)):
+            os.makedirs(os.path.abspath(data_dir), exist_ok=True)
+        if (os.path.exists(os.path.join(os.path.abspath(data_dir), 'trainset.pkl'))) and (os.path.exists(os.path.join(os.path.abspath(data_dir), 'valset.pkl'))) and (os.path.exists(os.path.join(os.path.abspath(data_dir), 'testset.pkl'))):
+            trainset = torch.load(os.path.join(os.path.abspath(data_dir), 'trainset.pkl'))
+            valset = torch.load(os.path.join(os.path.abspath(data_dir), 'valset.pkl'))
+            testset = torch.load(os.path.join(os.path.abspath(data_dir), 'testset.pkl'))
+        else:
+            weight_full_path = weight_path+'glove.6B.' + str(wordvec_dim) + 'd.txt'
+            wordvec = loadGloveModel(weight_full_path)
+            clean_type = 1
+            fullset = GlueDataset(raw['train'], 'text', 'coarse_label', clean_type, num_cls, wordvec_dim, wordvec)
+            testset = GlueDataset(raw['test'], 'text', 'coarse_label', clean_type, num_cls, wordvec_dim, wordvec)
+            validation_set_fraction = 0.1
+            seed = 42
+            num_fulltrn = len(fullset)
+            num_val = int(num_fulltrn * validation_set_fraction)
+            num_trn = num_fulltrn - num_val    
+            trainset, valset = random_split(fullset, [num_trn, num_val], generator=torch.Generator().manual_seed(seed))
+            torch.save(trainset, os.path.join(os.path.abspath(data_dir), 'trainset.pkl'))
+            torch.save(valset, os.path.join(os.path.abspath(data_dir), 'valset.pkl'))
+            torch.save(testset, os.path.join(os.path.abspath(data_dir), 'testset.pkl'))
         return trainset, valset, testset, num_cls
     
     elif dset_name == "imdb": # hugging face trec6
