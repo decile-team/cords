@@ -747,7 +747,7 @@ class TrainClassifier:
 
                 # report metric to ray for hyperparameter optimization
                 if 'report_tune' in self.cfg and self.cfg.report_tune and len(dataloader) and epoch > 0:
-                    tune.report(mean_accuracy=val_acc[-1])
+                    tune.report(mean_accuracy=np.array(val_acc).max())
 
                 logger.info(print_str)
 
