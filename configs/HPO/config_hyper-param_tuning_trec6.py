@@ -16,7 +16,7 @@ space = dict(learning_rate=tune.uniform(0.001, 0.1),
         ),
 
 # tuning algorithm 
-search_algo = "",
+search_algo = "TPE",
 
 # number of hyper-parameter set to try
 num_evals = 54,

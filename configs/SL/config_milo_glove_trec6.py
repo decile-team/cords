@@ -60,6 +60,10 @@ def parse_args():
                         default=25,
                         help= "No of nearest neighbors for KNN variant"
                         )
+    parser.add_argument("-f", "--fff",
+                        help= "a dummy argument for colab to fool ipython",
+                        default="1",
+                        )
     args=parser.parse_args()
     return args
 
