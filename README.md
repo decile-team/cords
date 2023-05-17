@@ -257,7 +257,7 @@ https://groups.google.com/forum/#!forum/Decile_CORDS_Dev/join
 This library takes inspiration, builds upon, and uses pieces of code from several open source codebases. These include [Teppei Suzuki's consistency based SSL repository](https://github.com/perrying/pytorch-consistency-regularization) and [Richard Liaw's Tune repository](https://github.com/ray-project/ray/tree/master/python/ray/tune). Also, CORDS uses [submodlib](https://github.com/decile-team/submodlib) for submodular optimization.
 
 ## Team
-DISTIL is created and maintained by [Krishnateja Killamsetty](https://krishnatejakillamsetty.me/), Dheeraj N Bhat, [Rishabh Iyer](https://www.rishiyer.com), and [Ganesh Ramakrishnan](https://www.cse.iitb.ac.in/~ganesh/). We look forward to have CORDS more community driven. Please use it and contribute to it for your efficient learning research, and feel free to use it for your commercial projects. We will add the major contributors here.
+CORDS is created and maintained by [Krishnateja Killamsetty](https://krishnatejakillamsetty.me/), Dheeraj N Bhat, [Rishabh Iyer](https://www.rishiyer.com), and [Ganesh Ramakrishnan](https://www.cse.iitb.ac.in/~ganesh/). We look forward to have CORDS more community driven. Please use it and contribute to it for your efficient learning research, and feel free to use it for your commercial projects. We will add the major contributors here.
 
 ## Resources
 
