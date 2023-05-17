@@ -613,7 +613,7 @@ class TrainClassifier:
                                               targets.to(self.cfg.train_args.device, non_blocking=True)
                             outputs = model(inputs)
                             loss = criterion(outputs, targets)
-                            trn_loss += (loss.item() * trainloader.batch_size)
+                            trn_loss += (loss.item() * train_eval_loader.batch_size)
                             samples += targets.shape[0]
                             if "trn_acc" in print_args:
                                 if is_selcon: predicted = outputs
@@ -640,7 +640,7 @@ class TrainClassifier:
                                               targets.to(self.cfg.train_args.device, non_blocking=True)
                             outputs = model(inputs)
                             loss = criterion(outputs, targets)
-                            val_loss += (loss.item() * valloader.batch_size)
+                            val_loss += (loss.item() * val_eval_loader.batch_size)
                             samples += targets.shape[0]
                             if "val_acc" in print_args:
                                 if is_selcon: predicted = outputs
@@ -668,7 +668,7 @@ class TrainClassifier:
                                               targets.to(self.cfg.train_args.device, non_blocking=True)
                             outputs = model(inputs)
                             loss = criterion(outputs, targets)
-                            tst_loss += (loss.item() * testloader.batch_size)
+                            tst_loss += (loss.item() * test_eval_loader.batch_size)
                             samples += targets.shape[0]
                             if "tst_acc" in print_args:
                                 if is_selcon: predicted = outputs
