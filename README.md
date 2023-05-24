@@ -247,6 +247,24 @@ We have added example python code and tutorial notebooks under the examples fold
 
 The documentation for the latest version of CORDS can always be found [here](https://cords.readthedocs.io/en/latest/).
 
+## Contributing to CORDS
+
+We value and encourage contributions from the open-source community to enhance the \textsc{Cords} library. Here are some guidelines for contributing:
+
+1. **Report issues**: If you come across any bugs or have suggestions for improvements, please raise an issue on our GitHub repository. Provide detailed information about the problem or feature request, including steps to reproduce the issue if applicable.
+
+2. **Feature requests**: If you have ideas for new features or enhancements, feel free to submit a feature request on GitHub. Clearly describe the proposed functionality and how it aligns with the goals of the \textsc{Cords} library.
+
+3. **Code contributions**: We welcome code contributions to improve \textsc{Cords}. If you plan to contribute code, please follow these steps:
+   - Fork the \textsc{Cords} repository on GitHub.
+   - Create a new branch for your work based on the `develop` branch.
+   - Make your changes and ensure they are well-documented and tested.
+   - Submit a pull request, providing a clear explanation of the changes made and their purpose.
+
+4. **Code style**: When contributing code, please adhere to the existing code style and formatting conventions used in the \textsc{Cords} library. Consistency in code style helps maintain readability and makes it easier to review and merge contributions.
+
+5. **Testing**: Ensure that your code changes pass the existing tests
+
 ## Mailing List
 To receive updates about CORDS and to be a part of the community, join the Decile_CORDS_Dev group.
 ```
