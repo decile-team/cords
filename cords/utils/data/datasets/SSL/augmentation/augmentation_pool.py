@@ -253,7 +253,7 @@ For numpy.array
 """
 def numpy_batch_gcn(images, multiplier=55, eps=1e-10):
     # global contrast normalization
-    images = images.astype(np.float)
+    images = images.astype(float)
     images -= images.mean(axis=(1,2,3), keepdims=True)
     per_image_norm = np.sqrt(np.square(images).sum((1,2,3), keepdims=True))
     per_image_norm[per_image_norm < eps] = 1
