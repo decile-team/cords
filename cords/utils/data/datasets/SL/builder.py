@@ -466,30 +466,30 @@ def create_imbalance(x_trn, y_trn, x_val, y_val, x_tst, y_tst, num_cls, ratio, s
                 subset_idxs = rng.choice(np.where(y_trn == i)[0], size=min_samples, replace=False)
             else:
                 subset_idxs = np.where(y_trn == i)[0]
-            x_trn_new = np.row_stack((x_trn_new, x_trn[subset_idxs]))
-            y_trn_new = np.row_stack((y_trn_new, y_trn[subset_idxs].reshape(-1, 1)))
+            x_trn_new = np.vstack((x_trn_new, x_trn[subset_idxs]))
+            y_trn_new = np.vstack((y_trn_new, y_trn[subset_idxs].reshape(-1, 1)))
     max_samples = int(np.max(val_samples_per_class))
     for i in range(num_cls):
         y_class = np.where(y_val == i)[0]
         if i == 0:
             subset_ids = rng.choice(y_class, size=max_samples - y_class.shape[0], replace=True)
-            x_val_new = np.row_stack((x_val, x_val[subset_ids]))
-            y_val_new = np.row_stack((y_val.reshape(-1, 1), y_val[subset_ids].reshape(-1, 1)))
+            x_val_new = np.vstack((x_val, x_val[subset_ids]))
+            y_val_new = np.vstack((y_val.reshape(-1, 1), y_val[subset_ids].reshape(-1, 1)))
         else:
             subset_ids = rng.choice(y_class, size=max_samples - y_class.shape[0], replace=True)
-            x_val_new = np.row_stack((x_val, x_val_new, x_val[subset_ids]))
-            y_val_new = np.row_stack((y_val.reshape(-1, 1), y_val_new, y_val[subset_ids].reshape(-1, 1)))
+            x_val_new = np.vstack((x_val, x_val_new, x_val[subset_ids]))
+            y_val_new = np.vstack((y_val.reshape(-1, 1), y_val_new, y_val[subset_ids].reshape(-1, 1)))
     max_samples = int(np.max(tst_samples_per_class))
     for i in range(num_cls):
         y_class = np.where(y_tst == i)[0]
         if i == 0:
             subset_ids = rng.choice(y_class, size=max_samples - y_class.shape[0], replace=True)
-            x_tst_new = np.row_stack((x_tst, x_tst[subset_ids]))
-            y_tst_new = np.row_stack((y_tst.reshape(-1, 1), y_tst[subset_ids].reshape(-1, 1)))
+            x_tst_new = np.vstack((x_tst, x_tst[subset_ids]))
+            y_tst_new = np.vstack((y_tst.reshape(-1, 1), y_tst[subset_ids].reshape(-1, 1)))
         else:
             subset_ids = rng.choice(y_class, size=max_samples - y_class.shape[0], replace=True)
-            x_tst_new = np.row_stack((x_tst, x_tst_new, x_tst[subset_ids]))
-            y_tst_new = np.row_stack((y_tst.reshape(-1, 1), y_tst_new, y_tst[subset_ids].reshape(-1, 1)))
+            x_tst_new = np.vstack((x_tst, x_tst_new, x_tst[subset_ids]))
+            y_tst_new = np.vstack((y_tst.reshape(-1, 1), y_tst_new, y_tst[subset_ids].reshape(-1, 1)))
 
     return x_trn_new, y_trn_new.reshape(-1), x_val_new, y_val_new.reshape(-1), x_tst_new, y_tst_new.reshape(-1)
 
